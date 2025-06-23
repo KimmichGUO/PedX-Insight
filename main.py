@@ -1,7 +1,7 @@
 import argparse
 
 from modules.count_pedestrians.count_pedestrians import count_pedestrians
-from modules.pedestrian_waiting.count_pedestrian_waiting_time import count_pedestrian_waiting_time
+from modules.waiting_time_pede.waiting_time_pede import waiting_time_pede
 
 def main():
     parser = argparse.ArgumentParser(description="Pedestrian Analysis Toolbox")

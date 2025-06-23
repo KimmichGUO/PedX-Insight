@@ -1,6 +1,7 @@
 import argparse
 from modules.count_pedestrians.count_pedestrians import count_pedestrians
 from modules.waiting_time_pede.waiting_time_pede import waiting_time_pede
+from modules.tracking_pede.tracking_pede import tracking_pede
 
 def main():
     parser = argparse.ArgumentParser(description="Pedestrian Analysis Toolbox")
@@ -8,14 +9,14 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting"],
-        help="Choose the analysis mode: 'count' for pedestrian counting, 'waitingtime' for waiting time analysis",
+        choices=["count", "waiting", "tracking"],  # 新增tracking选项
+        help="Choose the analysis mode: 'count', 'waiting', or 'tracking'",
     )
     parser.add_argument(
         "--zone_configuration_path",
         type=str,
         default="modules/count_pedestrians/vertical-zone-config.json",
-        help="Path to the zone configuration JSON file (default: %(default)s)",
+        help="Path to the zone configuration JSON file (only used in 'count' mode)",
     )
     parser.add_argument(
         "--source_video_path",
@@ -27,7 +28,7 @@ def main():
         "--target_video_path",
         type=str,
         default=None,
-        help="Path to save the processed video (optional)",
+        help="Path to save the processed video (optional, if supported by the mode)",
     )
     parser.add_argument(
         "--source_weights_path",
@@ -60,6 +61,12 @@ def main():
         default=[],
         help="List of class IDs to detect (e.g. 0 for person). Leave empty to detect all classes.",
     )
+    parser.add_argument(
+        "--weights",
+        type=str,
+        default="yolov8m-pose.pt",
+        help="Weights file for tracking mode (default: yolov8m-pose.pt)",
+    )
 
     args = parser.parse_args()
 
@@ -80,7 +87,12 @@ def main():
             confidence=args.confidence_threshold,
             iou=args.iou_threshold,
             classes=args.classes,
-            #target_video_path=args.target_video_path
+        )
+    elif args.mode == "tracking":
+        tracking_pede(
+            source_video_path=args.source_video_path,
+            #target_video_path=args.target_video_path,
+            weights=args.weights,
         )
     else:
         print(f"Unknown mode: {args.mode}")

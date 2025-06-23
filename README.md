@@ -10,5 +10,5 @@ https://github.com/shriram1998/PedestrianSpeedEstimator
 https://github.com/roboflow/supervision/tree/develop/examples/time_in_zone
 #### (4) Pedestrian keypoint tracking
 https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
-#### (5) pedestrian phone usage detection
+#### (5) Pedestrian phone usage detection
 https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision

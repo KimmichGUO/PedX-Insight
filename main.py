@@ -1,38 +1,56 @@
 import argparse
-from modules.count_pedestrians import count_pedestrians
-from modules.estimate_speed import estimate_speed
-from modules.estimate_waiting_time import estimate_waiting_time
-from modules.keypoint_tracking import track_keypoints
-from modules.phone_usage_detection import detect_phone_usage
+from modules.count_pedestrians.count_pedestrians import count_pedestrians
 
 def main():
     parser = argparse.ArgumentParser(description="Pedestrian Analysis Toolbox")
 
-    parser.add_argument('--video_path', type=str, required=True, help='Path to input video')
-    parser.add_argument('--zone_config', type=str, default='zone.json', help='Zone config file')
-
-    parser.add_argument('--count', action='store_true', help='Enable pedestrian counting')
-    parser.add_argument('--speed', action='store_true', help='Enable speed estimation')
-    parser.add_argument('--wait', action='store_true', help='Enable waiting time estimation')
-    parser.add_argument('--keypoints', action='store_true', help='Enable keypoint tracking')
-    parser.add_argument('--phone', action='store_true', help='Enable phone usage detection')
+    parser.add_argument(
+        "--zone_configuration_path",
+        required=True,
+        type=str,
+        help="Path to the zone configuration JSON file",
+    )
+    parser.add_argument(
+        "--source_video_path",
+        required=True,
+        type=str,
+        help="Path to the source video file",
+    )
+    parser.add_argument(
+        "--target_video_path",
+        type=str,
+        default=None,
+        help="Path to save the processed video (optional)",
+    )
+    parser.add_argument(
+        "--source_weights_path",
+        type=str,
+        default="yolov8x.pt",
+        help="Path to the YOLO weights file (default: yolov8x.pt)",
+    )
+    parser.add_argument(
+        "--confidence_threshold",
+        type=float,
+        default=0.3,
+        help="Model confidence threshold (default: 0.3)",
+    )
+    parser.add_argument(
+        "--iou_threshold",
+        type=float,
+        default=0.7,
+        help="IOU threshold (default: 0.7)",
+    )
 
     args = parser.parse_args()
 
-    if args.count:
-        count_pedestrians(args.video_path, args.zone_config)
+    count_pedestrians(
+        source_video_path=args.source_video_path,
+        zone_configuration_path=args.zone_configuration_path,
+        source_weights_path=args.source_weights_path,
+        target_video_path=args.target_video_path,
+        confidence_threshold=args.confidence_threshold,
+        iou_threshold=args.iou_threshold,
+    )
 
-    if args.speed:
-        estimate_speed(args.video_path, args.zone_config)
-
-    if args.wait:
-        estimate_waiting_time(args.video_path, args.zone_config)
-
-    if args.keypoints:
-        track_keypoints(args.video_path)
-
-    if args.phone:
-        detect_phone_usage(args.video_path)
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

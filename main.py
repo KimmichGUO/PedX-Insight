@@ -3,12 +3,11 @@ from modules.count_pedestrians.count_pedestrians import count_pedestrians
 
 def main():
     parser = argparse.ArgumentParser(description="Pedestrian Analysis Toolbox")
-
     parser.add_argument(
         "--zone_configuration_path",
-        required=True,
         type=str,
-        help="Path to the zone configuration JSON file",
+        default="modules/count_pedestrians/vertical-zone-config.json",
+        help="Path to the zone configuration JSON file (default: %(default)s)",
     )
     parser.add_argument(
         "--source_video_path",

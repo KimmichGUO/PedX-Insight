@@ -1,4 +1,4 @@
-# count pedestrian.py
+# count pedestrians.py
 import json
 from typing import List, Tuple
 import cv2
@@ -54,7 +54,7 @@ def annotate(frame, zones, zone_annotators, box_annotators, detections):
         )
     return annotated_frame
 
-def count_pedestrian(
+def count_pedestrians(
     source_video_path: str,
     zone_configuration_path: str,
     source_weights_path: str = "yolov8x.pt",

@@ -65,7 +65,7 @@ def main():
             iou_threshold=args.iou_threshold,
         )
     elif args.task == "waitingtime":
-        count_pedestrian_waiting_time(
+        waiting_time_pede(
             source_video_path=args.source_video_path,
             weights=args.source_weights_path,
             device="cuda",  # 可改成 args.device，如果你想支持参数控制

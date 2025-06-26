@@ -17,7 +17,8 @@ https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
 https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
 #### (6) Traffic Analysis (Available)
 `python main.py --mode traffic --source_video_path pedestrian.mp4`  
-https://github.com/roboflow/supervision/tree/develop/examples/traffic_analysis
+https://github.com/roboflow/supervision/tree/develop/examples/traffic_analysis  
+Weights should be downloaded from https://drive.google.com/uc?id=1y-IfToCjRXa3ZdC1JpnKRopC7mcQW-5z
 #### (7) Vehicle Type (Available)
 `python main.py --mode type --source_video_path pedestrian.mp4`  
 https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification

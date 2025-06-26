@@ -12,3 +12,6 @@ https://github.com/roboflow/supervision/tree/develop/examples/time_in_zone
 https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
 #### (5) Pedestrian phone usage detection
 https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
+#### (6) Traffic Analysis (Available)
+`python main.py --mode traffic --source_video_path pedestrian.mp4`
+https://github.com/roboflow/supervision/tree/develop/examples/traffic_analysis

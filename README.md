@@ -18,3 +18,6 @@ https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
 #### (6) Traffic Analysis (Available)
 `python main.py --mode traffic --source_video_path pedestrian.mp4`  
 https://github.com/roboflow/supervision/tree/develop/examples/traffic_analysis
+#### (7) Vehicle Type (Available)
+`python main.py --mode type --source_video_path pedestrian.mp4`  
+https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification

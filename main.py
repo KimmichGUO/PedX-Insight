@@ -2,6 +2,8 @@ import argparse
 from modules.count_pedestrians.count_pedestrians import count_pedestrians
 from modules.waiting_time_pede.waiting_time_pede import waiting_time_pede
 from modules.tracking_pede.tracking_pede import tracking_pede
+from modules.type_vehicle.type_vehicle import type_vehicle_analysis
+from modules.traffic_analysis.traffic_analysis import run_traffic_analysis
 
 def main():
     parser = argparse.ArgumentParser(description="Pedestrian Analysis Toolbox")
@@ -9,8 +11,8 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "tracking"],  # 新增tracking选项
-        help="Choose the analysis mode: 'count', 'waiting', or 'tracking'",
+        choices=["count", "waiting", "tracking", "type", "traffic"],  #
+        help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', or 'traffic'",
     )
     parser.add_argument(
         "--zone_configuration_path",
@@ -94,6 +96,26 @@ def main():
             #target_video_path=args.target_video_path,
             weights=args.weights,
         )
+    elif args.mode == "type":
+        type_vehicle_analysis(
+            source_video_path=args.source_video_path,
+            weights=args.source_weights_path,
+            confidence=args.confidence_threshold,
+            iou=args.iou_threshold,
+            device=args.device,
+            classes=args.classes,
+            show=True,
+            target_video_path=args.target_video_path
+        )
+    elif args.mode == "traffic":
+        run_traffic_analysis(
+            source_video_path=args.source_video_path,
+            source_weights_path=args.source_weights_path,
+            target_video_path=args.target_video_path,
+            confidence_threshold=args.confidence_threshold,
+            iou_threshold=args.iou_threshold,
+        )
+
     else:
         print(f"Unknown mode: {args.mode}")
 

@@ -2,7 +2,7 @@
 
 ## Toolbox:
 ### 1. Pedestrian Analysis 
-#### (1) Count the number of pedestrians in the zone
+#### (1) Count the number of pedestrians in the zone (available)
 `python main.py --mode count --source_video_path pedestrian.mp4`  
 https://github.com/roboflow/supervision/tree/develop/examples/count_people_in_zone
 #### (2) Pedestrian Speed Estimator

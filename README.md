@@ -15,10 +15,17 @@ https://github.com/roboflow/supervision/tree/develop/examples/time_in_zone
 https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
 #### (5) Pedestrian phone usage detection
 https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
-#### (6) Traffic Analysis (Available)
+#### (6) Age and gender (available)
+https://github.com/smahesh29/Gender-and-Age-Detection
+### 2. Vehicle Analysis 
+#### (1) Traffic Analysis (Available)
 `python main.py --mode traffic --source_video_path pedestrian.mp4`  
 https://github.com/roboflow/supervision/tree/develop/examples/traffic_analysis  
-Weights should be downloaded from https://drive.google.com/uc?id=1y-IfToCjRXa3ZdC1JpnKRopC7mcQW-5z
-#### (7) Vehicle Type (Available)
+Weights should be downloaded from https://drive.google.com/uc?id=1y-IfToCjRXa3ZdC1JpnKRopC7mcQW-5z  
+#### (2) Vehicle Type (Available)
 `python main.py --mode type --source_video_path pedestrian.mp4`  
 https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification
+### 3. Environment Analysis 
+#### (1) Weather
+
+

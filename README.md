@@ -24,7 +24,7 @@ https://github.com/roboflow/supervision/tree/develop/examples/traffic_analysis
 Weights should be downloaded from https://drive.google.com/uc?id=1y-IfToCjRXa3ZdC1JpnKRopC7mcQW-5z  
 #### (2) Vehicle Type (Available)
 ```bash
-python main.py --mode type --source_video_path pedestrian.mp4`  
+python main.py --mode type --source_video_path pedestrian.mp4    
 https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification
 ### 3. Environment Analysis 
 #### (1) Weather (Available)

@@ -3,7 +3,7 @@ from tensorflow.keras.utils import img_to_array
 import cv2
 import numpy as np
 
-classes = ['cloudy', 'rainy', 'shine', 'sunrise']
+classes = ["Cloudy","Sunny","Rainy","Snowy","Foggy"]
 
 def preprocess_frame(frame):
     frame = cv2.resize(frame, (100, 100))

@@ -22,6 +22,9 @@ https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
 #### (5) Pedestrian phone usage detection
 https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
 #### (6) Age and gender (available)
+```bash
+python main.py --mode agegender --source_video_path pedestrian.mp4
+```
 https://github.com/smahesh29/Gender-and-Age-Detection
 ### 2. Vehicle Analysis 
 #### (1) Traffic Analysis (Available)

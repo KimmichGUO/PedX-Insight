@@ -5,6 +5,8 @@ from modules.tracking_pede.tracking_pede import tracking_pede
 from modules.type_vehicle.type_vehicle import type_vehicle_analysis
 from modules.traffic_analysis.traffic_analysis import run_traffic_analysis
 from modules.age_gender.age_gender import run_age_gender_detection
+from modules.weather.weather import run_weather_detection
+
 
 def main():
     parser = argparse.ArgumentParser(description="Pedestrian Analysis Toolbox")
@@ -12,7 +14,7 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "tracking", "type", "traffic", "agegender"],
+        choices=["count", "waiting", "tracking", "type", "traffic", "agegender","weather"],
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
@@ -119,6 +121,10 @@ def main():
     elif args.mode == "agegender":
         run_age_gender_detection(args.source_video_path)
 
+    elif args.mode == "weather":
+        run_weather_detection(
+            source_video_path=args.source_video_path
+        )
     else:
         print(f"Unknown mode: {args.mode}")
 

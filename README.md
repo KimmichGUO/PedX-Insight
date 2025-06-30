@@ -25,7 +25,12 @@ https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
 ```bash
 python main.py --mode agegender --source_video_path pedestrian.mp4
 ```
-https://github.com/smahesh29/Gender-and-Age-Detection
+https://github.com/smahesh29/Gender-and-Age-Detection  
+#### (7) Race (available)
+```bash
+python main.py --mode race --source_video_path pedestrian.mp4
+```
+https://github.com/serengil/deepface
 ### 2. Vehicle Analysis 
 #### (1) Traffic Analysis (Available)
 ```bash

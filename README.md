@@ -49,5 +49,9 @@ https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Cla
 python main.py --mode weather --source_video_path pedestrian.mp4
 ```  
 https://github.com/berkgulay/weather-prediction-from-image
-
+#### (2) Traffic light (Available)
+```bash
+python main.py --mode light --source_video_path pedestrian.mp4
+```  
+https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
 

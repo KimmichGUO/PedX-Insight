@@ -54,4 +54,9 @@ https://github.com/berkgulay/weather-prediction-from-image
 python main.py --mode light --source_video_path pedestrian.mp4
 ```  
 https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
+#### (3) All things analysis (Available)
+```bash
+python main.py --mode total --source_video_path pedestrian.mp4
+```  
+https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
 

@@ -59,7 +59,7 @@ https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-Y
 python main.py --mode total --source_video_path pedestrian.mp4
 ```  
 https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
-### (4) Traffic sign (Available)
+#### (4) Traffic sign (Available)
 ```bash
 python main.py --mode sign --source_video_path pedestrian.mp4
 ```

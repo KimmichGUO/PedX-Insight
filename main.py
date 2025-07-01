@@ -7,6 +7,7 @@ from modules.traffic_analysis.traffic_analysis import run_traffic_analysis
 from modules.age_gender.age_gender import run_age_gender_detection
 from modules.weather.weather import run_weather_detection
 from modules.race.race import run_race_detection
+from modules.traffic_total.traffic_total import run_traffic_total_detection
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "tracking", "type", "traffic", "agegender","weather", "race"],
+        choices=["count", "waiting", "tracking", "type", "traffic", "agegender", "weather", "race", "total"],
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
@@ -130,6 +131,13 @@ def main():
         run_race_detection(
             source_video_path=args.source_video_path
         )
+    elif args.mode == "total":
+        run_traffic_total_detection(
+            source_video_path=args.source_video_path,
+            weights=args.source_weights_path,
+            target_video_path=args.target_video_path
+        )
+
     else:
         print(f"Unknown mode: {args.mode}")
 

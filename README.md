@@ -7,7 +7,7 @@
 python main.py --mode count --source_video_path pedestrian.mp4
 ```
 https://github.com/roboflow/supervision/tree/develop/examples/count_people_in_zone
-#### (2) Pedestrian Speed Estimator
+#### (2) Pedestrian Speed Estimator (Usable)
 https://github.com/shriram1998/PedestrianSpeedEstimator
 #### (3) Waiting time in the zone (available)
 ```bash
@@ -59,8 +59,5 @@ https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-Y
 python main.py --mode total --source_video_path pedestrian.mp4
 ```  
 https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
-#### (4) Traffic sign (Available)
-```bash
-python main.py --mode sign --source_video_path pedestrian.mp4
-```
+#### (4) Traffic sign (Usable)
 https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection/tree/main

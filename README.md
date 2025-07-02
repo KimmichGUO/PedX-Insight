@@ -63,3 +63,5 @@ python main.py --mode total --source_video_path pedestrian.mp4
 https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
 #### (4) Traffic sign (Usable)
 https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection/tree/main
+#### (5) Road Width (Usable)
+https://github.com/saarthxxk/Real-Time-Road-Width-Detection/tree/main

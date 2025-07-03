@@ -51,6 +51,8 @@ Weights should be downloaded from https://drive.google.com/uc?id=1y-IfToCjRXa3Zd
 python main.py --mode type --source_video_path pedestrian.mp4
 ```  
 https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification
+#### (3) Vehicle Speed (Usage)
+https://github.com/roboflow/supervision/tree/develop/examples/speed_estimation
 ### 3. Environment Analysis 
 #### (1) Weather (Available)
 ```bash

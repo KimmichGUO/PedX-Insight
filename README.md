@@ -73,6 +73,6 @@ https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection/tree/main
 https://github.com/saarthxxk/Real-Time-Road-Width-Detection/tree/main
 #### (6) Day or Evening (Available)
 ```bash
-python main.py --mode time --source_video_path pedestrian.mp4
+python main.py --mode daytime --source_video_path pedestrian.mp4
 ```
 https://github.com/KishieKube/CV_Day_Evening_detector/tree/main

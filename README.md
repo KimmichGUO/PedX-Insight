@@ -19,7 +19,10 @@ https://github.com/roboflow/supervision/tree/develop/examples/time_in_zone
 python main.py --mode tracking --source_video_path pedestrian.mp4
 ```    
 https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
-#### (5) Pedestrian phone usage detection (Usable)
+#### (5) Pedestrian phone usage detection (available)
+```bash
+python main.py --mode head --source_video_path pedestrian.mp4
+```  
 https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
 #### (6) Age and gender (available)
 ```bash
@@ -31,7 +34,10 @@ https://github.com/smahesh29/Gender-and-Age-Detection
 python main.py --mode race --source_video_path pedestrian.mp4
 ```
 https://github.com/serengil/deepface
-#### (8) Head direction (Usable)
+#### (8) Head direction (available)
+```bash
+python main.py --mode head --source_video_path pedestrian.mp4
+```  
 https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
 ### 2. Vehicle Analysis 
 #### (1) Traffic Analysis (Available)

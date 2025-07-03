@@ -12,6 +12,7 @@ from modules.traffic_light.traffic_light import traffic_light
 from modules.traffic_sign.traffic_sign import traffic_sign_detection
 from modules.head.head import run_head_detection
 from modules.daynight.daytime import run_daytime_detection
+from modules.crosswalk.crosswalk import run_crosswalk_detection
 
 def main():
     parser = argparse.ArgumentParser(description="Pedestrian Analysis Toolbox")
@@ -19,7 +20,7 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "tracking", "type", "traffic", "agegender", "weather", "race", "total", "light", "head", "daytime"],
+        choices=["count", "waiting", "tracking", "type", "traffic", "agegender", "weather", "race", "total", "light", "head", "daytime", "crosswalk"],
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
@@ -161,6 +162,11 @@ def main():
     elif args.mode == "daytime":
         run_daytime_detection(
             source_video_path=args.source_video_path
+        )
+    elif args.mode == "crosswalk":
+        run_crosswalk_detection(
+            source_video_path=args.source_video_path,
+            conf=args.confidence_threshold
         )
     else:
         print(f"Unknown mode: {args.mode}")

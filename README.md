@@ -53,6 +53,8 @@ python main.py --mode type --source_video_path pedestrian.mp4
 https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification
 #### (3) Vehicle Speed (Usage)
 https://github.com/roboflow/supervision/tree/develop/examples/speed_estimation
+#### (4) Distance between vehicles (Usage)
+https://github.com/maheshpaulj/Lane_Detection
 ### 3. Environment Analysis 
 #### (1) Weather (Available)
 ```bash

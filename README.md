@@ -1,9 +1,10 @@
 # MSc-Project
 
 ## Toolbox:
-If you want to use all the functions in the toolbox:
+- Using all the functions in the toolbox.
+- All videos used for detection are stored in a single folder.
 ```bash
-python main.py --mode all --source_video_path pedestrian.mp4
+python main.py --mode all --source_video_path your_folder
 ```
 ### 1. Pedestrian Analysis 
 #### (1) Count the number of pedestrians in the zone (Done)
@@ -11,9 +12,9 @@ python main.py --mode all --source_video_path pedestrian.mp4
 python main.py --mode count --source_video_path pedestrian.mp4
 ```
 https://github.com/roboflow/supervision/tree/develop/examples/count_people_in_zone
-#### (2) Pedestrian Speed Estimator (Done)
+#### (2) Pedestrian Speed Estimator (Usable)
 https://github.com/shriram1998/PedestrianSpeedEstimator
-#### (3) Waiting time in the zone (available)
+#### (3) Waiting time in the zone (Done)
 ```bash
 python main.py --mode Waiting --source_video_path pedestrian.mp4
 ```  

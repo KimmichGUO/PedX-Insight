@@ -19,7 +19,7 @@ https://github.com/shriram1998/PedestrianSpeedEstimator
 python main.py --mode Waiting --source_video_path pedestrian.mp4
 ```  
 https://github.com/roboflow/supervision/tree/develop/examples/time_in_zone
-#### (4) Pedestrian keypoint tracking (available)
+#### (4) Pedestrian tracking (Done)
 ```bash
 python main.py --mode tracking --source_video_path pedestrian.mp4
 ```    

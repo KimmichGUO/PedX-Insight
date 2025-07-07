@@ -3,6 +3,8 @@ from typing import List, Tuple
 import cv2
 import numpy as np
 from tqdm import tqdm
+import os
+import csv
 from ultralytics import YOLO
 import supervision as sv
 
@@ -64,7 +66,15 @@ def count_pedestrians(
     target_video_path: str = None,
     confidence_threshold: float = 0.3,
     iou_threshold: float = 0.7,
+    save_interval_frames: int = 30
 ):
+    
+    base_name = os.path.splitext(os.path.basename(source_video_path))[0]
+    csv_output_path = f"{base_name}_count_pedestrian.csv"
+
+    with open(csv_output_path, mode='w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["frame", "data"])
 
     video_info = sv.VideoInfo.from_video_path(source_video_path)
     polygons = load_zones_config(zone_configuration_path)
@@ -73,21 +83,30 @@ def count_pedestrians(
     )
 
     model = YOLO(source_weights_path)
-
     frames_generator = sv.get_video_frames_generator(source_video_path)
+
+    frame_count = 0
 
     if target_video_path is not None:
         with sv.VideoSink(target_video_path, video_info) as sink:
             for frame in tqdm(frames_generator, total=video_info.total_frames):
+                frame_count += 1
                 detections = detect(frame, model, confidence_threshold)
-                annotated_frame = annotate(frame, zones, zone_annotators, box_annotators, detections)
+                annotated_frame, counts = annotate(frame, zones, zone_annotators, box_annotators, detections)
+
+                if frame_count % save_interval_frames == 0:
+                    count_dict = {i: count for i, count in enumerate(counts)}
+                    with open(csv_output_path, mode='a', newline='') as f:
+                        writer = csv.writer(f)
+                        writer.writerow([frame_count, str(count_dict)])
+
                 sink.write_frame(annotated_frame)
     else:
         for frame in tqdm(frames_generator, total=video_info.total_frames):
+            frame_count += 1
             detections = detect(frame, model, confidence_threshold)
             annotated_frame, counts = annotate(frame, zones, zone_annotators, box_annotators, detections)
 
-            # 在帧上添加人数信息
             for i, count in enumerate(counts):
                 position = (30, 50 + i * 40)
                 text = f"Zone {i + 1} Count: {count}"
@@ -99,8 +118,13 @@ def count_pedestrians(
                     thickness=2
                 )
 
-            print(f"Frame: Zone counts = {counts}")
+            if frame_count % save_interval_frames == 0:
+                count_dict = {i: count for i, count in enumerate(counts)}
+                with open(csv_output_path, mode='a', newline='') as f:
+                    writer = csv.writer(f)
+                    writer.writerow([frame_count, str(count_dict)])
 
+            print(f"Frame {frame_count}: Zone counts = {counts}")
             cv2.imshow("Processed Video", annotated_frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break

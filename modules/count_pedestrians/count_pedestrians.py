@@ -62,7 +62,7 @@ def annotate(frame, zones, zone_annotators, box_annotators, detections):
 def count_pedestrians(
     source_video_path: str,
     zone_configuration_path: str,
-    source_weights_path: str = "yolov8x.pt",
+    source_weights_path: str = "yolov8n.pt",
     target_video_path: str = None,
     confidence_threshold: float = 0.3,
     iou_threshold: float = 0.7,

@@ -9,18 +9,24 @@ from modules.weather.weather import run_weather_detection
 from modules.race.race import run_race_detection
 from modules.traffic_total.traffic_total import run_traffic_total_detection
 from modules.traffic_light.traffic_light import traffic_light
-from modules.traffic_sign.traffic_sign import traffic_sign_detection
-from modules.head.head import run_head_detection
+# from modules.traffic_sign.traffic_sign import traffic_sign_detection
+# from modules.head.head import run_head_detection
 from modules.daynight.daytime import run_daytime_detection
 from modules.crosswalk.crosswalk import run_crosswalk_detection
+import subprocess
+import os
 
 def main():
+    def run_mode(mode, video_path, extra_args=""):
+        cmd = f"python main.py --mode {mode} --source_video_path \"{video_path}\" {extra_args}"
+        print(f"Running: {cmd}")
+        subprocess.run(cmd, shell=True)
     parser = argparse.ArgumentParser(description="Pedestrian Analysis Toolbox")
     parser.add_argument(
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "tracking", "type", "traffic", "agegender", "weather", "race", "total", "light", "head", "daytime", "crosswalk"],
+        choices=["count", "waiting", "tracking", "type", "traffic", "agegender", "weather", "race", "total", "light", "head", "daytime", "crosswalk","all"],
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
@@ -44,7 +50,7 @@ def main():
     parser.add_argument(
         "--source_weights_path",
         type=str,
-        default="yolov8x.pt",
+        default="yolov8n.pt",
         help="Path to the YOLO weights file (default: yolov8x.pt)",
     )
     parser.add_argument(
@@ -69,7 +75,7 @@ def main():
         "--classes",
         nargs="*",
         type=int,
-        default=[],
+        default=[0],
         help="List of class IDs to detect (e.g. 0 for person). Leave empty to detect all classes.",
     )
     parser.add_argument(
@@ -145,20 +151,20 @@ def main():
         traffic_light(
             source_video_path=args.source_video_path,
         )
-    elif args.mode == "sign":
-        traffic_sign_detection(
-            source_video_path=args.source_video_path,
-            weights=args.source_weights_path,
-            confidence=args.confidence_threshold,
-            iou=args.iou_threshold,
-            device=args.device,
-            classes=args.classes,
-            target_video_path=args.target_video_path
-        )
-    elif args.mode == "head":
-        run_head_detection(
-            source_video_path=args.source_video_path
-        )
+    # elif args.mode == "sign":
+    #     traffic_sign_detection(
+    #         source_video_path=args.source_video_path,
+    #         weights=args.source_weights_path,
+    #         confidence=args.confidence_threshold,
+    #         iou=args.iou_threshold,
+    #         device=args.device,
+    #         classes=args.classes,
+    #         target_video_path=args.target_video_path
+    #     )
+    # elif args.mode == "head":
+    #     run_head_detection(
+    #         source_video_path=args.source_video_path
+    #     )
     elif args.mode == "daytime":
         run_daytime_detection(
             source_video_path=args.source_video_path
@@ -168,8 +174,25 @@ def main():
             source_video_path=args.source_video_path,
             conf=args.confidence_threshold
         )
+    # elif args.mode == "all":
+    #     subprocess.run("python main.py --mode count --source_video_path pedestrian.mp4", shell=True)
+    #     subprocess.run("python main.py --mode count --source_video_path pedestrian.mp4", shell=True)
+    elif args.mode == "all":
+        video_dir = args.source_video_path
+        if not os.path.isdir(video_dir):
+            print(f"Error: {video_dir} is not a valid directory.")
+            return
+
+        video_files = [f for f in os.listdir(video_dir) if f.lower().endswith((".mp4", ".avi", ".mov", ".mkv"))]
+
+        for video_file in video_files:
+            video_path = os.path.join(video_dir, video_file)
+
+            run_mode("count", video_path)
+            run_mode("waiting", video_path)
     else:
         print(f"Unknown mode: {args.mode}")
+
 
 if __name__ == "__main__":
     main()

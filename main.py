@@ -190,6 +190,7 @@ def main():
 
             run_mode("count", video_path)
             run_mode("waiting", video_path)
+            run_mode("tracking", video_path)
     else:
         print(f"Unknown mode: {args.mode}")
 

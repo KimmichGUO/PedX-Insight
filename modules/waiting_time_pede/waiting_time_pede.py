@@ -24,6 +24,7 @@ def waiting_time_pede(
     classes: List[int],
     save_interval_frames: int = 30,
 ) -> None:
+
     base_name = os.path.splitext(os.path.basename(source_video_path))[0]
     csv_output_path = f"{base_name}_waiting_times.csv"
 

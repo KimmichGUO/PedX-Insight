@@ -1,4 +1,3 @@
-# count pedestrians.py
 import json
 from typing import List, Tuple
 import cv2
@@ -46,13 +45,17 @@ def detect(frame: np.ndarray, model: YOLO, confidence_threshold: float = 0.5):
 
 def annotate(frame, zones, zone_annotators, box_annotators, detections):
     annotated_frame = frame.copy()
+    counts = []
     for zone, zone_annotator, box_annotator in zip(zones, zone_annotators, box_annotators):
         detections_in_zone = detections[zone.trigger(detections=detections)]
+        count = len(detections_in_zone)
+        counts.append(count)
         annotated_frame = zone_annotator.annotate(scene=annotated_frame)
         annotated_frame = box_annotator.annotate(
             scene=annotated_frame, detections=detections_in_zone
         )
-    return annotated_frame
+    return annotated_frame, counts
+
 
 def count_pedestrians(
     source_video_path: str,
@@ -82,7 +85,22 @@ def count_pedestrians(
     else:
         for frame in tqdm(frames_generator, total=video_info.total_frames):
             detections = detect(frame, model, confidence_threshold)
-            annotated_frame = annotate(frame, zones, zone_annotators, box_annotators, detections)
+            annotated_frame, counts = annotate(frame, zones, zone_annotators, box_annotators, detections)
+
+            # 在帧上添加人数信息
+            for i, count in enumerate(counts):
+                position = (30, 50 + i * 40)
+                text = f"Zone {i + 1} Count: {count}"
+                cv2.putText(
+                    annotated_frame, text, position,
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                    fontScale=1,
+                    color=(0, 255, 0),
+                    thickness=2
+                )
+
+            print(f"Frame: Zone counts = {counts}")
+
             cv2.imshow("Processed Video", annotated_frame)
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break

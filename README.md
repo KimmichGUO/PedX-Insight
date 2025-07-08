@@ -12,8 +12,11 @@ python main.py --mode all --source_video_path 'your_folder'
 python main.py --mode count --source_video_path 'your_video'
 ```
 https://github.com/roboflow/supervision/tree/develop/examples/count_people_in_zone
-#### (2) Pedestrian Speed Estimator (Usable)
-https://github.com/shriram1998/PedestrianSpeedEstimator
+#### (2) Pedestrian Speed Estimator (Done)
+```bash
+python main.py --mode speed --source_video_path 'your_video'
+```    
+https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
 #### (3) Waiting time in the zone (Done)
 ```bash
 python main.py --mode Waiting --source_video_path 'your_video'

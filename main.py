@@ -13,6 +13,7 @@ from modules.traffic_light.traffic_light import traffic_light
 from modules.head_phone.head_phone import run_head_detection
 from modules.daynight.daytime import run_daytime_detection
 from modules.crosswalk.crosswalk import run_crosswalk_detection
+from modules.speed_pedestrian.speed_pedestrian import detect_pedestrian_speed
 import subprocess
 import os
 
@@ -26,7 +27,7 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "tracking", "type", "traffic", "agegender", "weather", "face", "total", "light", "head", "daytime", "crosswalk","all"],
+        choices=["count", "waiting", "tracking", "type", "speed","traffic", "agegender", "weather", "face", "total", "light", "head", "daytime", "crosswalk","all"],
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
@@ -111,6 +112,12 @@ def main():
             #target_video_path=args.target_video_path,
             weights=args.weights,
         )
+    elif args.mode == "speed":
+        detect_pedestrian_speed(
+            source_video_path=args.source_video_path,
+            # target_video_path=args.target_video_path,
+            weights=args.weights,
+        )
     elif args.mode == "type":
         type_vehicle_analysis(
             source_video_path=args.source_video_path,
@@ -193,6 +200,7 @@ def main():
             run_mode("tracking", video_path)
             run_mode("head", video_path)
             run_mode("face", video_path)
+            run_mode("speed",video_path)
     else:
         print(f"Unknown mode: {args.mode}")
 

@@ -7,12 +7,14 @@ def run_race_detection(source_video_path):
     cap = cv2.VideoCapture(source_video_path)
     frame_index = 0
 
-    video_name = os.path.splitext(os.path.basename(source_video_path))[0]
-    csv_filename = f"{video_name}_faces.csv"
+    video_basename = os.path.splitext(os.path.basename(source_video_path))[0]
+    output_dir = os.path.join("analysis_results", video_basename)
+    os.makedirs(output_dir, exist_ok=True)
+    csv_filename = os.path.join(output_dir, f"{video_basename}_pedestrian_speed.csv")
 
     with open(csv_filename, mode="w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["frame", "detections"])  # 一帧一行
+        writer.writerow(["frame", "detections"]) 
 
     while True:
         ret, frame = cap.read()

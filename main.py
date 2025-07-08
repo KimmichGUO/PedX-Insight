@@ -10,7 +10,7 @@ from modules.race.race import run_race_detection
 from modules.traffic_total.traffic_total import run_traffic_total_detection
 from modules.traffic_light.traffic_light import traffic_light
 # from modules.traffic_sign.traffic_sign import traffic_sign_detection
-# from modules.head.head import run_head_detection
+from modules.head_phone.head_phone import run_head_detection
 from modules.daynight.daytime import run_daytime_detection
 from modules.crosswalk.crosswalk import run_crosswalk_detection
 import subprocess
@@ -161,10 +161,10 @@ def main():
     #         classes=args.classes,
     #         target_video_path=args.target_video_path
     #     )
-    # elif args.mode == "head":
-    #     run_head_detection(
-    #         source_video_path=args.source_video_path
-    #     )
+    elif args.mode == "head":
+        run_head_detection(
+            source_video_path=args.source_video_path
+        )
     elif args.mode == "daytime":
         run_daytime_detection(
             source_video_path=args.source_video_path
@@ -191,6 +191,7 @@ def main():
             run_mode("count", video_path)
             run_mode("waiting", video_path)
             run_mode("tracking", video_path)
+            run_mode("head", video_path)
     else:
         print(f"Unknown mode: {args.mode}")
 

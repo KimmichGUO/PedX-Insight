@@ -24,7 +24,7 @@ def tracking_pede(
     cap.release()
 
     video_basename = os.path.splitext(os.path.basename(source_video_path))[0]
-    csv_filename = f"{video_basename}_pedestrian_speed.csv"
+    csv_filename = f"{video_basename}_pedestrian_tracking.csv"
 
     with open(csv_filename, mode="w", newline="") as csvfile:
         csv_writer = csv.writer(csvfile)
@@ -32,7 +32,7 @@ def tracking_pede(
 
     id_centers = defaultdict(list)
     id_distance = defaultdict(float)
-    # id_bbox_widths = defaultdict(lambda: deque(maxlen=30))  # 存储最近30帧bbox宽度
+    # id_bbox_widths = defaultdict(lambda: deque(maxlen=30))  
 
     def callback(frame: np.ndarray, frame_index: int) -> np.ndarray:
         results = model(frame)[0]

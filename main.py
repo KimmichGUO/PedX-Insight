@@ -26,7 +26,7 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "tracking", "type", "traffic", "agegender", "weather", "race", "total", "light", "head", "daytime", "crosswalk","all"],
+        choices=["count", "waiting", "tracking", "type", "traffic", "agegender", "weather", "face", "total", "light", "head", "daytime", "crosswalk","all"],
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
@@ -137,7 +137,7 @@ def main():
         run_weather_detection(
             source_video_path=args.source_video_path
         )
-    elif args.mode == "race":
+    elif args.mode == "face":
         run_race_detection(
             source_video_path=args.source_video_path
         )
@@ -192,6 +192,7 @@ def main():
             run_mode("waiting", video_path)
             run_mode("tracking", video_path)
             run_mode("head", video_path)
+            run_mode("face", video_path)
     else:
         print(f"Unknown mode: {args.mode}")
 

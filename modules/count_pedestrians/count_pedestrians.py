@@ -69,9 +69,13 @@ def count_pedestrians(
     save_interval_frames: int = 30
 ):
     
+    # base_name = os.path.splitext(os.path.basename(source_video_path))[0]
+    # csv_output_path = f"{base_name}_count_pedestrian.csv"
     base_name = os.path.splitext(os.path.basename(source_video_path))[0]
-    csv_output_path = f"{base_name}_count_pedestrian.csv"
-
+    output_dir = os.path.join("analysis_results", base_name)
+    os.makedirs(output_dir, exist_ok=True)
+    csv_output_path = os.path.join(output_dir, f"{base_name}_pedestrian_speed.csv")
+    
     with open(csv_output_path, mode='w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["frame", "data"])

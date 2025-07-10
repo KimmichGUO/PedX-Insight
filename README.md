@@ -7,46 +7,56 @@
 python main.py --mode all --source_video_path 'your_folder'
 ```
 ### 1. Pedestrian Analysis 
-#### (1) Count the number of pedestrians in the zone (Done)
+#### (1) Count the number of pedestrians in the zone
 ```bash
 python main.py --mode count --source_video_path 'your_video'
 ```
 https://github.com/roboflow/supervision/tree/develop/examples/count_people_in_zone
-#### (2) Pedestrian Speed Estimator (Done)
+#### (2) Pedestrian Speed Estimator
 ```bash
 python main.py --mode speed --source_video_path 'your_video'
 ```    
 https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
-#### (3) Waiting time in the zone (Done)
+#### (3) Waiting time in the zone
 ```bash
 python main.py --mode Waiting --source_video_path 'your_video'
 ```  
 https://github.com/roboflow/supervision/tree/develop/examples/time_in_zone
-#### (4) Pedestrian tracking (Done)
+#### (4) Pedestrian tracking
 ```bash
 python main.py --mode tracking --source_video_path 'your_video'
 ```    
 https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
-#### (5) Pedestrian phone usage detection (Done)
+#### (5) Phone usage detection (Done)
 ```bash
-python main.py --mode head --source_video_path 'your_video'
+python main.py --mode phone --source_video_path 'your_video'
 ```  
 https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
-#### (6) Age and gender (Done)
-```bash
-python main.py --mode face --source_video_path 'your_video'
-```
-https://github.com/smahesh29/Gender-and-Age-Detection  
-#### (7) Race (Done)
+#### (6) Age (Done)
 ```bash
 python main.py --mode face --source_video_path 'your_video'
 ```
 https://github.com/serengil/deepface
-#### (8) Head direction (Done)
+#### (7) Gender (Done)
+```bash
+python main.py --mode face --source_video_path 'your_video'
+```
+https://github.com/serengil/deepface
+#### (8) Race (Done)
+```bash
+python main.py --mode face --source_video_path 'your_video'
+```
+https://github.com/serengil/deepface
+#### (9) Head direction
 ```bash
 python main.py --mode head --source_video_path 'your_video'
 ```  
 https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
+#### (10) Clothing type analysis (Done)
+```bash
+python main.py --mode clothing --source_video_path 'your_video'
+```
+https://github.com/ZerrnArsk/Fashion-Based-Person-Searcher
 ### 2. Vehicle Analysis 
 #### (1) Traffic Analysis (Available)
 ```bash

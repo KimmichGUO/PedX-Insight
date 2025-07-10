@@ -1,0 +1,63 @@
+import cv2
+import pandas as pd
+import os
+from deepface import DeepFace
+
+
+def run_attribute_analysis(tracking_csv_path, video_path, output_csv_path):
+    df = pd.read_csv(tracking_csv_path)
+    cap = cv2.VideoCapture(video_path)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
+    grouped = df.groupby("track_id")
+    results = []
+
+    print("Start analyzing attributes...")
+    for track_id, group in grouped:
+        first_row = group.sort_values("frame_id").iloc[len(group) // 2] 
+
+        frame_id = int(first_row["frame_id"])
+        x1, y1, x2, y2 = map(int, [first_row["x1"], first_row["y1"], first_row["x2"], first_row["y2"]])
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_id - 1)
+        ret, frame = cap.read()
+        if not ret:
+            continue
+
+        person_crop = frame[y1:y2, x1:x2]
+        if person_crop.size == 0:
+            continue
+
+        try:
+            analysis = DeepFace.analyze(
+                person_crop,
+                actions=['age', 'gender', 'race'],
+                enforce_detection=False
+            )
+        except Exception as e:
+            print(f"Track ID {track_id} - Detection failed:", e)
+            continue
+
+        if isinstance(analysis, dict):
+            analysis = [analysis]
+
+        face = analysis[0]
+        results.append({
+            "track_id": track_id,
+            "age": int(face.get("age", -1)),
+            "gender": face.get("dominant_gender", "Unknown"),
+            "race": face.get("dominant_race", "Unknown")
+        })
+        print(f"Track ID {track_id} analyzed.")
+
+    cap.release()
+
+    results_df = pd.DataFrame(results)
+    results_df.to_csv(output_csv_path, index=False)
+    print(f"\n Attributes saved to {output_csv_path}")
+
+run_attribute_analysis(
+    tracking_csv_path="tracked_pedestrians.csv",
+    video_path="pedestrian.mp4",
+    output_csv_path="pedestrian_attributes.csv"
+)

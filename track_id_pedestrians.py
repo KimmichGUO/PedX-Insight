@@ -37,7 +37,7 @@ while cap.isOpened():
 
     boxes = []
     for box, cls, conf in zip(dets.boxes.xyxy, dets.boxes.cls, dets.boxes.conf):
-        if int(cls.item()) == 0:  # 只检测类别为“person”的对象
+        if int(cls.item()) == 0: 
             x1, y1, x2, y2 = box.tolist()
             boxes.append([x1, y1, x2, y2, conf.item()])
 

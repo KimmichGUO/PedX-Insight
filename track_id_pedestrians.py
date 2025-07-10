@@ -13,7 +13,7 @@ tracker = BYTETracker(args)
 
 video_path = "pedestrian.mp4"
 video_name = os.path.splitext(os.path.basename(video_path))[0] 
-output_dir = os.path.join(".", video_name)
+output_dir = os.path.join(".", "analysis_results", video_name)
 os.makedirs(output_dir, exist_ok=True)  
 
 cap = cv2.VideoCapture(video_path)

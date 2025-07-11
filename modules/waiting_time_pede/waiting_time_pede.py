@@ -12,7 +12,7 @@ def run_waiting_time_analysis(video_path, tracking_csv_path=None, output_csv_pat
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "waiting_segments.csv")
+        output_csv_path = os.path.join(output_dir, "waiting_time_pedestrian.csv")
 
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)

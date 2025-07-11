@@ -77,7 +77,7 @@ https://github.com/maheshpaulj/Lane_Detection
 ### 3. Environment Analysis 
 #### (1) Weather (Done)
 ```bash
-python main.py --mode weather --source_video_path pedestrian.mp4
+python main.py --mode weather --source_video_path 'your_video'
 ```  
 https://github.com/nurcanyaz/yolov8WeatherClassification
 #### (2) Traffic light (Available)
@@ -90,7 +90,11 @@ https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-Y
 python main.py --mode total --source_video_path pedestrian.mp4
 ```  
 https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
-#### (4) Traffic sign (Usable)
+#### (4) Traffic sign (Done)
+```bash
+python main.py --mode traffic_sign --source_video_path 'your_video'
+```
+https://github.com/MDhamani/Traffic-Sign-Recognition-Using-YOLO
 https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection/tree/main
 #### (5) Road Width (Usable)
 https://github.com/saarthxxk/Real-Time-Road-Width-Detection/tree/main

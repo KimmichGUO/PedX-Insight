@@ -52,7 +52,7 @@ https://github.com/serengil/deepface
 python main.py --mode clothing --source_video_path 'your_video'
 ```
 https://github.com/ZerrnArsk/Fashion-Based-Person-Searcher
-#### (10) personal belongings (Done)
+#### (10) Personal belongings (Done)
 ```bash
 python main.py --mode belongings --source_video_path 'your_video'
 ```
@@ -75,11 +75,11 @@ https://github.com/maheshpaulj/Lane_Detection
 #### (5) Distance between vehicles and pedestrians (Usage)
 https://github.com/maheshpaulj/Lane_Detection
 ### 3. Environment Analysis 
-#### (1) Weather (Available)
+#### (1) Weather (Done)
 ```bash
 python main.py --mode weather --source_video_path pedestrian.mp4
 ```  
-https://github.com/berkgulay/weather-prediction-from-image
+https://github.com/nurcanyaz/yolov8WeatherClassification
 #### (2) Traffic light (Available)
 ```bash
 python main.py --mode light --source_video_path pedestrian.mp4

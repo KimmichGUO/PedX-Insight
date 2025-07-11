@@ -52,6 +52,10 @@ https://github.com/serengil/deepface
 python main.py --mode clothing --source_video_path 'your_video'
 ```
 https://github.com/ZerrnArsk/Fashion-Based-Person-Searcher
+#### (10) personal belongings (Done)
+```bash
+python main.py --mode belongings --source_video_path 'your_video'
+```
 ### 2. Vehicle Analysis 
 #### (1) Traffic Analysis (Available)
 ```bash

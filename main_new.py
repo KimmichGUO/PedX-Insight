@@ -1,7 +1,7 @@
 import argparse
 from modules.count_pedestrians.count_pedestrians import count_pedestrians
 from modules.waiting_time_pede.waiting_time_pede import run_waiting_time_analysis
-from modules.tracking_pede.tracking_pede import tracking_pede
+from modules.tracking_pede.tracking_pede import run_pede_direction_analysis
 from modules.type_vehicle.type_vehicle import type_vehicle_analysis
 from modules.traffic_analysis.traffic_analysis import run_traffic_analysis
 from modules.age_gender.age_gender import run_age_gender_detection
@@ -13,12 +13,13 @@ from modules.traffic_light.traffic_light import traffic_light
 from modules.head_phone.head_phone import run_head_detection
 from modules.daynight.daytime import run_daytime_detection
 from modules.crosswalk.crosswalk import run_crosswalk_detection
-from modules.speed_pedestrian.speed_pedestrian import detect_pedestrian_speed
+from modules.speed_pedestrian.speed_pedestrian import run_pede_speed_estimation
 import subprocess
 import os
 from modules.face.face import run_face_analysis
 from modules.phone.phone import run_phone_detection
 from modules.clothing.clothing import run_clothing_detection
+from modules.belongings.belongings import run_belongings_detection
 
 def main():
     def run_mode(mode, video_path, extra_args=""):
@@ -30,7 +31,7 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "tracking", "type", "speed","traffic", "agegender", "weather", "phone", "clothing", "face", "total", "light", "head", "daytime", "crosswalk","all"],
+        choices=["count", "waiting", "tracking_pede", "type", "speed_pede","traffic", "agegender", "belongings", "weather", "phone", "clothing", "face", "total", "light", "head", "daytime", "crosswalk","all"],
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
@@ -110,17 +111,13 @@ def main():
         run_waiting_time_analysis(
             video_path=args.source_video_path,
         )
-    elif args.mode == "tracking":
-        tracking_pede(
-            source_video_path=args.source_video_path,
-            #target_video_path=args.target_video_path,
-            weights=args.weights,
+    elif args.mode == "tracking_pede":
+        run_pede_direction_analysis(
+            video_path=args.source_video_path,
         )
-    elif args.mode == "speed":
-        detect_pedestrian_speed(
-            source_video_path=args.source_video_path,
-            # target_video_path=args.target_video_path,
-            weights=args.weights,
+    elif args.mode == "speed_pede":
+        run_pede_speed_estimation(
+            video_path=args.source_video_path,
         )
     elif args.mode == "type":
         type_vehicle_analysis(
@@ -172,6 +169,11 @@ def main():
             video_path=args.source_video_path,
             weights = args.weights_yolo
         )
+    elif args.mode == "belongings":
+        run_belongings_detection(
+            video_path=args.source_video_path,
+            weights = args.weights_yolo
+        )
     # elif args.mode == "sign":
     #     traffic_sign_detection(
     #         source_video_path=args.source_video_path,
@@ -212,10 +214,12 @@ def main():
 
             run_mode("count", video_path)
             run_mode("waiting", video_path)
-            run_mode("tracking", video_path)
-            run_mode("head", video_path)
+            run_mode("tracking_pede", video_path)
+            run_mode("speed_pede",video_path)
+            run_mode("clothing", video_path)
+            run_mode("phone", video_path)
+            run_mode("belongings", video_path)
             run_mode("face", video_path)
-            run_mode("speed",video_path)
     else:
         print(f"Unknown mode: {args.mode}")
 

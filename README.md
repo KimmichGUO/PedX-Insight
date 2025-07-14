@@ -103,7 +103,7 @@ https://github.com/saarthxxk/Real-Time-Road-Width-Detection/tree/main
 python main.py --mode daytime --source_video_path pedestrian.mp4
 ```
 https://github.com/KishieKube/CV_Day_Evening_detector/tree/main
-#### (7) Crosswalk (available)
+#### (7) Crosswalk (Done)
 ```bash
 python main.py --mode crosswalk --source_video_path pedestrian.mp4
 ```

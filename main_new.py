@@ -6,10 +6,10 @@ from modules.type_vehicle.type_vehicle import type_vehicle_analysis
 from modules.traffic_analysis.traffic_analysis import run_traffic_analysis
 from modules.age_gender.age_gender import run_age_gender_detection
 from modules.weather.weather import run_weather_detection
-from modules.race.race import run_race_detection
 from modules.traffic_total.traffic_total import run_traffic_total_detection
-from modules.traffic_light.traffic_light import traffic_light
-# from modules.traffic_sign.traffic_sign import traffic_sign_detection
+from modules.traffic_light.traffic_light import run_traffic_light_detection
+from modules.traffic_sign.traffic_sign_euro import run_traffic_sign_euro
+from modules.traffic_sign.traffic_sign_asia import run_traffic_sign_asia
 from modules.head_phone.head_phone import run_head_detection
 from modules.daynight.daytime import run_daytime_detection
 from modules.crosswalk.crosswalk import run_crosswalk_detection
@@ -20,6 +20,7 @@ from modules.face.face import run_face_analysis
 from modules.phone.phone import run_phone_detection
 from modules.clothing.clothing import run_clothing_detection
 from modules.belongings.belongings import run_belongings_detection
+from modules.road_condition.road_condition import run_road_defect_detection
 
 def main():
     def run_mode(mode, video_path, extra_args=""):
@@ -31,7 +32,7 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "tracking_pede", "type", "speed_pede","traffic", "agegender", "belongings", "weather", "phone", "clothing", "face", "total", "light", "head", "daytime", "crosswalk","all"],
+        choices=["count", "waiting", "tracking_pede", "type", "speed_pede","traffic", "traffic_sign", "defect", "agegender", "belongings", "weather", "phone", "clothing", "face", "total", "light", "head", "daytime", "crosswalk","all"],
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
@@ -119,6 +120,13 @@ def main():
         run_pede_speed_estimation(
             video_path=args.source_video_path,
         )
+    elif args.mode == "traffic_sign":
+        run_traffic_sign_asia(
+            video_path=args.source_video_path,
+        )
+        # run_traffic_sign_euro(
+        #     video_path=args.source_video_path,
+        # )
     elif args.mode == "type":
         type_vehicle_analysis(
             source_video_path=args.source_video_path,
@@ -143,7 +151,7 @@ def main():
 
     elif args.mode == "weather":
         run_weather_detection(
-            source_video_path=args.source_video_path
+            video_path=args.source_video_path
         )
     elif args.mode == "clothing":
         run_clothing_detection(
@@ -161,8 +169,12 @@ def main():
             target_video_path=args.target_video_path
         )
     elif args.mode == "light":
-        traffic_light(
-            source_video_path=args.source_video_path,
+        run_traffic_light_detection(
+            video_path=args.source_video_path,
+        )
+    elif args.mode == "defect":
+        run_road_defect_detection(
+            video_path=args.source_video_path
         )
     elif args.mode == "phone":
         run_phone_detection(
@@ -174,16 +186,6 @@ def main():
             video_path=args.source_video_path,
             weights = args.weights_yolo
         )
-    # elif args.mode == "sign":
-    #     traffic_sign_detection(
-    #         source_video_path=args.source_video_path,
-    #         weights=args.source_weights_path,
-    #         confidence=args.confidence_threshold,
-    #         iou=args.iou_threshold,
-    #         device=args.device,
-    #         classes=args.classes,
-    #         target_video_path=args.target_video_path
-    #     )
     elif args.mode == "head":
         run_head_detection(
             # source_video_path=args.source_video_path
@@ -191,12 +193,11 @@ def main():
         )
     elif args.mode == "daytime":
         run_daytime_detection(
-            source_video_path=args.source_video_path
+            video_path=args.source_video_path
         )
     elif args.mode == "crosswalk":
         run_crosswalk_detection(
-            source_video_path=args.source_video_path,
-            conf=args.confidence_threshold
+            video_path=args.source_video_path,
         )
     # elif args.mode == "all":
     #     subprocess.run("python main.py --mode count --source_video_path pedestrian.mp4", shell=True)
@@ -220,6 +221,8 @@ def main():
             run_mode("phone", video_path)
             run_mode("belongings", video_path)
             run_mode("face", video_path)
+            run_mode("weather", video_path)
+            run_mode("traffic_sign", video_path)
     else:
         print(f"Unknown mode: {args.mode}")
 

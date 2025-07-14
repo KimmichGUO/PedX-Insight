@@ -80,26 +80,21 @@ https://github.com/maheshpaulj/Lane_Detection
 python main.py --mode weather --source_video_path 'your_video'
 ```  
 https://github.com/nurcanyaz/yolov8WeatherClassification
-#### (2) Traffic light (Available)
+#### (2) Traffic light (Done)
 ```bash
 python main.py --mode light --source_video_path pedestrian.mp4
 ```  
 https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
-#### (3) All scenes detection (Available)
-```bash
-python main.py --mode total --source_video_path pedestrian.mp4
-```  
-https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
-#### (4) Traffic sign (Done)
+#### (3) Traffic sign (Done)
 ```bash
 python main.py --mode traffic_sign --source_video_path 'your_video'
 ```
 https://github.com/MDhamani/Traffic-Sign-Recognition-Using-YOLO
 https://github.com/KL-lovesagiri/YOLOv8_GUI_For_Traffic_Sign_Detection
-https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection/tree/main
+https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection
 #### (5) Road Width (Usable)
 https://github.com/saarthxxk/Real-Time-Road-Width-Detection/tree/main
-#### (6) Day or Evening (Available)
+#### (6) Day or Evening (Done)
 ```bash
 python main.py --mode daytime --source_video_path pedestrian.mp4
 ```

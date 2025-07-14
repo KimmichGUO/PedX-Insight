@@ -92,6 +92,11 @@ python main.py --mode traffic_sign --source_video_path 'your_video'
 https://github.com/MDhamani/Traffic-Sign-Recognition-Using-YOLO
 https://github.com/KL-lovesagiri/YOLOv8_GUI_For_Traffic_Sign_Detection
 https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection
+#### (4) Road Condition (Done)
+```bash
+python main.py --mode road_defect --source_video_path 'your_video'
+```
+https://github.com/oracl4/RoadDamageDetection
 #### (5) Road Width (Usable)
 https://github.com/saarthxxk/Real-Time-Road-Width-Detection/tree/main
 #### (6) Day or Evening (Done)

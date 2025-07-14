@@ -6,9 +6,9 @@ import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='modules/traffic_sign/best_93.pt', force_reload=True)
+def run_traffic_sign_euro(video_path, output_csv=None):
 
-def detect_traffic_signs(video_path, output_csv=None):
+    model = torch.hub.load('ultralytics/yolov5', 'custom', path='modules/traffic_sign/best_93.pt', force_reload=True)
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print("Error opening video file")
@@ -18,7 +18,7 @@ def detect_traffic_signs(video_path, output_csv=None):
     if output_csv is None:
         output_dir = os.path.join(".", "analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv = os.path.join(output_dir, "traffic_sign_detections.csv")
+        output_csv = os.path.join(output_dir, "traffic_sign_detections_euro.csv")
 
     with open(output_csv, mode="w", newline="") as csvfile:
         csv_writer = csv.writer(csvfile)

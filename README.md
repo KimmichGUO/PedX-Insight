@@ -104,16 +104,19 @@ https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection
 python main.py --mode road_defect --source_video_path 'your_video'
 ```
 https://github.com/oracl4/RoadDamageDetection
-#### (5) Road Width (Usable)
+#### (5) Road Width (Done)
+```bash
+python main.py --mode width --source_video_path 'your_video'
+```
 https://github.com/saarthxxk/Real-Time-Road-Width-Detection/tree/main
 #### (6) Day or Evening (Done)
 ```bash
-python main.py --mode daytime --source_video_path pedestrian.mp4
+python main.py --mode daytime --source_video_path 'your_video'
 ```
 https://github.com/KishieKube/CV_Day_Evening_detector/tree/main
 #### (7) Crosswalk (Done)
 ```bash
-python main.py --mode crosswalk --source_video_path pedestrian.mp4
+python main.py --mode crosswalk --source_video_path 'your_video'
 ```
 https://github.com/xN1ckuz/Crosswalks-Detection-using-YOLO/tree/main
 

@@ -6,7 +6,9 @@
 ```bash
 python main.py --mode all --source_video_path 'your_folder'
 ```
-### 1. Pedestrian Analysis 
+### 1. Pedestrian Analysis
+#### (0) Pedestrian Detection
+https://github.com/EdgeGalaxy/YoloPedestrian
 #### (1) Count the number of pedestrians in the zone (Done)
 ```bash
 python main.py --mode count --source_video_path 'your_video'

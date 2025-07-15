@@ -21,6 +21,9 @@ from modules.phone.phone import run_phone_detection
 from modules.clothing.clothing import run_clothing_detection
 from modules.belongings.belongings import run_belongings_detection
 from modules.road_condition.road_condition import run_road_defect_detection
+from modules.road_width.road_width import run_road_width_analysis
+from modules.lane_detection.lane_detection import lane_detection
+from modules.distance_vehicle.distance_vehicle import run_car_detection_with_distance
 
 def main():
     def run_mode(mode, video_path, extra_args=""):
@@ -32,7 +35,7 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "tracking_pede", "type", "speed_pede","traffic", "traffic_sign", "defect", "agegender", "belongings", "weather", "phone", "clothing", "face", "total", "light", "head", "daytime", "crosswalk","all"],
+        choices=["count", "waiting", "car_distance", "tracking_pede", "type", "lane", "width", "speed_pede","traffic", "traffic_sign", "defect", "agegender", "belongings", "weather", "phone", "clothing", "face", "total", "light", "head", "daytime", "crosswalk","all"],
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
@@ -174,6 +177,18 @@ def main():
         )
     elif args.mode == "defect":
         run_road_defect_detection(
+            video_path=args.source_video_path
+        )
+    elif args.mode == "width":
+        run_road_width_analysis(
+            video_path=args.source_video_path
+        )
+    elif args.mode == "car_distance":
+        run_car_detection_with_distance(
+            video_path=args.source_video_path
+        )
+    elif args.mode == "lane":
+        lane_detection(
             video_path=args.source_video_path
         )
     elif args.mode == "phone":

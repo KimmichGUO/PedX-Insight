@@ -78,7 +78,7 @@ https://github.com/maheshpaulj/Lane_Detection
 https://github.com/maheshpaulj/Lane_Detection
 #### (6) Lane Detection (Done)
 ```bash
-python main.py --mode line --source_video_path pedestrian.mp4
+python main.py --mode lane --source_video_path pedestrian.mp4
 ```  
 https://github.com/maheshpaulj/Lane_Detection
 ### 3. Environment Analysis 

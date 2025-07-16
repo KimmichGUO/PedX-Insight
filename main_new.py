@@ -2,7 +2,7 @@ import argparse
 # 0
 from track_id_pedestrians import run_pedestrian_tracking
 # 1.1
-# from modules.count_pedestrians.count_pedestrians import count_pedestrians
+from modules.count_pedestrians.count_pedestrians import pedestrian_count
 # 1.2
 from modules.speed_pedestrian.speed_pedestrian import run_pede_speed_estimation
 # 1.3
@@ -60,8 +60,10 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["id", "count", "waiting", "car_distance", "tracking_pede", "type", "lane", "width", "speed_pede","traffic", "traffic_sign", "defect", "agegender", "belongings", "weather", "phone", "clothing", "face", "total", "light", "head", "daytime", "crosswalk","all"],
-        help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
+        choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face",
+                 "type", "car_distance", "pede_distance", "lane",
+                 "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "all"],
+        help="Choose the analysis mode",
     )
     parser.add_argument(
         "--source_video_path",
@@ -79,13 +81,8 @@ def main():
     args = parser.parse_args()
 
     if args.mode == "count":
-        count_pedestrians(
-            source_video_path=args.source_video_path,
-            zone_configuration_path=args.zone_configuration_path,
-            source_weights_path=args.source_weights_path,
-            target_video_path=args.target_video_path,
-            confidence_threshold=args.confidence_threshold,
-            iou_threshold=args.iou_threshold,
+        pedestrian_count(
+            video_path=args.source_video_path,
         )
     elif args.mode == "id":
         run_pedestrian_tracking(
@@ -119,7 +116,9 @@ def main():
             video_path=args.source_video_path
         )
     elif args.mode == "face":
-        run_face_analysis(video_path=args.source_video_path)
+        run_face_analysis(
+            video_path=args.source_video_path
+        )
     elif args.mode == "light":
         run_traffic_light_detection(
             video_path=args.source_video_path,
@@ -169,6 +168,8 @@ def main():
         for video_file in video_files:
             video_path = os.path.join(video_dir, video_file)
 
+            # pedestrian
+            run_mode("id", video_path)
             run_mode("count", video_path)
             run_mode("waiting", video_path)
             run_mode("tracking_pede", video_path)
@@ -177,8 +178,19 @@ def main():
             run_mode("phone", video_path)
             run_mode("belongings", video_path)
             run_mode("face", video_path)
+            # vehicle
+            run_mode("type", video_path)
+            run_mode("car_distance", video_path)
+            run_mode("pede_distance", video_path)
+            run_mode("lane", video_path)
+            # environment
             run_mode("weather", video_path)
             run_mode("traffic_sign", video_path)
+            run_mode("width", video_path)
+            run_mode("light", video_path)
+            run_mode("road_defect", video_path)
+            run_mode("daytime", video_path)
+            run_mode("crosswalk", video_path)
     else:
         print(f"Unknown mode: {args.mode}")
 

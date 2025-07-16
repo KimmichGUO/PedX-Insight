@@ -1,29 +1,52 @@
 import argparse
+# 1.1
 from modules.count_pedestrians.count_pedestrians import count_pedestrians
-from modules.waiting_time_pede.waiting_time_pede import run_waiting_time_analysis
-from modules.tracking_pede.tracking_pede import run_pede_direction_analysis
-from modules.type_vehicle.type_vehicle import type_vehicle_analysis
-from modules.traffic_analysis.traffic_analysis import run_traffic_analysis
-from modules.age_gender.age_gender import run_age_gender_detection
-from modules.weather.weather import run_weather_detection
-from modules.traffic_total.traffic_total import run_traffic_total_detection
-from modules.traffic_light.traffic_light import run_traffic_light_detection
-from modules.traffic_sign.traffic_sign_euro import run_traffic_sign_euro
-from modules.traffic_sign.traffic_sign_asia import run_traffic_sign_asia
-from modules.head_phone.head_phone import run_head_detection
-from modules.daynight.daytime import run_daytime_detection
-from modules.crosswalk.crosswalk import run_crosswalk_detection
+# 1.2
 from modules.speed_pedestrian.speed_pedestrian import run_pede_speed_estimation
+# 1.3
+from modules.waiting_time_pede.waiting_time_pede import run_waiting_time_analysis
+# 1.4
+from modules.tracking_pede.tracking_pede import run_pede_direction_analysis
+# 1.5
+from modules.phone.phone import run_phone_detection
+# 1.6 ~ 1.8
+from modules.face.face import run_face_analysis
+# 1.9
+from modules.clothing.clothing import run_clothing_detection
+# 1.10
+from modules.belongings.belongings import run_belongings_detection
+# 2.1
+from modules.type_vehicle.type_vehicle import run_vehicle_frame_analysis
+# 2.2
+from modules.type_vehicle.type_vehicle import run_vehicle_frame_analysis
+# 2.3
+from modules.distance_vehicle.distance_vehicle import run_car_detection_with_distance
+# 2.4
+from modules.distance_pedestrian.distance_pedestrian import visualize_and_estimate_distance
+# 2.5
+from modules.lane_detection.lane_detection import lane_detection
+# 3.1
+from modules.weather.weather import run_weather_detection
+# 3.2
+from modules.traffic_light.traffic_light import run_traffic_light_detection
+# 3.3.1
+from modules.traffic_sign.traffic_sign_euro import run_traffic_sign_euro
+# 3.3.2
+from modules.traffic_sign.traffic_sign_asia import run_traffic_sign_asia
+# 3.4
+from modules.road_condition.road_condition import run_road_defect_detection
+# 3.5
+from modules.road_width.road_width import run_road_width_analysis
+# 3.6
+from modules.daynight.daytime import run_daytime_detection
+# 3.7
+from modules.crosswalk.crosswalk import run_crosswalk_detection
+
 import subprocess
 import os
-from modules.face.face import run_face_analysis
-from modules.phone.phone import run_phone_detection
-from modules.clothing.clothing import run_clothing_detection
-from modules.belongings.belongings import run_belongings_detection
-from modules.road_condition.road_condition import run_road_defect_detection
-from modules.road_width.road_width import run_road_width_analysis
-from modules.lane_detection.lane_detection import lane_detection
-from modules.distance_vehicle.distance_vehicle import run_car_detection_with_distance
+
+
+
 
 def main():
     def run_mode(mode, video_path, extra_args=""):
@@ -39,59 +62,10 @@ def main():
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
-        "--zone_configuration_path",
-        type=str,
-        default="modules/count_pedestrians/vertical-zone-config.json",
-        help="Path to the zone configuration JSON file (only used in 'count' mode)",
-    )
-    parser.add_argument(
         "--source_video_path",
         required=True,
         type=str,
         help="Path to the source video file",
-    )
-    parser.add_argument(
-        "--target_video_path",
-        type=str,
-        default=None,
-        help="Path to save the processed video (optional, if supported by the mode)",
-    )
-    parser.add_argument(
-        "--source_weights_path",
-        type=str,
-        default="yolov8n.pt",
-        help="Path to the YOLO weights file (default: yolov8x.pt)",
-    )
-    parser.add_argument(
-        "--confidence_threshold",
-        type=float,
-        default=0.3,
-        help="Model confidence threshold (default: 0.3)",
-    )
-    parser.add_argument(
-        "--iou_threshold",
-        type=float,
-        default=0.7,
-        help="IOU threshold (default: 0.7)",
-    )
-    parser.add_argument(
-        "--device",
-        type=str,
-        default="cpu",
-        help="Device to run the model on: 'cpu', 'cuda', or 'mps'. Default is 'cpu'.",
-    )
-    parser.add_argument(
-        "--classes",
-        nargs="*",
-        type=int,
-        default=[0],
-        help="List of class IDs to detect (e.g. 0 for person). Leave empty to detect all classes.",
-    )
-    parser.add_argument(
-        "--weights",
-        type=str,
-        default="yolov8m-pose.pt",
-        help="Weights file for tracking mode (default: yolov8m-pose.pt)",
     )
     parser.add_argument(
         "--weights_yolo",
@@ -130,28 +104,6 @@ def main():
         # run_traffic_sign_euro(
         #     video_path=args.source_video_path,
         # )
-    elif args.mode == "type":
-        type_vehicle_analysis(
-            source_video_path=args.source_video_path,
-            weights=args.source_weights_path,
-            confidence=args.confidence_threshold,
-            iou=args.iou_threshold,
-            device=args.device,
-            classes=args.classes,
-            show=True,
-            target_video_path=args.target_video_path
-        )
-    elif args.mode == "traffic":
-        run_traffic_analysis(
-            source_video_path=args.source_video_path,
-            source_weights_path=args.source_weights_path,
-            target_video_path=args.target_video_path,
-            confidence_threshold=args.confidence_threshold,
-            iou_threshold=args.iou_threshold,
-        )
-    elif args.mode == "agegender":
-        run_age_gender_detection(args.source_video_path)
-
     elif args.mode == "weather":
         run_weather_detection(
             video_path=args.source_video_path
@@ -161,16 +113,7 @@ def main():
             video_path=args.source_video_path
         )
     elif args.mode == "face":
-        # run_race_detection(
-        #     source_video_path=args.source_video_path
-        # )
         run_face_analysis(video_path=args.source_video_path)
-    elif args.mode == "total":
-        run_traffic_total_detection(
-            source_video_path=args.source_video_path,
-            weights=args.source_weights_path,
-            target_video_path=args.target_video_path
-        )
     elif args.mode == "light":
         run_traffic_light_detection(
             video_path=args.source_video_path,
@@ -194,17 +137,12 @@ def main():
     elif args.mode == "phone":
         run_phone_detection(
             video_path=args.source_video_path,
-            weights = args.weights_yolo
+            weights=args.weights_yolo
         )
     elif args.mode == "belongings":
         run_belongings_detection(
             video_path=args.source_video_path,
-            weights = args.weights_yolo
-        )
-    elif args.mode == "head":
-        run_head_detection(
-            # source_video_path=args.source_video_path
-            video_path=args.source_video_path
+            weights=args.weights_yolo
         )
     elif args.mode == "daytime":
         run_daytime_detection(
@@ -214,9 +152,6 @@ def main():
         run_crosswalk_detection(
             video_path=args.source_video_path,
         )
-    # elif args.mode == "all":
-    #     subprocess.run("python main.py --mode count --source_video_path pedestrian.mp4", shell=True)
-    #     subprocess.run("python main.py --mode count --source_video_path pedestrian.mp4", shell=True)
     elif args.mode == "all":
         video_dir = args.source_video_path
         if not os.path.isdir(video_dir):

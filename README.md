@@ -59,24 +59,24 @@ https://github.com/ZerrnArsk/Fashion-Based-Person-Searcher
 python main.py --mode belongings --source_video_path 'your_video'
 ```
 ### 2. Vehicle Analysis 
-#### (1) Traffic Analysis (Available)
-```bash
-python main.py --mode traffic --source_video_path pedestrian.mp4
-```  
-https://github.com/roboflow/supervision/tree/develop/examples/traffic_analysis  
-Weights should be downloaded from https://drive.google.com/uc?id=1y-IfToCjRXa3ZdC1JpnKRopC7mcQW-5z  
-#### (2) Vehicle Type (Available)
+#### (1) Vehicle Type (Done)
 ```bash
 python main.py --mode type --source_video_path pedestrian.mp4
 ```  
 https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification
-#### (3) Vehicle Speed (Usage)
+#### (2) Vehicle Speed (Usage)
 https://github.com/roboflow/supervision/tree/develop/examples/speed_estimation
-#### (4) Distance between vehicles and vehicles (Usage)
+#### (3) Distance between vehicles and vehicles (Done)
+```bash
+python main.py --mode car_distance --source_video_path pedestrian.mp4
+```  
 https://github.com/maheshpaulj/Lane_Detection
-#### (5) Distance between vehicles and pedestrians (Usage)
+#### (4) Distance between vehicles and pedestrians (Done)
+```bash
+python main.py --mode pede_distance --source_video_path pedestrian.mp4
+```  
 https://github.com/maheshpaulj/Lane_Detection
-#### (6) Lane Detection (Done)
+#### (5) Lane Detection (Done)
 ```bash
 python main.py --mode lane --source_video_path pedestrian.mp4
 ```  

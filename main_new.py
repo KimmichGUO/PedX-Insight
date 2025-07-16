@@ -1,6 +1,8 @@
 import argparse
+# 0
+from track_id_pedestrians import run_pedestrian_tracking
 # 1.1
-from modules.count_pedestrians.count_pedestrians import count_pedestrians
+# from modules.count_pedestrians.count_pedestrians import count_pedestrians
 # 1.2
 from modules.speed_pedestrian.speed_pedestrian import run_pede_speed_estimation
 # 1.3
@@ -24,7 +26,7 @@ from modules.distance_vehicle.distance_vehicle import run_car_detection_with_dis
 # 2.4
 from modules.distance_pedestrian.distance_pedestrian import visualize_and_estimate_distance
 # 2.5
-from modules.lane_detection.lane_detection import lane_detection
+from modules.lane_detection.lane_detection import run_lane_detection
 # 3.1
 from modules.weather.weather import run_weather_detection
 # 3.2
@@ -58,7 +60,7 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["count", "waiting", "car_distance", "tracking_pede", "type", "lane", "width", "speed_pede","traffic", "traffic_sign", "defect", "agegender", "belongings", "weather", "phone", "clothing", "face", "total", "light", "head", "daytime", "crosswalk","all"],
+        choices=["id", "count", "waiting", "car_distance", "tracking_pede", "type", "lane", "width", "speed_pede","traffic", "traffic_sign", "defect", "agegender", "belongings", "weather", "phone", "clothing", "face", "total", "light", "head", "daytime", "crosswalk","all"],
         help="Choose the analysis mode: 'count', 'waiting', 'tracking', 'type', 'traffic', or 'agegender'",
     )
     parser.add_argument(
@@ -84,6 +86,10 @@ def main():
             target_video_path=args.target_video_path,
             confidence_threshold=args.confidence_threshold,
             iou_threshold=args.iou_threshold,
+        )
+    elif args.mode == "id":
+        run_pedestrian_tracking(
+            video_path=args.source_video_path,
         )
     elif args.mode == "waiting":
         run_waiting_time_analysis(
@@ -131,7 +137,7 @@ def main():
             video_path=args.source_video_path
         )
     elif args.mode == "lane":
-        lane_detection(
+        run_lane_detection(
             video_path=args.source_video_path
         )
     elif args.mode == "phone":

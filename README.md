@@ -7,7 +7,7 @@
 python main.py --mode all --source_video_path 'your_folder'
 ```
 ### 1. Pedestrian Analysis
-#### (0) Pedestrian Detection
+#### (0) Weights for Pedestrian Detection (Optional)
 https://github.com/EdgeGalaxy/YoloPedestrian
 #### (1) Count the number of pedestrians in the zone (Done)
 ```bash
@@ -61,24 +61,27 @@ python main.py --mode belongings --source_video_path 'your_video'
 ### 2. Vehicle Analysis 
 #### (1) Vehicle Type (Done)
 ```bash
-python main.py --mode type --source_video_path pedestrian.mp4
+python main.py --mode vehicle_type --source_video_path 'your_video'
 ```  
 https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification
-#### (2) Vehicle Speed (Usage)
-https://github.com/roboflow/supervision/tree/develop/examples/speed_estimation
+#### (2) Vehicle Speed (Done)
+```bash
+python main.py --mode speed --source_video_path 'your_video'
+```  
+https://github.com/WZS666/Yolov5_DeepSort_SpeedEstimate
 #### (3) Distance between vehicles and vehicles (Done)
 ```bash
-python main.py --mode car_distance --source_video_path pedestrian.mp4
+python main.py --mode car_distance --source_video_path 'your_video'
 ```  
 https://github.com/maheshpaulj/Lane_Detection
 #### (4) Distance between vehicles and pedestrians (Done)
 ```bash
-python main.py --mode pede_distance --source_video_path pedestrian.mp4
+python main.py --mode pede_distance --source_video_path 'your_video'
 ```  
 https://github.com/maheshpaulj/Lane_Detection
 #### (5) Lane Detection (Done)
 ```bash
-python main.py --mode lane --source_video_path pedestrian.mp4
+python main.py --mode lane --source_video_path 'your_video'
 ```  
 https://github.com/maheshpaulj/Lane_Detection
 ### 3. Environment Analysis 
@@ -119,4 +122,3 @@ https://github.com/KishieKube/CV_Day_Evening_detector/tree/main
 python main.py --mode crosswalk --source_video_path 'your_video'
 ```
 https://github.com/xN1ckuz/Crosswalks-Detection-using-YOLO/tree/main
-

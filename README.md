@@ -111,14 +111,19 @@ https://github.com/oracl4/RoadDamageDetection
 ```bash
 python main.py --mode width --source_video_path 'your_video'
 ```
-https://github.com/saarthxxk/Real-Time-Road-Width-Detection/tree/main
+https://github.com/saarthxxk/Real-Time-Road-Width-Detection
 #### (6) Day or Evening (Done)
 ```bash
 python main.py --mode daytime --source_video_path 'your_video'
 ```
-https://github.com/KishieKube/CV_Day_Evening_detector/tree/main
+https://github.com/KishieKube/CV_Day_Evening_detector
 #### (7) Crosswalk (Done)
 ```bash
 python main.py --mode crosswalk --source_video_path 'your_video'
 ```
-https://github.com/xN1ckuz/Crosswalks-Detection-using-YOLO/tree/main
+https://github.com/xN1ckuz/Crosswalks-Detection-using-YOLO
+#### (8) Accident (Done)
+```bash
+python main.py --mode accident --source_video_path 'your_video'
+```
+https://github.com/RoadEyeProject/RoadEye_model

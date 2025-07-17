@@ -43,6 +43,8 @@ from modules.road_width.road_width import run_road_width_analysis
 from modules.daynight.daytime import run_daytime_detection
 # 3.7
 from modules.crosswalk.crosswalk import run_crosswalk_detection
+# 3.8
+from modules.accident.accident import run_accident_scene_detection
 
 import subprocess
 import os
@@ -62,7 +64,7 @@ def main():
         required=True,
         choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face",
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed",
-                 "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "all"],
+                 "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident", "all"],
         help="Choose the analysis mode",
     )
     parser.add_argument(
@@ -168,6 +170,10 @@ def main():
         run_crosswalk_detection(
             video_path=args.source_video_path,
         )
+    elif args.mode == "accident":
+        run_accident_scene_detection(
+            video_path=args.source_video_path,
+        )
     elif args.mode == "all":
         video_dir = args.source_video_path
         if not os.path.isdir(video_dir):
@@ -202,6 +208,7 @@ def main():
             run_mode("road_defect", video_path)
             run_mode("daytime", video_path)
             run_mode("crosswalk", video_path)
+            run_mode("accident",video_path)
     else:
         print(f"Unknown mode: {args.mode}")
 

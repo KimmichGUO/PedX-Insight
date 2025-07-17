@@ -20,7 +20,7 @@ from modules.belongings.belongings import run_belongings_detection
 # 2.1
 from modules.type_vehicle.type_vehicle import run_vehicle_frame_analysis
 # 2.2
-from modules.type_vehicle.type_vehicle import run_vehicle_frame_analysis
+from modules.speed_estimate.track import run_speed_estimate
 # 2.3
 from modules.distance_vehicle.distance_vehicle import run_car_detection_with_distance
 # 2.4
@@ -61,7 +61,7 @@ def main():
         type=str,
         required=True,
         choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face",
-                 "type", "car_distance", "pede_distance", "lane",
+                 "vehicle_type", "car_distance", "pede_distance", "lane", "speed",
                  "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "all"],
         help="Choose the analysis mode",
     )
@@ -77,7 +77,6 @@ def main():
         default="yolov8n.pt",
         help="Weights file for tracking mode",
     )
-
     args = parser.parse_args()
 
     if args.mode == "count":
@@ -99,6 +98,10 @@ def main():
     elif args.mode == "speed_pede":
         run_pede_speed_estimation(
             video_path=args.source_video_path,
+        )
+    elif args.mode == "speed":
+        run_speed_estimate(
+            source=args.source_video_path,
         )
     elif args.mode == "traffic_sign":
         run_traffic_sign_asia(
@@ -135,8 +138,16 @@ def main():
         run_car_detection_with_distance(
             video_path=args.source_video_path
         )
+    elif args.mode == "pede_distance":
+        visualize_and_estimate_distance(
+            video_path=args.source_video_path
+        )
     elif args.mode == "lane":
         run_lane_detection(
+            video_path=args.source_video_path
+        )
+    elif args.mode == "vehicle_type":
+        run_vehicle_frame_analysis(
             video_path=args.source_video_path
         )
     elif args.mode == "phone":
@@ -179,7 +190,7 @@ def main():
             run_mode("belongings", video_path)
             run_mode("face", video_path)
             # vehicle
-            run_mode("type", video_path)
+            run_mode("vehicle_type", video_path)
             run_mode("car_distance", video_path)
             run_mode("pede_distance", video_path)
             run_mode("lane", video_path)

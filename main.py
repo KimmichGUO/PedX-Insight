@@ -64,7 +64,8 @@ def main():
         required=True,
         choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face",
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed",
-                 "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident", "all"],
+                 "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident",
+                 "all", "pedestrian", "vehicle", "environment"],
         help="Choose the analysis mode",
     )
     parser.add_argument(
@@ -208,9 +209,69 @@ def main():
             run_mode("road_defect", video_path)
             run_mode("daytime", video_path)
             run_mode("crosswalk", video_path)
-            run_mode("accident",video_path)
+            run_mode("accident", video_path)
+
+    elif args.mode == "pedestrian":
+        video_dir = args.source_video_path
+        if not os.path.isdir(video_dir):
+            print(f"Error: {video_dir} is not a valid directory.")
+            return
+
+        video_files = [f for f in os.listdir(video_dir) if f.lower().endswith((".mp4", ".avi", ".mov", ".mkv"))]
+
+        for video_file in video_files:
+            video_path = os.path.join(video_dir, video_file)
+
+            # pedestrian
+            run_mode("id", video_path)
+            run_mode("count", video_path)
+            run_mode("waiting", video_path)
+            run_mode("tracking_pede", video_path)
+            run_mode("speed_pede",video_path)
+            run_mode("clothing", video_path)
+            run_mode("phone", video_path)
+            run_mode("belongings", video_path)
+            run_mode("face", video_path)
+
+    elif args.mode == "vehicle":
+        video_dir = args.source_video_path
+        if not os.path.isdir(video_dir):
+            print(f"Error: {video_dir} is not a valid directory.")
+            return
+
+        video_files = [f for f in os.listdir(video_dir) if f.lower().endswith((".mp4", ".avi", ".mov", ".mkv"))]
+
+        for video_file in video_files:
+            video_path = os.path.join(video_dir, video_file)
+
+            run_mode("vehicle_type", video_path)
+            run_mode("car_distance", video_path)
+            run_mode("pede_distance", video_path)
+            run_mode("lane", video_path)
+
+
+    elif args.mode == "environment":
+        video_dir = args.source_video_path
+        if not os.path.isdir(video_dir):
+            print(f"Error: {video_dir} is not a valid directory.")
+            return
+
+        video_files = [f for f in os.listdir(video_dir) if f.lower().endswith((".mp4", ".avi", ".mov", ".mkv"))]
+
+        for video_file in video_files:
+            video_path = os.path.join(video_dir, video_file)
+
+            run_mode("weather", video_path)
+            run_mode("traffic_sign", video_path)
+            run_mode("width", video_path)
+            run_mode("light", video_path)
+            run_mode("road_defect", video_path)
+            run_mode("daytime", video_path)
+            run_mode("crosswalk", video_path)
+            run_mode("accident", video_path)
     else:
         print(f"Unknown mode: {args.mode}")
+
 
 
 if __name__ == "__main__":

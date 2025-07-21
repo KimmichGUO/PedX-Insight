@@ -66,9 +66,9 @@ def run_pedestrian_tracking(video_path, weights="yolov8n.pt", output_csv_path=No
             x2, y2 = int(tlwh[0] + tlwh[2]), int(tlwh[1] + tlwh[3])
 
             results.append({
-                "frame": frame_id,
+                "frame_id": frame_id,
                 "timestamp": timestamp,
-                "id": track_id,
+                "track_id": track_id,
                 "x1": x1,
                 "y1": y1,
                 "x2": x2,

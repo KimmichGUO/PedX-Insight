@@ -124,5 +124,3 @@ def detect_crossing_risk(
     cv2.destroyAllWindows()
     pd.DataFrame(results).to_csv(output_csv_path, index=False)
     print(f"Crossing risk analysis completed. Results saved to {output_csv_path}")
-
-detect_crossing_risk("sample.mp4")

@@ -1,0 +1,72 @@
+import os
+import cv2
+import pandas as pd
+from ultralytics import YOLO
+
+def run_traffic_sign(video_path, output_csv_path=None, conf=0.25):
+    video_name = os.path.splitext(os.path.basename(video_path))[0]
+    if output_csv_path is None:
+        output_dir = os.path.join("analysis_results", video_name)
+        os.makedirs(output_dir, exist_ok=True)
+        output_csv_path = os.path.join(output_dir, "traffic_sign_detection.csv")
+
+    model_asia = YOLO("modules/traffic_sign/best_asia.pt")
+    model_new = YOLO("modules/traffic_sign/best_new.pt")
+
+    cap = cv2.VideoCapture(video_path)
+    results_list = []
+    frame_id = -1
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        frame_id += 1
+
+        result_asia = model_asia(frame, imgsz=640, conf=conf, verbose=False)[0]
+        detected_asia = 0
+        class_str_asia = ""
+        if result_asia.boxes is not None and result_asia.boxes.data.size(0) > 0:
+            detected_asia = 1
+            for box in result_asia.boxes:
+                cls_id = int(box.cls)
+                label = model_asia.names[cls_id]
+                class_str_asia += label + ";"
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green box for Asia
+                cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.7, (0, 255, 0), 2)
+
+        result_new = model_new(frame, imgsz=640, conf=conf, verbose=False)[0]
+        detected_new = 0
+        class_str_new = ""
+        if result_new.boxes is not None and result_new.boxes.data.size(0) > 0:
+            for box in result_new.boxes:
+                cls_id = int(box.cls)
+                label = model_new.names[cls_id]
+
+                if cls_id == 24 or label.lower() == "traffic_signal":
+                    continue
+                detected_new = 1
+                class_str_new += label + ";"
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)  # Blue box for New
+                cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.7, (255, 0, 0), 2)
+
+        cv2.imshow("Traffic Sign Detection", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+        results_list.append({
+            "frame_id": frame_id,
+            "sign_detected_1": detected_asia,
+            "sign_classes_1": class_str_asia.strip(";"),
+            "sign_detected_2": detected_new,
+            "sign_classes_2": class_str_new.strip(";")
+        })
+
+    cap.release()
+    cv2.destroyAllWindows()
+    pd.DataFrame(results_list).to_csv(output_csv_path, index=False)
+    print(f"Traffic Sign detection completed. Results saved to {output_csv_path}")

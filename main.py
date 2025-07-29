@@ -31,10 +31,8 @@ from modules.lane_detection.lane_detection import run_lane_detection
 from modules.weather.weather import run_weather_detection
 # 3.2
 from modules.traffic_light.traffic_light import run_traffic_light_detection
-# 3.3.1
-from modules.traffic_sign.traffic_sign_euro import run_traffic_sign_euro
-# 3.3.2
-from modules.traffic_sign.traffic_sign_asia import run_traffic_sign_asia
+# 3.3
+from modules.traffic_sign.traffic_sign import run_traffic_sign
 # 3.4
 from modules.road_condition.road_condition import run_road_defect_detection
 # 3.5
@@ -49,7 +47,7 @@ from modules.accident.accident import run_accident_scene_detection
 import subprocess
 import os
 
-
+from modules.risky_crossing.risky_crossing import detect_crossing_risk
 
 
 def main():
@@ -65,6 +63,7 @@ def main():
         choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face",
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed",
                  "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident",
+                 "risky",
                  "all", "pedestrian", "vehicle", "environment"],
         help="Choose the analysis mode",
     )
@@ -107,12 +106,13 @@ def main():
             source=args.source_video_path,
         )
     elif args.mode == "traffic_sign":
-        run_traffic_sign_asia(
+        run_traffic_sign(
             video_path=args.source_video_path,
         )
-        # run_traffic_sign_euro(
-        #     video_path=args.source_video_path,
-        # )
+    elif args.mode == "risky":
+        detect_crossing_risk(
+            video_path=args.source_video_path,
+        )
     elif args.mode == "weather":
         run_weather_detection(
             video_path=args.source_video_path

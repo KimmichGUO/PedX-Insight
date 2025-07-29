@@ -10,7 +10,7 @@ def run_crosswalk_detection(video_path, output_csv_path=None, conf=0.25):
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "crosswalk_detection.csv")
 
-    model = YOLO("modules/crosswalk/best.pt")
+    model = YOLO("modules/crosswalk/best_cw.pt")
     cap = cv2.VideoCapture(video_path)
 
     results_list = []
@@ -34,7 +34,7 @@ def run_crosswalk_detection(video_path, output_csv_path=None, conf=0.25):
 
         results_list.append({
             "frame_id": frame_id,
-            "crosswalk_detected": int(detected)
+            "crosswalk_detected": "Yes" if detected else "No"
         })
 
     cap.release()

@@ -48,6 +48,10 @@ import subprocess
 import os
 
 from modules.risky_crossing.risky_crossing import detect_crossing_risk
+from modules.acceleration_pede.acceleration import analyze_acceleration
+
+import numpy as np
+np.float = float
 
 
 def main():
@@ -63,7 +67,7 @@ def main():
         choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face",
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed",
                  "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident",
-                 "risky",
+                 "risky", "acc",
                  "all", "pedestrian", "vehicle", "environment"],
         help="Choose the analysis mode",
     )
@@ -104,6 +108,10 @@ def main():
     elif args.mode == "speed":
         run_speed_estimate(
             source=args.source_video_path,
+        )
+    elif args.mode == "acc":
+        analyze_acceleration(
+            video_path=args.source_video_path,
         )
     elif args.mode == "traffic_sign":
         run_traffic_sign(

@@ -66,7 +66,7 @@ def main():
         required=True,
         choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face",
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed",
-                 "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident",
+                 "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident", "sidewalk",
                  "risky", "acc",
                  "all", "pedestrian", "vehicle", "environment"],
         help="Choose the analysis mode",
@@ -149,6 +149,12 @@ def main():
         run_car_detection_with_distance(
             video_path=args.source_video_path
         )
+    elif args.mode == "sidewalk":
+        cmd = [
+            "python", "modules/sidewalk/sidewalk_detect.py",
+            "--video", args.source_video_path
+        ]
+        subprocess.run(cmd)
     elif args.mode == "pede_distance":
         visualize_and_estimate_distance(
             video_path=args.source_video_path

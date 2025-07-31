@@ -127,3 +127,20 @@ https://github.com/xN1ckuz/Crosswalks-Detection-using-YOLO
 python main.py --mode accident --source_video_path 'your_video'
 ```
 https://github.com/RoadEyeProject/RoadEye_model
+#### (9) Sidewalk (Done)
+```bash
+python main.py --mode sidewalk --source_video_path 'your_video'
+```
+https://github.com/shaikhubaidahmed/Vehicle_Collision_Detection
+
+### 4. Combination Analysis 
+#### (1) Risky crossing analysis (Done)
+```bash
+python main.py --mode risky --source_video_path 'your_video'
+```
+This function is used to detect whether pedestrians cross the street in a risky way based on the detection of the traffic light, the traffic sign, and the crosswalk
+#### (2) Trend in pedestrians speed when crossing (Done)
+```bash
+python main.py --mode acc --source_video_path 'your_video'
+```
+This function is used to analyze whether pedestrians accelerate, move at a constant speed, or decelerate while crossing the street.

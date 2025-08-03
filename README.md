@@ -41,9 +41,9 @@ python main.py --mode face --source_video_path 'your_video'
 https://github.com/serengil/deepface
 #### (7) Gender (Done)
 ```bash
-python main.py --mode face --source_video_path 'your_video'
+python main.py --mode gender --source_video_path 'your_video'
 ```
-https://github.com/serengil/deepface
+https://github.com/Sklyvan/Age-Gender-Prediction
 #### (8) Race (Done)
 ```bash
 python main.py --mode face --source_video_path 'your_video'
@@ -131,7 +131,8 @@ https://github.com/RoadEyeProject/RoadEye_model
 ```bash
 python main.py --mode sidewalk --source_video_path 'your_video'
 ```
-https://github.com/shaikhubaidahmed/Vehicle_Collision_Detection
+https://github.com/shaikhubaidahmed/Vehicle_Collision_Detection  
+Weights should be downloaded from https://drive.usercontent.google.com/download?id=1X1uKaGENEBZamF6tOfx9eKLTIQLsBN5h&export=download&authuser=0
 
 ### 4. Combination Analysis 
 #### (1) Risky crossing analysis (Done)

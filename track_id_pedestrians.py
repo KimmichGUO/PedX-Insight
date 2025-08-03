@@ -5,6 +5,8 @@ import numpy as np
 from ultralytics import YOLO
 from yolox.tracker.byte_tracker import BYTETracker
 from types import SimpleNamespace
+import numpy as np
+np.float = float
 
 def run_pedestrian_tracking(video_path, weights="yolov8n.pt", output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]

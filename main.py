@@ -13,6 +13,8 @@ from modules.tracking_pede.tracking_pede import run_pede_direction_analysis
 from modules.phone.phone import run_phone_detection
 # 1.6 ~ 1.8
 from modules.face.face import run_face_analysis
+# 1.6_new
+from modules.gender.gender import gender_analysis
 # 1.9
 from modules.clothing.clothing import run_clothing_detection
 # 1.10
@@ -64,7 +66,7 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face",
+        choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face","gender",
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed",
                  "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident", "sidewalk",
                  "risky", "acc",
@@ -131,6 +133,10 @@ def main():
         )
     elif args.mode == "face":
         run_face_analysis(
+            video_path=args.source_video_path
+        )
+    elif args.mode == "gender":
+        gender_analysis(
             video_path=args.source_video_path
         )
     elif args.mode == "light":

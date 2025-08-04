@@ -150,3 +150,8 @@ This function is used to analyze whether pedestrians accelerate, move at a const
 python main.py --mode cross_pede --source_video_path 'your_video'
 ```
 This function is used to Determine and record whether each pedestrian in the video has crossed the road.
+#### (4) Determine whether a pedestrian has used the crosswalk when crossing (Done)
+```bash
+python main.py --mode crosswalk_usage --source_video_path 'your_video'
+```
+This function is used to analyse whether a pedestrian use the crosswalk or not besed on the fact that he/she has crossed the street.

@@ -3,14 +3,14 @@ import cv2
 import pandas as pd
 from ultralytics import YOLO
 
-def run_crosswalk_detection(video_path, output_csv_path=None, conf=0.25, show=True):
+def run_crosswalk_detection(video_path, output_csv_path=None, conf=0.05, show=True):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "crosswalk_detection.csv")
 
-    model = YOLO("modules/crosswalk/best_cw.pt")
+    model = YOLO("modules/crosswalk/best.pt")
     cap = cv2.VideoCapture(video_path)
 
     results_list = []
@@ -33,7 +33,11 @@ def run_crosswalk_detection(video_path, output_csv_path=None, conf=0.25, show=Tr
                 if cls_id == 0:
                     detected = True
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
-                    coords = [round(x1, 2), round(y1, 2), round(x2, 2), round(y2, 2)]
+                    # coords = [round(x1, 2), round(y1, 2), round(x2, 2), round(y2, 2)]
+                    width = (x2 - x1) * 2
+                    extended_x1 = x1 - width
+                    extended_x2 = x2 + width
+                    coords = [round(extended_x1, 2), round(y1, 2), round(extended_x2, 2), round(y2, 2)]
                     crosswalk_boxes.append(coords)
 
                     if show:

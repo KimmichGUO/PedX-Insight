@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from ultralytics import YOLO
 
-def run_clothing_detection(video_path, tracking_csv_path=None, output_csv_path=None):
+def run_clothing_detection(video_path, tracking_csv_path=None, output_csv_path=None, show=True):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if tracking_csv_path is None:
@@ -25,7 +25,6 @@ def run_clothing_detection(video_path, tracking_csv_path=None, output_csv_path=N
     }
 
     print("Start analyzing clothing per frame...")
-
     grouped = df.groupby("frame_id")
 
     def iou(boxA, boxB):
@@ -60,21 +59,32 @@ def run_clothing_detection(video_path, tracking_csv_path=None, output_csv_path=N
             track_id = row["track_id"]
             x1, y1, x2, y2 = map(int, [row["x1"], row["y1"], row["x2"], row["y2"]])
             person_box = [x1, y1, x2, y2]
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(frame, f"ID:{track_id}", (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
             matched_classes = set()
             for det in detections:
                 if iou(person_box, det["box"]) > 0.1:
                     matched_classes.add(det["name"])
 
+            label = ", ".join(sorted(matched_classes)) if matched_classes else "None"
+            cv2.putText(frame, label, (x1, y2 + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+
             results.append({
                 "frame_id": frame_id,
                 "track_id": track_id,
-                "clothing_items": ", ".join(sorted(matched_classes)) if matched_classes else "None"
+                "clothing_items": label
             })
+
+        if show:
+            cv2.imshow("Clothing Detection", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
         print(f"Frame {frame_id} processed.")
 
     cap.release()
+    cv2.destroyAllWindows()
     results_df = pd.DataFrame(results)
     results_df.to_csv(output_csv_path, index=False)
-    print(f"\nClothing detection results saved to {output_csv_path}")
+    print(f"\n Clothing detection results saved to {output_csv_path}")

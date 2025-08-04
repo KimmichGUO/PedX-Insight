@@ -32,73 +32,75 @@ def detect_crossing(video_path, tracked_csv_path=None, sidewalk_csv_path=None, o
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if tracked_csv_path is None:
-        tracked_csv_path = os.path.join("analysis_results", video_name, "tracked_pedestrians.csv")
+        tracked_csv_path = os.path.join(".", "analysis_results", video_name, "tracked_pedestrians.csv")
     if sidewalk_csv_path is None:
-        sidewalk_csv_path = os.path.join("analysis_results", video_name, "sidewalk_polygons.csv")
+        sidewalk_csv_path = os.path.join(".", "analysis_results", video_name, "sidewalk_polygons.csv")
 
     df_tracks = pd.read_csv(tracked_csv_path)
     df_polygons = pd.read_csv(sidewalk_csv_path)
 
     video_mid_x = get_video_mid_x(video_path)
-    polygons_by_frame = {
-        row['frame_id']: parse_sidewalk_polygons(row['polygons'])
-        for _, row in df_polygons.iterrows()
-    }
+    polygons_by_frame = {}
+    for _, row in df_polygons.iterrows():
+        polygons_by_frame[row['frame_id']] = parse_sidewalk_polygons(row['polygons'])
 
+    grouped = df_tracks.groupby('track_id')
     results = []
 
-    for track_id, group in df_tracks.groupby('track_id'):
+    for track_id, group in grouped:
         group = group.sort_values('frame_id')
         frames = group['frame_id'].values
-        xs1, ys1, xs2, ys2 = group['x1'].values, group['y1'].values, group['x2'].values, group['y2'].values
+        xs1 = group['x1'].values
+        ys1 = group['y1'].values
+        xs2 = group['x2'].values
+        ys2 = group['y2'].values
 
-        x_centers = []
+        crossed_mid = False
         in_sidewalk_status = []
+        x_center_history = []
 
         for i in range(len(frames)):
+            frame_id = frames[i]
             x1, y1, x2, y2 = xs1[i], ys1[i], xs2[i], ys2[i]
             width = x2 - x1
-            frame_id = frames[i]
 
             # if (x1 + x2) / 2 < video_mid_x:
             #     center = (x1, y1)
             # else:
             #     center = (x2, y1)
-
-            center = ((x1 + x2)/2 , y1)
-
+            center = ((x1 + x2)/2, y1)
             radius = width
-            polygons = polygons_by_frame.get(frame_id, [])
-            in_sidewalk = point_in_sidewalk(center, radius, polygons)
 
+            polys = polygons_by_frame.get(frame_id, [])
+            in_sidewalk = point_in_sidewalk(center, radius, polys)
             in_sidewalk_status.append(in_sidewalk)
-            x_centers.append((x1 + x2) / 2)
+            x_center_history.append((x1 + x2) / 2)
 
-        crossed = False
+        min_x = min(x_center_history)
+        max_x = max(x_center_history)
+        crossed_mid = (min_x < video_mid_x) and (max_x > video_mid_x)
+
+        ever_left_sidewalk = not all(in_sidewalk_status)
+        crossed = crossed_mid and ever_left_sidewalk
+
         start_cross_frame = None
         end_cross_frame = None
         movement_type = None
 
-        i = 0
-        while i <= len(in_sidewalk_status) - 6:
-            if all(not s for s in in_sidewalk_status[i:i + 6]):
-                start_idx = i
-                end_idx = i + 5
-                while end_idx + 1 < len(in_sidewalk_status) and not in_sidewalk_status[end_idx + 1]:
-                    end_idx += 1
-
-                min_x = min(x_centers[start_idx:end_idx + 1])
-                max_x = max(x_centers[start_idx:end_idx + 1])
-                if min_x < video_mid_x and max_x > video_mid_x:
-                    crossed = True
-                    start_cross_frame = frames[start_idx]
-                    end_cross_frame = frames[end_idx]
-                    break
-                i = end_idx + 1
-            else:
-                i += 1
-
         if crossed:
+            for i in range(len(in_sidewalk_status)):
+                if not in_sidewalk_status[i]:
+                    start_cross_frame = frames[i]
+                    break
+
+            for i in range(len(in_sidewalk_status)):
+                if frames[i] > start_cross_frame and in_sidewalk_status[i]:
+                    end_cross_frame = frames[i]
+                    break
+
+            if end_cross_frame is None:
+                end_cross_frame = frames[-1]
+
             start_status = in_sidewalk_status[0]
             end_status = in_sidewalk_status[-1]
             if start_status and end_status:

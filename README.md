@@ -145,3 +145,8 @@ This function is used to detect whether pedestrians cross the street in a risky 
 python main.py --mode acc --source_video_path 'your_video'
 ```
 This function is used to analyze whether pedestrians accelerate, move at a constant speed, or decelerate while crossing the street.
+#### (3) Determine whether a pedestrian has crossed the road (Done)
+```bash
+python main.py --mode cross_pede --source_video_path 'your_video'
+```
+This function is used to Determine and record whether each pedestrian in the video has crossed the road.

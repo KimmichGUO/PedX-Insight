@@ -173,8 +173,13 @@ python main.py --mode crossing_vehicle_count --source_video_path 'your_video'
 This function is used to analyse how many different types of vehicles there are when a pedestrian crosses the street.
 #### (7) Extract crossed pedestrian information
 ```bash
-python main.py --mode info --source_video_path 'your_video'
+python main.py --mode personal_info --source_video_path 'your_video'
 ```
 This function is used to extract the information of pedestrians who have crossed the streets, including the gender, the clothing type, and the personal belongings.
+#### (8) Pedestrian on lane
+```bash
+python main.py --mode on_lane --source_video_path 'your_video'
+```
+This function is used to analyse whether a pedestrian walks too close to a vehicle.
 
 ### 5. Combination Analysis for the city level

@@ -1,6 +1,7 @@
 import argparse
 # 0
 from track_id_pedestrians import run_pedestrian_tracking
+from track_id_pedestrians_with_imgsave import run_pedestrian_tracking_with_imgsave
 # 1.1
 from modules.count_pedestrians.count_pedestrians import pedestrian_count
 # 1.2
@@ -46,6 +47,8 @@ from modules.crosswalk.crosswalk import run_crosswalk_detection
 # 3.8
 from modules.accident.accident import run_accident_scene_detection
 
+from modules.count_vehicle.count_vehicle import vehicle_count
+
 import subprocess
 import os
 
@@ -54,6 +57,7 @@ from modules.acceleration_pede.acceleration import analyze_acceleration
 from modules.crossing_judge.crossing import detect_crossing
 from modules.crosswalk_usage.crosswalk_usage import determine_crosswalk_usage
 from modules.run_redlight.run_redlight import determine_red_light_violation
+from modules.count_vehicle.count_vehicle_when_crossing import analyze_vehicle_during_crossing
 import numpy as np
 np.float = float
 
@@ -68,10 +72,10 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face","gender",
-                 "vehicle_type", "car_distance", "pede_distance", "lane", "speed",
+        choices=["id", "id_img","count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face","gender",
+                 "vehicle_type", "car_distance", "pede_distance", "lane", "speed", "count_vehicle",
                  "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident", "sidewalk",
-                 "risky", "acc", "cross_pede", "crosswalk_usage", "run_red"
+                 "risky", "acc", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count",
                  "all", "pedestrian", "vehicle", "environment"],
         help="Choose the analysis mode",
     )
@@ -95,6 +99,10 @@ def main():
         )
     elif args.mode == "id":
         run_pedestrian_tracking(
+            video_path=args.source_video_path,
+        )
+    elif args.mode == "id_img":
+        run_pedestrian_tracking_with_imgsave(
             video_path=args.source_video_path,
         )
     elif args.mode == "waiting":
@@ -155,6 +163,14 @@ def main():
         )
     elif args.mode == "car_distance":
         run_car_detection_with_distance(
+            video_path=args.source_video_path
+        )
+    elif args.mode == "count_vehicle":
+        vehicle_count(
+            video_path=args.source_video_path
+        )
+    elif args.mode == "crossing_vehicle_count":
+        analyze_vehicle_during_crossing(
             video_path=args.source_video_path
         )
     elif args.mode == "sidewalk":

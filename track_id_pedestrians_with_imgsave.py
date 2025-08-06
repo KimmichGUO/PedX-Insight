@@ -113,5 +113,3 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolov8n.pt", outpu
     df.to_csv(output_csv_path, index=False)
     print(f"Tracking results saved to: {output_csv_path}")
     print(f"Pedestrian images saved in: {pedestrian_img_dir}")
-
-run_pedestrian_tracking_with_imgsave("1.mp4")

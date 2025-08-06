@@ -19,6 +19,8 @@ def point_in_sidewalk(circle_center, radius, polygons):
     return False
 
 def parse_sidewalk_polygons(sidewalk_str):
+    if not isinstance(sidewalk_str, str) or pd.isna(sidewalk_str):
+        return []
     polygons = []
     for poly_str in sidewalk_str.split('|'):
         points = []

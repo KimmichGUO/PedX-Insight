@@ -9,81 +9,87 @@ python main.py --mode all --source_video_path 'your_folder'
 ### 1. Pedestrian Analysis
 #### (0) Weights for Pedestrian Detection (Optional)
 https://github.com/EdgeGalaxy/YoloPedestrian
-#### (1) Count the number of pedestrians in the zone (Done)
+#### (1) Count the number of pedestrians in the zone
 ```bash
 python main.py --mode count --source_video_path 'your_video'
 ```
 https://github.com/roboflow/supervision/tree/develop/examples/count_people_in_zone
-#### (2) Pedestrian Speed Estimator (Done)
+#### (2) Pedestrian Speed Estimator
 ```bash
 python main.py --mode speed_pede --source_video_path 'your_video'
 ```    
 https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
-#### (3) Waiting time in the zone (Done)
+#### (3) Waiting time in the zone
 ```bash
 python main.py --mode Waiting --source_video_path 'your_video'
 ```  
 https://github.com/roboflow/supervision/tree/develop/examples/time_in_zone
-#### (4) Pedestrian tracking (Done)
+#### (4) Pedestrian tracking
 ```bash
 python main.py --mode tracking_pede --source_video_path 'your_video'
 ```    
 https://supervision.roboflow.com/develop/how_to/track_objects/#keypoint-tracking
-#### (5) Phone usage detection (Done)
+#### (5) Phone usage detection
 ```bash
 python main.py --mode phone --source_video_path 'your_video'
 ```  
 https://github.com/HasnainAhmedO7/Detection-of-Phone-Usage-with-Computer-Vision
-#### (6) Age (Done)
+#### (6) Age
 ```bash
 python main.py --mode face --source_video_path 'your_video'
 ```
 https://github.com/serengil/deepface
-#### (7) Gender (Done)
+#### (7) Gender
 ```bash
 python main.py --mode gender --source_video_path 'your_video'
 ```
 https://github.com/Sklyvan/Age-Gender-Prediction
-#### (8) Race (Done)
+#### (8) Race
 ```bash
 python main.py --mode face --source_video_path 'your_video'
 ```
 https://github.com/serengil/deepface
-#### (9) Clothing type analysis (Done)
+#### (9) Clothing type analysis 
 ```bash
 python main.py --mode clothing --source_video_path 'your_video'
 ```
 https://github.com/ZerrnArsk/Fashion-Based-Person-Searcher
-#### (10) Personal belongings (Done)
+#### (10) Personal belongings 
 ```bash
 python main.py --mode belongings --source_video_path 'your_video'
 ```
 ### 2. Vehicle Analysis 
-#### (1) Vehicle Type (Done)
+#### (1) Vehicle Type
 ```bash
 python main.py --mode vehicle_type --source_video_path 'your_video'
 ```  
 https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification
-#### (2) Vehicle Speed (Done)
+#### (2) Vehicle Speed 
 ```bash
 python main.py --mode speed --source_video_path 'your_video'
 ```  
 https://github.com/WZS666/Yolov5_DeepSort_SpeedEstimate
-#### (3) Distance between vehicles and vehicles (Done)
+#### (3) Distance between vehicles and vehicles 
 ```bash
 python main.py --mode car_distance --source_video_path 'your_video'
 ```  
 https://github.com/maheshpaulj/Lane_Detection
-#### (4) Distance between vehicles and pedestrians (Done)
+#### (4) Distance between vehicles and pedestrians 
 ```bash
 python main.py --mode pede_distance --source_video_path 'your_video'
 ```  
 https://github.com/maheshpaulj/Lane_Detection
-#### (5) Lane Detection (Done)
+#### (5) Lane Detection
 ```bash
 python main.py --mode lane --source_video_path 'your_video'
 ```  
 https://github.com/maheshpaulj/Lane_Detection
+#### (6) Different types of Vehicle Count 
+```bash
+python main.py --mode count_vehicle --source_video_path 'your_video'
+```  
+https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification
+
 ### 3. Environment Analysis 
 #### (1) Weather (Done)
 ```bash
@@ -160,3 +166,8 @@ This function is used to analyse whether a pedestrian use the crosswalk or not b
 python main.py --mode red_run --source_video_path 'your_video'
 ```
 This function is used to analyse whether a pedestrian run the red light or not besed on the fact that he/she has crossed the street.
+#### (6) Vehicle Count when crossing
+```bash
+python main.py --mode crossing_vehicle_count --source_video_path 'your_video'
+```
+This function is used to analyse how many different types of vehicles there are when a pedestrian crosses the street.

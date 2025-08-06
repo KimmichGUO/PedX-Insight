@@ -51,7 +51,9 @@ import os
 
 from modules.risky_crossing.risky_crossing import detect_crossing_risk
 from modules.acceleration_pede.acceleration import analyze_acceleration
-
+from modules.crossing_judge.crossing import detect_crossing
+from modules.crosswalk_usage.crosswalk_usage import determine_crosswalk_usage
+from modules.run_redlight.run_redlight import determine_red_light_violation
 import numpy as np
 np.float = float
 
@@ -69,7 +71,7 @@ def main():
         choices=["id", "count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face","gender",
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed",
                  "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident", "sidewalk",
-                 "risky", "acc",
+                 "risky", "acc", "cross_pede", "crosswalk_usage", "run_red"
                  "all", "pedestrian", "vehicle", "environment"],
         help="Choose the analysis mode",
     )
@@ -161,6 +163,10 @@ def main():
             "--video", args.source_video_path
         ]
         subprocess.run(cmd)
+    elif args.mode == "cross_pede":
+        detect_crossing(
+            video_path=args.source_video_path
+        )
     elif args.mode == "pede_distance":
         visualize_and_estimate_distance(
             video_path=args.source_video_path
@@ -191,8 +197,16 @@ def main():
         run_crosswalk_detection(
             video_path=args.source_video_path,
         )
+    elif args.mode == "crosswalk_usage":
+        determine_crosswalk_usage(
+            video_path=args.source_video_path,
+        )
     elif args.mode == "accident":
         run_accident_scene_detection(
+            video_path=args.source_video_path,
+        )
+    elif args.mode == "run_red":
+        determine_red_light_violation(
             video_path=args.source_video_path,
         )
     elif args.mode == "all":

@@ -155,3 +155,8 @@ This function is used to Determine and record whether each pedestrian in the vid
 python main.py --mode crosswalk_usage --source_video_path 'your_video'
 ```
 This function is used to analyse whether a pedestrian use the crosswalk or not besed on the fact that he/she has crossed the street.
+#### (5) Detect red light runner
+```bash
+python main.py --mode red_run --source_video_path 'your_video'
+```
+This function is used to analyse whether a pedestrian run the red light or not besed on the fact that he/she has crossed the street.

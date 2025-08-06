@@ -95,7 +95,8 @@ def analyze_all_ids(pedestrian_img_dir, output_csv_path):
         id_folder = os.path.join(pedestrian_img_dir, folder_name)
         if os.path.isdir(id_folder):
             gender = analyze_gender_majority(id_folder)
-            gender_results.append((folder_name, gender))
+            id_num = folder_name.split('_')[-1] if '_' in folder_name else folder_name
+            gender_results.append((id_num, gender))
 
     with open(output_csv_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)

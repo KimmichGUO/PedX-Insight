@@ -91,72 +91,72 @@ python main.py --mode count_vehicle --source_video_path 'your_video'
 https://github.com/Srilakshmi2717/YOLO-Based-Real-Time-Vehicle-Detection-and-Classification
 
 ### 3. Environment Analysis 
-#### (1) Weather (Done)
+#### (1) Weather
 ```bash
 python main.py --mode weather --source_video_path 'your_video'
 ```  
 https://github.com/nurcanyaz/yolov8WeatherClassification
-#### (2) Traffic light (Done)
+#### (2) Traffic light
 ```bash
 python main.py --mode light --source_video_path pedestrian.mp4
 ```  
 https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
-#### (3) Traffic sign (Done)
+#### (3) Traffic sign 
 ```bash
 python main.py --mode traffic_sign --source_video_path 'your_video'
 ```
 https://github.com/MDhamani/Traffic-Sign-Recognition-Using-YOLO
 https://github.com/KL-lovesagiri/YOLOv8_GUI_For_Traffic_Sign_Detection
 https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection
-#### (4) Road Condition (Done)
+#### (4) Road Condition
 ```bash
 python main.py --mode road_defect --source_video_path 'your_video'
 ```
 https://github.com/oracl4/RoadDamageDetection
-#### (5) Road Width (Done)
+#### (5) Road Width
 ```bash
 python main.py --mode width --source_video_path 'your_video'
 ```
 https://github.com/saarthxxk/Real-Time-Road-Width-Detection
-#### (6) Day or Evening (Done)
+#### (6) Day or Evening 
 ```bash
 python main.py --mode daytime --source_video_path 'your_video'
 ```
 https://github.com/KishieKube/CV_Day_Evening_detector
-#### (7) Crosswalk (Done)
+#### (7) Crosswalk 
 ```bash
 python main.py --mode crosswalk --source_video_path 'your_video'
 ```
 https://github.com/xN1ckuz/Crosswalks-Detection-using-YOLO
-#### (8) Accident (Done)
+#### (8) Accident
 ```bash
 python main.py --mode accident --source_video_path 'your_video'
 ```
 https://github.com/RoadEyeProject/RoadEye_model
-#### (9) Sidewalk (Done)
+#### (9) Sidewalk
 ```bash
 python main.py --mode sidewalk --source_video_path 'your_video'
 ```
 https://github.com/shaikhubaidahmed/Vehicle_Collision_Detection  
 Weights should be downloaded from https://drive.usercontent.google.com/download?id=1X1uKaGENEBZamF6tOfx9eKLTIQLsBN5h&export=download&authuser=0
 
-### 4. Combination Analysis 
-#### (1) Risky crossing analysis (Done)
+### 4. Combination Analysis on Pedestrians
+#### (1) Risky crossing analysis 
 ```bash
 python main.py --mode risky --source_video_path 'your_video'
 ```
 This function is used to detect whether pedestrians cross the street in a risky way based on the detection of the traffic light, the traffic sign, and the crosswalk
-#### (2) Trend in pedestrians speed when crossing (Done)
+#### (2) Trend in pedestrians speed when crossing
 ```bash
 python main.py --mode acc --source_video_path 'your_video'
 ```
 This function is used to analyze whether pedestrians accelerate, move at a constant speed, or decelerate while crossing the street.
-#### (3) Determine whether a pedestrian has crossed the road (Done)
+#### (3) Determine whether a pedestrian has crossed the road 
 ```bash
 python main.py --mode cross_pede --source_video_path 'your_video'
 ```
 This function is used to Determine and record whether each pedestrian in the video has crossed the road.
-#### (4) Determine whether a pedestrian has used the crosswalk when crossing (Done)
+#### (4) Determine whether a pedestrian has used the crosswalk when crossing
 ```bash
 python main.py --mode crosswalk_usage --source_video_path 'your_video'
 ```
@@ -171,3 +171,10 @@ This function is used to analyse whether a pedestrian run the red light or not b
 python main.py --mode crossing_vehicle_count --source_video_path 'your_video'
 ```
 This function is used to analyse how many different types of vehicles there are when a pedestrian crosses the street.
+#### (7) Extract crossed pedestrian information
+```bash
+python main.py --mode info --source_video_path 'your_video'
+```
+This function is used to extract the information of pedestrians who have crossed the streets, including the gender, the clothing type, and the personal belongings.
+
+### 5. Combination Analysis for the city level

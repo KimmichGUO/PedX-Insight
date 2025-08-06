@@ -58,6 +58,8 @@ from modules.crossing_judge.crossing import detect_crossing
 from modules.crosswalk_usage.crosswalk_usage import determine_crosswalk_usage
 from modules.run_redlight.run_redlight import determine_red_light_violation
 from modules.count_vehicle.count_vehicle_when_crossing import analyze_vehicle_during_crossing
+from modules.crossed_pede_info.crossed_info import extract_pedestrian_info
+
 import numpy as np
 np.float = float
 
@@ -75,7 +77,7 @@ def main():
         choices=["id", "id_img","count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face","gender",
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed", "count_vehicle",
                  "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident", "sidewalk",
-                 "risky", "acc", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count",
+                 "risky", "acc", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "info",
                  "all", "pedestrian", "vehicle", "environment"],
         help="Choose the analysis mode",
     )
@@ -223,6 +225,10 @@ def main():
         )
     elif args.mode == "run_red":
         determine_red_light_violation(
+            video_path=args.source_video_path,
+        )
+    elif args.mode == "info":
+        extract_pedestrian_info(
             video_path=args.source_video_path,
         )
     elif args.mode == "all":

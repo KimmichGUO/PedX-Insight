@@ -70,11 +70,22 @@ def run_clothing_detection(video_path, tracking_csv_path=None, output_csv_path=N
             label = ", ".join(sorted(matched_classes)) if matched_classes else "None"
             cv2.putText(frame, label, (x1, y2 + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
 
-            results.append({
+            # results.append({
+            #     "frame_id": frame_id,
+            #     "track_id": track_id,
+            #     "clothing_items": label
+            # })
+            clothing_flags = {name: 0 for name in class_names.values()}
+            for det in detections:
+                if iou(person_box, det["box"]) > 0.1:
+                    clothing_flags[det["name"]] = 1
+
+            result = {
                 "frame_id": frame_id,
                 "track_id": track_id,
-                "clothing_items": label
-            })
+                **clothing_flags
+            }
+            results.append(result)
 
         if show:
             cv2.imshow("Clothing Detection", frame)

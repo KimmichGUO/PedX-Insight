@@ -14,9 +14,6 @@ def run_road_defect_detection(video_path, output_csv_path=None):
     model = YOLO("modules/road_condition/YOLOv8road.pt")
     cap = cv2.VideoCapture(video_path)
 
-    results_list = []
-    frame_id = -1
-
     class_map = {
         0: 'Longitudinal Crack',
         1: 'Transverse Crack',
@@ -24,30 +21,35 @@ def run_road_defect_detection(video_path, output_csv_path=None):
         3: 'Potholes'
     }
 
+    results_list = []
+    frame_id = -1
+
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
         frame_id += 1
 
+        frame_result = {
+            "frame_id": frame_id,
+            "Longitudinal Crack": 0,
+            "Transverse Crack": 0,
+            "Alligator Crack": 0,
+            "Potholes": 0
+        }
+
         result = model(frame, verbose=False)[0]
 
         for box in result.boxes:
             cls_id = int(box.cls[0])
-            cls_name = class_map.get(cls_id, "unknown")
-            conf = float(box.conf[0])
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            cls_name = class_map.get(cls_id)
+            if cls_name:
+                frame_result[cls_name] = 1
 
-            results_list.append({
-                "frame_id": frame_id,
-                "defect_type": cls_name,
-                "confidence": round(conf, 4),
-                "x1": x1,
-                "y1": y1,
-                "x2": x2,
-                "y2": y2
-            })
+        results_list.append(frame_result)
 
     cap.release()
-    pd.DataFrame(results_list).to_csv(output_csv_path, index=False)
+
+    df = pd.DataFrame(results_list)
+    df.to_csv(output_csv_path, index=False)
     print(f"Road defect detection completed. Results saved to {output_csv_path}")

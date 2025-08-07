@@ -60,6 +60,7 @@ from modules.run_redlight.run_redlight import determine_red_light_violation
 from modules.count_vehicle.count_vehicle_when_crossing import analyze_vehicle_during_crossing
 from modules.crossed_pede_info.crossed_info import extract_pedestrian_info
 from modules.pede_on_lane.pede_on_lane import pedestrian_on_lane
+from modules.crossed_pede_info.env_info import merge_env_info
 
 import numpy as np
 np.float = float
@@ -77,8 +78,8 @@ def main():
         required=True,
         choices=["id", "id_img","count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face","gender",
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed", "count_vehicle",
-                 "weather", "traffic_sign", "width", "light", "road_defect", "daytime", "crosswalk", "accident", "sidewalk",
-                 "risky", "acc", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "personal_info", "on_lane",
+                 "weather", "traffic_sign", "width", "light", "road_condition", "daytime", "crosswalk", "accident", "sidewalk",
+                 "risky", "acc", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "personal_info", "on_lane", "env_info",
                  "all", "pedestrian", "vehicle", "environment"],
         help="Choose the analysis mode",
     )
@@ -156,7 +157,7 @@ def main():
         run_traffic_light_detection(
             video_path=args.source_video_path,
         )
-    elif args.mode == "defect":
+    elif args.mode == "road_condition":
         run_road_defect_detection(
             video_path=args.source_video_path
         )
@@ -230,6 +231,10 @@ def main():
         )
     elif args.mode == "personal_info":
         extract_pedestrian_info(
+            video_path=args.source_video_path,
+        )
+    elif args.mode == "env_info":
+        merge_env_info(
             video_path=args.source_video_path,
         )
     elif args.mode == "on_lane":

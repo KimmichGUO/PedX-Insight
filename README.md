@@ -110,7 +110,7 @@ https://github.com/KL-lovesagiri/YOLOv8_GUI_For_Traffic_Sign_Detection
 https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection
 #### (4) Road Condition
 ```bash
-python main.py --mode road_defect --source_video_path 'your_video'
+python main.py --mode road_condition --source_video_path 'your_video'
 ```
 https://github.com/oracl4/RoadDamageDetection
 #### (5) Road Width
@@ -181,5 +181,9 @@ This function is used to extract the information of pedestrians who have crossed
 python main.py --mode on_lane --source_video_path 'your_video'
 ```
 This function is used to analyse whether a pedestrian walks too close to a vehicle.
-
+#### (9) Extract crossed environment information
+```bash
+python main.py --mode env_info --source_video_path 'your_video'
+```
+This function is used to extract the information of environment when a pedestrian has crossed the streets, including weather, daytime, accident or not, road condition.
 ### 5. Combination Analysis for the city level

@@ -1,7 +1,8 @@
 import os
 import pandas as pd
 
-def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=None, belongings_csv_path=None, crossing_csv_path=None, output_csv_path=None):
+def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=None, belongings_csv_path=None,
+                            crossing_csv_path=None, phone_usage_csv_path=None, output_csv_path=None):
 
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
@@ -16,11 +17,14 @@ def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=
         belongings_csv_path = os.path.join(output_dir, "[P9]pedestrian_belongings.csv")
     if crossing_csv_path is None:
         crossing_csv_path = os.path.join(output_dir, "[C3]crossing_judge.csv")
+    if phone_usage_csv_path is None:
+        phone_usage_csv_path = os.path.join(output_dir, "[P5]phone_usage.csv")
 
     gender_df = pd.read_csv(gender_csv_path)
     belongings_df = pd.read_csv(belongings_csv_path)
     clothing_df = pd.read_csv(clothing_csv_path)
     crossing_df = pd.read_csv(crossing_csv_path)
+    phone_usage_df = pd.read_csv(phone_usage_csv_path)
 
     crossing_df = crossing_df[crossing_df['crossed'] == True]
 
@@ -57,10 +61,18 @@ def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=
             for item in clothing_cols:
                 clothing_result[item] = 0
 
+        phone_person = phone_usage_df[phone_usage_df['track_id'] == pid]
+        if not phone_person.empty:
+            phone_ratio = phone_person['phone_using'].astype(str).str.lower().eq("true").sum() / len(phone_person)
+            phone_using = 1 if phone_ratio >= 0.1 else 0
+        else:
+            phone_using = 0
+
         final_row = {
             'track_id': pid,
             'crossed': crossed,
             'gender': gender,
+            'phone_using': phone_using,
             **belongings_result,
             **clothing_result
         }
@@ -69,4 +81,3 @@ def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=
     output_df = pd.DataFrame(output_rows)
     output_df.to_csv(output_csv_path, index=False)
     print(f"\nPedestrians info results saved to：{output_csv_path}")
-

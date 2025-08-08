@@ -123,6 +123,6 @@ def detect_crossing(video_path, tracked_csv_path=None, sidewalk_csv_path=None, o
         })
 
     if output_csv_path is None:
-        output_csv_path = os.path.join(os.path.dirname(tracked_csv_path), "crossing_results.csv")
+        output_csv_path = os.path.join(os.path.dirname(tracked_csv_path), "[C3]crossing_judge.csv")
     pd.DataFrame(results).to_csv(output_csv_path, index=False)
     print(f"Crossing detection results saved to: {output_csv_path}")

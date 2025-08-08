@@ -7,7 +7,7 @@ import os
 def analyze_acceleration(video_path, input_csv=None, output_csv=None, window_size=30):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if input_csv is None:
-        input_csv = os.path.join(".", "analysis_results", video_name, "tracked_pedestrians.csv")
+        input_csv = os.path.join(".", "analysis_results", video_name, "[B1]tracked_pedestrians.csv")
     df = pd.read_csv(input_csv)
     df['x_center'] = (df['x1'] + df['x2']) / 2
 
@@ -44,6 +44,6 @@ def analyze_acceleration(video_path, input_csv=None, output_csv=None, window_siz
     result_df = pd.DataFrame(results)
 
     if output_csv is None:
-        output_csv = os.path.join(os.path.dirname(input_csv), "[P10]pedestrian_acc.csv")
+        output_csv = os.path.join(os.path.dirname(input_csv), "[C2]pedestrian_acc.csv")
     result_df.to_csv(output_csv, index=False)
     print(f"Acceleration trend analysis saved to: {output_csv}")

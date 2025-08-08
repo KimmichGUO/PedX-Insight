@@ -69,12 +69,7 @@ https://github.com/ZerrnArsk/Fashion-Based-Person-Searcher
 ```bash
 python main.py --mode belongings --source_video_path 'your_video'
 ```
-Result: [P9]pedestrian_belongings.csv  
-#### (11) Pedestrian acceleration trend 
-```bash
-python main.py --mode acc --source_video_path 'your_video'
-```
-Result: [P10]pedestrian_acc.csv    
+Result: [P9]pedestrian_belongings.csv   
 ### 2. Vehicle Analysis 
 #### (1) Vehicle Type
 ```bash
@@ -183,7 +178,7 @@ This function is used to detect whether pedestrians cross the street in a risky 
 ```bash
 python main.py --mode acc --source_video_path 'your_video'
 ```
-Result: [C2]risky_crossing.csv  
+Result: [C2]pede_speed_trend.csv  
 This function is used to analyze whether pedestrians accelerate, move at a constant speed, or decelerate while crossing the street.
 #### (3) Determine whether a pedestrian has crossed the road 
 ```bash
@@ -199,7 +194,7 @@ Result: [C4]crosswalk_usage.csv
 This function is used to analyse whether a pedestrian use the crosswalk or not besed on the fact that he/she has crossed the street.
 #### (5) Detect red light runner
 ```bash
-python main.py --mode red_run --source_video_path 'your_video'
+python main.py --mode run_red --source_video_path 'your_video'
 ```
 Result: [C5]red_light_runner.csv  
 This function is used to analyse whether a pedestrian run the red light or not besed on the fact that he/she has crossed the street.
@@ -225,12 +220,12 @@ This function is used to analyse whether a pedestrian walks too close to a vehic
 ```bash
 python main.py --mode env_info --source_video_path 'your_video'
 ```
-Result: [C7]crossing_env_info.csv  
+Result: [C9]crossing_env_info.csv  
 This function is used to extract the information of environment when a pedestrian has crossed the streets, including weather, daytime, accident or not, road condition.
 ### 5. Combination Analysis for the city level
 #### (1) Extract video info about environment
 ```bash
 python main.py --mode env_info --source_video_path 'your_video'
 ```
-Result: [M1]video_env.csv  
-This function is used to extract the information of environment of whole video
+Result: [A1]video_info.csv  
+This function is used to extract and summary the information of whole video

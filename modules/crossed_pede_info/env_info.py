@@ -6,17 +6,17 @@ def merge_env_info(video_path, crossing_csv_path=None, weather_csv_path=None, ro
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "[crossed_env_info].csv")
+        output_csv_path = os.path.join(output_dir, "[C9]crossing_env_info.csv")
     if crossing_csv_path is None:
-        crossing_csv_path = os.path.join(output_dir, "crossing_results.csv")
+        crossing_csv_path = os.path.join(output_dir, "[C3]crossing_judge.csv")
     if weather_csv_path is None:
-        weather_csv_path = os.path.join(output_dir, "weather_detection.csv")
+        weather_csv_path = os.path.join(output_dir, "[E1]weather.csv")
     if road_defect_csv_path is None:
-        road_defect_csv_path = os.path.join(output_dir, "road_defect_detection.csv")
+        road_defect_csv_path = os.path.join(output_dir, "[E4]road_condition.csv")
     if daytime_csv_path is None:
-        daytime_csv_path = os.path.join(output_dir, "daytime_detection.csv")
+        daytime_csv_path = os.path.join(output_dir, "[E6]daytime.csv")
     if accident_csv_path is None:
-        accident_csv_path = os.path.join(output_dir, "accident_scene_detection.csv")
+        accident_csv_path = os.path.join(output_dir, "[E8]accident_detection.csv")
 
     df_crossing = pd.read_csv(crossing_csv_path)
     df_crossing = df_crossing[df_crossing['crossed'] == True]

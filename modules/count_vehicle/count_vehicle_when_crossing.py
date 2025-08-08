@@ -37,9 +37,9 @@ def analyze_vehicle_during_crossing(video_path, crossing_csv_path=None, output_c
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "vehicle_count_during_crossing.csv")
+        output_csv_path = os.path.join(output_dir, "[C6]crossing_ve_count.csv")
     if crossing_csv_path is None:
-        crossing_csv_path = os.path.join(output_dir, "crossing_results.csv")
+        crossing_csv_path = os.path.join(output_dir, "[C3]crossing_judge.csv")
 
     tracker_args = SimpleNamespace(
         track_thresh=0.3,

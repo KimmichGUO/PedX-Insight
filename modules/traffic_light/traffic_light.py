@@ -9,7 +9,7 @@ def run_traffic_light_detection(video_path, output_csv_path=None):
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "traffic_light_detection.csv")
+        output_csv_path = os.path.join(output_dir, "[E2]traffic_light.csv")
 
     model = YOLO("modules/traffic_light/v9 - 48 epochs.pt")
     cap = cv2.VideoCapture(video_path)

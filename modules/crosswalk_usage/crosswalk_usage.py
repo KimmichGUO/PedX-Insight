@@ -28,13 +28,13 @@ def circle_overlaps_crosswalk(circle_center, radius, crosswalk_boxes):
 def determine_crosswalk_usage(video_path, crossing_csv_path=None, track_csv_path=None, crosswalk_csv_path=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if crossing_csv_path is None:
-        crossing_csv_path = os.path.join("analysis_results", video_name, "crossing_results.csv")
+        crossing_csv_path = os.path.join("analysis_results", video_name, "[C3]crossing_judge.csv")
     if track_csv_path is None:
-        track_csv_path = os.path.join("analysis_results", video_name, "tracked_pedestrians.csv")
+        track_csv_path = os.path.join("analysis_results", video_name, "[B1]tracked_pedestrians.csv")
     if crosswalk_csv_path is None:
-        crosswalk_csv_path = os.path.join("analysis_results", video_name, "crosswalk_detection.csv")
+        crosswalk_csv_path = os.path.join("analysis_results", video_name, "[E7]crosswalk_detection.csv")
     if output_csv_path is None:
-        output_csv_path = os.path.join("analysis_results", video_name, "used_crosswalk.csv")
+        output_csv_path = os.path.join("analysis_results", video_name, "[C4]crosswalk_usage.csv")
 
     crossing_df = pd.read_csv(crossing_csv_path)
     tracked_df = pd.read_csv(track_csv_path)

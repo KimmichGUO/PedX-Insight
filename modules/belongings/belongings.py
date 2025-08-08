@@ -7,11 +7,11 @@ from collections import defaultdict
 def run_belongings_detection(video_path, weights = "yolov8n.pt", tracking_csv_path=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if tracking_csv_path is None:
-        tracking_csv_path = os.path.join("analysis_results", video_name, "tracked_pedestrians.csv")
+        tracking_csv_path = os.path.join("analysis_results", video_name, "[B1]tracked_pedestrians.csv")
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "pedestrian_belongings.csv")
+        output_csv_path = os.path.join(output_dir, "[P9]pedestrian_belongings.csv")
 
     TARGET_CLASSES = {
         24: "backpack",

@@ -109,5 +109,5 @@ def gender_analysis(video_path):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     output_dir = os.path.join("analysis_results", video_name)
     pedestrian_img_dir = os.path.join(output_dir, "pedestrian_img")
-    output_csv_path = os.path.join(output_dir, "gender_pedestrians.csv")
+    output_csv_path = os.path.join(output_dir, "[P7]pedestrian_gender.csv")
     analyze_all_ids(pedestrian_img_dir, output_csv_path)

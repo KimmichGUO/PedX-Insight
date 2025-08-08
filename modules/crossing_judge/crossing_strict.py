@@ -32,9 +32,9 @@ def detect_crossing_strict(video_path, tracked_csv_path=None, sidewalk_csv_path=
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if tracked_csv_path is None:
-        tracked_csv_path = os.path.join(".", "analysis_results", video_name, "tracked_pedestrians.csv")
+        tracked_csv_path = os.path.join(".", "analysis_results", video_name, "[B1]tracked_pedestrians.csv")
     if sidewalk_csv_path is None:
-        sidewalk_csv_path = os.path.join(".", "analysis_results", video_name, "sidewalk_polygons.csv")
+        sidewalk_csv_path = os.path.join(".", "analysis_results", video_name, "[E9]sidewalk_detection_strict.csv")
 
     df_tracks = pd.read_csv(tracked_csv_path)
     df_polygons = pd.read_csv(sidewalk_csv_path)

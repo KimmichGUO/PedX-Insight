@@ -37,7 +37,7 @@ def vehicle_count(video_path, output_csv_path=None):
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "vehicle_count.csv")
+        output_csv_path = os.path.join(output_dir, "[V6]vehicle_count.csv")
     tracker_args = SimpleNamespace(
         track_thresh=0.3,
         match_thresh=0.8,

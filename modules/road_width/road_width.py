@@ -10,7 +10,7 @@ def run_road_width_analysis(video_path, output_csv_path=None):
     if output_csv_path is None:
         output_dir = os.path.join(".", "analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "road_width_analysis.csv")
+        output_csv_path = os.path.join(output_dir, "[E5]road_width.csv")
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():

@@ -8,7 +8,7 @@ def run_weather_detection(video_path, output_csv_path=None):
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "weather_detection.csv")
+        output_csv_path = os.path.join(output_dir, "[E1]weather.csv")
 
     model = YOLO('modules/weather/best.pt')
     cap = cv2.VideoCapture(video_path)

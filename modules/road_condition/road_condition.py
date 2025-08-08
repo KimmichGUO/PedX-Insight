@@ -9,7 +9,7 @@ def run_road_defect_detection(video_path, output_csv_path=None):
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "road_defect_detection.csv")
+        output_csv_path = os.path.join(output_dir, "[E4]road_condition.csv")
 
     model = YOLO("modules/road_condition/YOLOv8road.pt")
     cap = cv2.VideoCapture(video_path)

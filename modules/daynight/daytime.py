@@ -10,7 +10,7 @@ def run_daytime_detection(video_path, brightness_threshold=100, output_csv_path=
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "daytime_detection.csv")
+        output_csv_path = os.path.join(output_dir, "[E6]daytime.csv")
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():

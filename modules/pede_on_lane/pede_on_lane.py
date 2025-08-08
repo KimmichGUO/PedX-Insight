@@ -17,11 +17,11 @@ def pedestrian_on_lane(video_path, tracking_csv_path=None, lane_csv_path=None, o
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "pedestrian_on_lane.csv")
+        output_csv_path = os.path.join(output_dir, "[C8]pedestrian_on_lane.csv")
     if tracking_csv_path is None:
-        tracking_csv_path = os.path.join(output_dir, "tracked_pedestrians.csv")
+        tracking_csv_path = os.path.join(output_dir, "[B1]tracked_pedestrians.csv")
     if lane_csv_path is None:
-        lane_csv_path = os.path.join(output_dir, "lane_detection.csv")
+        lane_csv_path = os.path.join(output_dir, "[V5]lane_detection.csv")
 
     tracking_df = pd.read_csv(tracking_csv_path)
     lane_df = pd.read_csv(lane_csv_path)

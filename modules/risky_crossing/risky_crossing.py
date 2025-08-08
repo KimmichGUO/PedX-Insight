@@ -16,15 +16,15 @@ def detect_crossing_risk(
     os.makedirs(output_dir, exist_ok=True)
 
     if output_csv_path is None:
-        output_csv_path = os.path.join(output_dir, "crossing_risk.csv")
+        output_csv_path = os.path.join(output_dir, "[C1]risky_crossing.csv")
     if direction_csv_path is None:
-        direction_csv_path = os.path.join(output_dir, "tracked_pedestrians.csv")
+        direction_csv_path = os.path.join(output_dir, "[B1]tracked_pedestrians.csv")
     if traffic_light_csv is None:
-        traffic_light_csv = os.path.join(output_dir, "traffic_light_detection.csv")
+        traffic_light_csv = os.path.join(output_dir, "[E2]traffic_light.csv")
     if crosswalk_csv is None:
-        crosswalk_csv = os.path.join(output_dir, "crosswalk_detection.csv")
+        crosswalk_csv = os.path.join(output_dir, "[E7]crosswalk_detection.csv")
     if traffic_sign_csv is None:
-        traffic_sign_csv = os.path.join(output_dir, "traffic_sign_detection.csv")
+        traffic_sign_csv = os.path.join(output_dir, "[E3]traffic_sign.csv")
 
     df = pd.read_csv(direction_csv_path)
     df.set_index(["frame_id", "track_id"], inplace=True)

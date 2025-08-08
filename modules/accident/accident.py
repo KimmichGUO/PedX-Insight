@@ -10,7 +10,7 @@ def run_accident_scene_detection(video_path, output_csv_path=None, conf=0.25):
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "accident_scene_detection.csv")
+        output_csv_path = os.path.join(output_dir, "[E8]accident_detection.csv")
 
     model = YOLO("modules/accident/best.pt")
     cap = cv2.VideoCapture(video_path)

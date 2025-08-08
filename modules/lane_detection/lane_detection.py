@@ -79,7 +79,7 @@ def run_lane_detection(video_path, weights="yolov8n.pt", output_csv_path=None):
     if output_csv_path is None:
         output_dir = os.path.join(".", "analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "lane_detection.csv")
+        output_csv_path = os.path.join(output_dir, "[V5]lane_detection.csv")
     if not cap.isOpened():
         print("Error: Cannot open video.")
         return

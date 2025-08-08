@@ -70,6 +70,11 @@ https://github.com/ZerrnArsk/Fashion-Based-Person-Searcher
 python main.py --mode belongings --source_video_path 'your_video'
 ```
 Result: [P9]pedestrian_belongings.csv  
+#### (11) Pedestrian acceleration trend 
+```bash
+python main.py --mode acc --source_video_path 'your_video'
+```
+Result: [P10]pedestrian_acc.csv    
 ### 2. Vehicle Analysis 
 #### (1) Vehicle Type
 ```bash

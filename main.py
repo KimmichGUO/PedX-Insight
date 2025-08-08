@@ -155,7 +155,7 @@ def main():
         )
     elif args.mode == "light":
         run_traffic_light_detection(
-            video_path=args.source_video_path,
+            video_path=args.source_video_path
         )
     elif args.mode == "road_condition":
         run_road_defect_detection(

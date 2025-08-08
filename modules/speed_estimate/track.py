@@ -204,7 +204,7 @@ def run_speed_estimate(
 
     t0 = time.time()
     video_name = os.path.splitext(os.path.basename(source))[0]
-    output_csv_path = os.path.join(".", "analysis_results", video_name, "speed_estimate.csv")
+    output_csv_path = os.path.join(".", "analysis_results", video_name, "[V2]vehicle_speed.csv")
     os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
     csv_data = []
 

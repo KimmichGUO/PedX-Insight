@@ -11,7 +11,7 @@ def run_vehicle_frame_analysis(video_path, weights="modules/type_vehicle/best.pt
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "vehicle_type_count.csv")
+        output_csv_path = os.path.join(output_dir, "[V1]vehicle_type.csv ")
 
     model = YOLO(weights)
 

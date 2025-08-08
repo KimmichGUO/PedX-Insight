@@ -15,7 +15,7 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolov8n.pt", outpu
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "tracked_pedestrians.csv")
+        output_csv_path = os.path.join(output_dir, "[B1]tracked_pedestrians.csv")
     else:
         os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
 

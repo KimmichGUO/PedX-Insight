@@ -12,7 +12,7 @@ def run_pede_speed_estimation(video_path, tracking_csv_path=None, output_csv_pat
     if output_csv_path is None:
         output_dir = os.path.join(".", "analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "pedestrian_speed.csv")
+        output_csv_path = os.path.join(output_dir, "[P2]pedestrian_speed.csv")
 
     df = pd.read_csv(tracking_csv_path)
     df.sort_values(by=["frame_id", "track_id"], inplace=True)

@@ -8,7 +8,7 @@ def run_traffic_sign(video_path, output_csv_path=None, conf=0.25):
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "traffic_sign_detection.csv")
+        output_csv_path = os.path.join(output_dir, "[E3]traffic_sign.csv")
 
     model_asia = YOLO("modules/traffic_sign/best_asia.pt")
     model_new = YOLO("modules/traffic_sign/best_new.pt")

@@ -7,11 +7,11 @@ def pedestrian_count(video_path, tracking_csv_path=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if tracking_csv_path is None:
-        tracking_csv_path = os.path.join("analysis_results", video_name, "tracked_pedestrians.csv")
+        tracking_csv_path = os.path.join("analysis_results", video_name, "[B1]tracked_pedestrians.csv")
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "pedestrian_count.csv")
+        output_csv_path = os.path.join(output_dir, "[P1]pedestrian_count.csv")
 
     cap = cv2.VideoCapture(video_path)
     frame_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)

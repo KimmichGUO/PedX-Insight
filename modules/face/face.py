@@ -72,15 +72,13 @@ import os
 def run_face_analysis(video_path, tracking_csv_path=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
-    # 默认路径
     if tracking_csv_path is None:
-        tracking_csv_path = os.path.join(".", "analysis_results", video_name, "tracked_pedestrians.csv")
+        tracking_csv_path = os.path.join(".", "analysis_results", video_name, "[B1]tracked_pedestrians.csv")
     if output_csv_path is None:
         output_dir = os.path.join(".", "analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "face_analysis.csv")
+        output_csv_path = os.path.join(output_dir, "[P6]age_gender_race.csv")
 
-    # 加载 tracking 结果
     df = pd.read_csv(tracking_csv_path)
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -121,25 +119,21 @@ def run_face_analysis(video_path, tracking_csv_path=None, output_csv_path=None):
 
         face = analysis[0]
 
-        # 添加文字标签
         gender = face.get('dominant_gender', 'Unknown')
         age = int(face.get('age', -1))
         race = face.get('dominant_race', 'Unknown')
         label = f"{gender}, {age}, {race}"
 
-        # 在原图上画框和文字
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
         cv2.putText(frame, label, (x1, y1 - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-        # 显示整帧视频图像
         cv2.imshow("Face Analysis", frame)
         key = cv2.waitKey(1)
         if key == ord('q'):
             print("User interrupted.")
             break
 
-        # 保存当前分析结果
         results.append({
             "frame_id": frame_id,
             "track_id": track_id,
@@ -153,7 +147,6 @@ def run_face_analysis(video_path, tracking_csv_path=None, output_csv_path=None):
     cap.release()
     cv2.destroyAllWindows()
 
-    # 保存为 CSV
     results_df = pd.DataFrame(results)
     results_df.to_csv(output_csv_path, index=False)
     print(f"\nAll attributes saved to {output_csv_path}")

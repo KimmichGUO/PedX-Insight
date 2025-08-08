@@ -6,7 +6,7 @@ def merge_env_info(video_path, crossing_csv_path=None, weather_csv_path=None, ro
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "crossed_env_info.csv")
+        output_csv_path = os.path.join(output_dir, "[crossed_env_info].csv")
     if crossing_csv_path is None:
         crossing_csv_path = os.path.join(output_dir, "crossing_results.csv")
     if weather_csv_path is None:
@@ -33,13 +33,11 @@ def merge_env_info(video_path, crossing_csv_path=None, weather_csv_path=None, ro
         start_frame = int(row['started_frame'])
         end_frame = int(row['ended_frame'])
 
-        # 截取帧范围的数据
         weather_labels = df_weather[(df_weather['frame_id'] >= start_frame) & (df_weather['frame_id'] <= end_frame)]
         daytime_labels = df_daytime[(df_daytime['frame_id'] >= start_frame) & (df_daytime['frame_id'] <= end_frame)]
         accident_labels = df_accident[(df_accident['frame_id'] >= start_frame) & (df_accident['frame_id'] <= end_frame)]
         road_labels = df_road[(df_road['frame_id'] >= start_frame) & (df_road['frame_id'] <= end_frame)]
 
-        # 众数选择：最常见的标签
         weather = weather_labels['weather_label'].mode()[0] if not weather_labels.empty else 'Unknown'
         daytime = daytime_labels['daytime_label'].mode()[0] if not daytime_labels.empty else 'Unknown'
 

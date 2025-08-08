@@ -7,15 +7,15 @@ def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "crossed_pedestrian_info.csv")
+        output_csv_path = os.path.join(output_dir, "[C7]crossing_pe_info.csv")
     if gender_csv_path is None:
-        gender_csv_path = os.path.join(output_dir, "gender_pedestrians.csv")
+        gender_csv_path = os.path.join(output_dir, "[P7]pedestrian_gender.csv")
     if clothing_csv_path is None:
-        clothing_csv_path = os.path.join(output_dir, "clothing_analysis.csv")
+        clothing_csv_path = os.path.join(output_dir, "[P8]clothing.csv")
     if belongings_csv_path is None:
-        belongings_csv_path = os.path.join(output_dir, "pedestrian_belongings.csv")
+        belongings_csv_path = os.path.join(output_dir, "[P9]pedestrian_belongings.csv")
     if crossing_csv_path is None:
-        crossing_csv_path = os.path.join(output_dir, "crossing_results.csv")
+        crossing_csv_path = os.path.join(output_dir, "[C3]crossing_judge.csv")
 
     gender_df = pd.read_csv(gender_csv_path)
     belongings_df = pd.read_csv(belongings_csv_path)

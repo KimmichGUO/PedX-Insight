@@ -40,7 +40,7 @@ if opt.save:
 sidewalk_class_id = 1
 MIN_AREA_THRESHOLD = 500
 video_name = os.path.splitext(os.path.basename(opt.video))[0]
-sidewalk_csv_path = os.path.join('./analysis_results', video_name, 'sidewalk_polygons.csv')
+sidewalk_csv_path = os.path.join('./analysis_results', video_name, '[E9]sidewalk_detection.csv')
 os.makedirs(os.path.dirname(sidewalk_csv_path), exist_ok=True)
 csvfile = open(sidewalk_csv_path, 'w', newline='')
 writer = csv.writer(csvfile)
@@ -80,6 +80,7 @@ while cap.isOpened():
         if area < MIN_AREA_THRESHOLD:
             continue
 
+        # epsilon = 0.01 * cv2.arcLength(cnt, True)
         epsilon = 0.01 * cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt, epsilon, True)
 

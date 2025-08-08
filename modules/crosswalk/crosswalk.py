@@ -3,12 +3,12 @@ import cv2
 import pandas as pd
 from ultralytics import YOLO
 
-def run_crosswalk_detection(video_path, output_csv_path=None, conf=0.05, show=True):
+def run_crosswalk_detection(video_path, output_csv_path=None, conf=0.1, show=True):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "crosswalk_detection.csv")
+        output_csv_path = os.path.join(output_dir, "[E7]crosswalk_detection.csv")
 
     model = YOLO("modules/crosswalk/best.pt")
     cap = cv2.VideoCapture(video_path)

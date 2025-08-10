@@ -81,7 +81,7 @@ def main():
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed", "count_vehicle",
                  "weather", "traffic_sign", "width", "light", "road_condition", "daytime", "crosswalk", "accident", "sidewalk",
                  "risky", "acc", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "personal_info", "on_lane", "env_info",
-                 "all", "pedestrian", "vehicle", "environment", "analysis",
+                 "all", "pedestrian", "vehicle", "environment", "analysis", "other",
                  "sum"
                  ],
         help="Choose the analysis mode",
@@ -263,27 +263,47 @@ def main():
             # run_mode("id", video_path)
             run_mode("id_img", video_path)
             run_mode("count", video_path)
+            run_mode("speed_pede", video_path)
             run_mode("waiting", video_path)
             run_mode("tracking_pede", video_path)
-            run_mode("speed_pede",video_path)
-            run_mode("clothing", video_path)
             run_mode("phone", video_path)
-            run_mode("belongings", video_path)
             run_mode("face", video_path)
+            run_mode("gender", video_path)
+            run_mode("clothing", video_path)
+            run_mode("belongings", video_path)
+
             # vehicle
             run_mode("vehicle_type", video_path)
+            run_mode("speed", video_path)
             run_mode("car_distance", video_path)
             run_mode("pede_distance", video_path)
             run_mode("lane", video_path)
+            run_mode("count_vehicle", video_path)
+
             # environment
             run_mode("weather", video_path)
-            run_mode("traffic_sign", video_path)
-            run_mode("width", video_path)
             run_mode("light", video_path)
-            run_mode("road_defect", video_path)
+            run_mode("traffic_sign", video_path)
+            run_mode("road_condition", video_path)
+            run_mode("width", video_path)
             run_mode("daytime", video_path)
             run_mode("crosswalk", video_path)
             run_mode("accident", video_path)
+            run_mode("sidewalk", video_path)
+
+            #combination
+            run_mode("risky", video_path)
+            run_mode("acc", video_path)
+            run_mode("cross_pede", video_path)
+            run_mode("crosswalk_usage", video_path)
+            run_mode("run_red", video_path)
+            run_mode("crossing_vehicle_count", video_path)
+            run_mode("personal_info", video_path)
+            run_mode("on_lane", video_path)
+            run_mode("env_info", video_path)
+
+            # final
+            run_mode("sum", video_path)
 
     elif args.mode == "pedestrian":
         video_dir = args.source_video_path
@@ -367,6 +387,27 @@ def main():
             run_mode("run_red", video_path)
             run_mode("on_lane", video_path)
             run_mode("env_info", video_path)
+
+    elif args.mode == "other":
+        video_dir = args.source_video_path
+        if not os.path.isdir(video_dir):
+            print(f"Error: {video_dir} is not a valid directory.")
+            return
+
+        video_files = [f for f in os.listdir(video_dir) if f.lower().endswith((".mp4", ".avi", ".mov", ".mkv"))]
+
+        for video_file in video_files:
+            video_path = os.path.join(video_dir, video_file)
+
+            run_mode("vehicle_type", video_path)
+            run_mode("speed", video_path)
+            run_mode("car_distance", video_path)
+            run_mode("pede_distance", video_path)
+            run_mode("count", video_path)
+            run_mode("speed_pede", video_path)
+            run_mode("waiting", video_path)
+            run_mode("tracking_pede", video_path)
+            run_mode("face", video_path)
     else:
         print(f"Unknown mode: {args.mode}")
 

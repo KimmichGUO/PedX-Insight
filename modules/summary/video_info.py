@@ -12,7 +12,10 @@ def generate_video_env_stats(video_path,
                              road_width_csv=None,
                              road_condition_csv=None,
                              accident_csv_path=None,
-                             output_csv_path=None):
+                             output_csv_path=None,
+                             run_red_csv=None,
+                             risky_csv_path=None,
+                             ):
 
     # 1 name
     video_name = os.path.splitext(os.path.basename(video_path))[0]
@@ -38,6 +41,10 @@ def generate_video_env_stats(video_path,
         road_condition_csv = os.path.join(output_dir, "[E4]road_condition.csv")
     if accident_csv_path is None:
         accident_csv_path = os.path.join(output_dir, "[E8]accident_detection.csv")
+    if run_red_csv is None:
+        run_red_csv = os.path.join(output_dir, "[C5]red_light_runner.csv")
+    if risky_csv_path is None:
+        risky_csv_path = os.path.join(output_dir, "[C1]risky_crossing.csv")
 
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -54,9 +61,35 @@ def generate_video_env_stats(video_path,
     road_width_df = pd.read_csv(road_width_csv)
     road_condition_df = pd.read_csv(road_condition_csv)
     accident_df = pd.read_csv(accident_csv_path)
+    runred_df = pd.read_csv(run_red_csv)
+    risky_df = pd.read_csv(risky_csv_path)
 
     # 4 total pedestrians
     total_pedestrians = tracked_df['track_id'].nunique()
+
+    if 'track_id' in risky_df.columns and 'risk' in risky_df.columns:
+        crossed_ids = risky_df['track_id'].unique()
+        total_crossers = len(crossed_ids)
+
+        risky_count = 0
+        for tid in crossed_ids:
+            person_df = risky_df[risky_df['track_id'] == tid]
+            risky_ratio = (person_df['risk'].str.lower() == 'risky').sum() / len(person_df)
+            if risky_ratio > 0.3:
+                risky_count += 1
+
+        risky_crossing_ratio = risky_count / total_crossers if total_crossers > 0 else 0
+    else:
+        risky_crossing_ratio = None
+
+        # 4+2 runred
+    if 'track_id' in runred_df.columns and 'ran_red_light' in runred_df.columns:
+        total_crossers_runred = runred_df['track_id'].nunique()
+        runred_ids = runred_df.loc[runred_df['ran_red_light'] == True, 'track_id'].unique()
+        runred_ratio = len(runred_ids) / total_crossers_runred if total_crossers_runred > 0 else 0
+    else:
+        runred_ratio = None
+
 
     # 5-6 vehicle total + top3
     vehicle_df = vehicle_df[vehicle_df['Vehicle_Type'].str.lower() != 'total']
@@ -100,6 +133,8 @@ def generate_video_env_stats(video_path,
         ["duration_seconds", duration],
         ["total_frames", total_frames],
         ["total_pedestrians", total_pedestrians],
+        ["risky_crossing_ratio", risky_crossing_ratio],
+        ["run_red_light_ratio", runred_ratio],
         ["total_vehicles", total_vehicles],
         ["top3_vehicles", top3_vehicles],
         ["main_weather", main_weather],

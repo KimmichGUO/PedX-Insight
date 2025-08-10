@@ -222,10 +222,10 @@ python main.py --mode env_info --source_video_path 'your_video'
 ```
 Result: [C9]crossing_env_info.csv  
 This function is used to extract the information of environment when a pedestrian has crossed the streets, including weather, daytime, accident or not, road condition.
-### 5. Combination Analysis for the city level
-#### (1) Extract video info about environment
+### 5. Combination Analysis at the city level
+#### (1) Extract video information
 ```bash
-python main.py --mode env_info --source_video_path 'your_video'
+python main.py --mode sum --source_video_path 'your_video'
 ```
 Result: [A1]video_info.csv  
 This function is used to extract and summary the information of whole video

@@ -54,6 +54,10 @@ def merge_env_info(video_path, crossing_csv_path=None, weather_csv_path=None, ro
             trans_crack = road_labels['Transverse Crack'].mode()[0]
             alligator = road_labels['Alligator Crack'].mode()[0]
             potholes = road_labels['Potholes'].mode()[0]
+            if long_crack == 1 or alligator == 1 or trans_crack == 1:
+                crack = 1
+            else:
+                crack = 0
         else:
             long_crack = trans_crack = alligator = potholes = -1
 
@@ -66,9 +70,10 @@ def merge_env_info(video_path, crossing_csv_path=None, weather_csv_path=None, ro
             'arrow_board': arrow_board,
             'cones': cones,
             'accident': accident,
-            'longitudinal_crack': long_crack,
-            'transverse_crack': trans_crack,
-            'alligator_crack': alligator,
+            # 'longitudinal_crack': long_crack,
+            # 'transverse_crack': trans_crack,
+            # 'alligator_crack': alligator,
+            'crack': crack,
             'potholes': potholes
         })
 

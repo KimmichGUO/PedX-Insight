@@ -22,6 +22,9 @@ from modules.speed_estimate.yolov5.utils.torch_utils import select_device, time_
 from modules.speed_estimate.deep_sort_pytorch.utils.parser import get_config
 from modules.speed_estimate.deep_sort_pytorch.deep_sort import DeepSort
 global np_store,exclamation
+
+import numpy as np
+np.int = int
 np_store = np.zeros((500, 6))
 alpha = 1.8/1.3
 palette = (2 ** 11 - 1, 2 ** 15 - 1, 2 ** 20 - 1)

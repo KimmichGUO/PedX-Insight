@@ -12,7 +12,7 @@ def run_car_detection_with_distance(video_path, weights = "yolov8n.pt", output_c
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "car_distance_tracked.csv")
+        output_csv_path = os.path.join(output_dir, "[V3]distance_ve_ve.csv")
 
     model = YOLO(weights)
     cap = cv2.VideoCapture(video_path)

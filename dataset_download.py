@@ -24,7 +24,7 @@ for idx, row in df.iterrows():
         try:
             subprocess.run([
                 "yt-dlp",
-                "-f", "bestvideo[height=2160]+bestaudio/best[height=2160]",
+                "-f", "bestvideo[height=2160]/bestvideo",
                 "-o", os.path.join(city_dir, f"%(title)s_{vid}.%(ext)s"),
                 url
             ], check=True)

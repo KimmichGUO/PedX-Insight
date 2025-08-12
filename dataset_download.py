@@ -2,10 +2,22 @@ import os
 import pandas as pd
 import subprocess
 import glob
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--start-city", type=str, default='Toronto', help="Start downloading from this city")
+args = parser.parse_args()
 
 df = pd.read_csv("mapping.csv")
 
-for idx, row in df.iterrows():
+start_index = 0
+if args.start_city:
+    if args.start_city in df['city'].values:
+        start_index = df.index[df['city'] == args.start_city][0]
+    else:
+        print(f"City not found: {args.start_city}, starting from the first city")
+
+for idx, row in df.iloc[start_index:].iterrows():
     city = row['city']
     video_ids = row['videos'].strip("[]").split(",")
     video_ids = [v.strip() for v in video_ids if v.strip()]
@@ -20,7 +32,7 @@ for idx, row in df.iterrows():
     for vid in video_ids:
         existing_files = glob.glob(os.path.join(city_dir, f"{city}{video_count}.*"))
         if existing_files:
-            print(f"Skipping {vid} (already exists)")
+            print(f"⏩ Skipping {vid} (already exists)")
             video_count += 1
             continue
 
@@ -29,8 +41,7 @@ for idx, row in df.iterrows():
 
         try:
             result = subprocess.run([
-                "yt-dlp",
-                "--get-title",
+                "yt-dlp", "--get-title",
                 "-f", "bestvideo[height=2160]/bestvideo",
                 "-o", os.path.join(city_dir, f"{new_video_name}.%(ext)s"),
                 url

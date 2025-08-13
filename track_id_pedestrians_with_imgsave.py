@@ -5,9 +5,9 @@ from collections import defaultdict
 from ultralytics import YOLO
 from yolox.tracker.byte_tracker import BYTETracker
 from types import SimpleNamespace
-import csv
-
 import numpy as np
+import heapq
+
 np.float = float
 
 def run_pedestrian_tracking_with_imgsave(video_path, weights="yolov8n.pt", output_csv_path=None):
@@ -38,9 +38,8 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolov8n.pt", outpu
     results = []
     target_cls = 0
 
-    saved_frame_ids = defaultdict(list)
-    max_saved = 3
-    min_frame_gap = 15
+    top3_heap = defaultdict(list)
+    crops_dict = defaultdict(dict)
 
     while cap.isOpened():
         success, frame = cap.read()
@@ -75,6 +74,7 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolov8n.pt", outpu
             track_id = target.track_id
             x1, y1 = int(tlwh[0]), int(tlwh[1])
             x2, y2 = int(tlwh[0] + tlwh[2]), int(tlwh[1] + tlwh[3])
+            area = (x2 - x1) * (y2 - y1)
 
             results.append({
                 "frame_id": frame_id,
@@ -86,28 +86,36 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolov8n.pt", outpu
                 "y2": y2
             })
 
-            prev_frames = saved_frame_ids[track_id]
-            if len(prev_frames) < max_saved and (not prev_frames or frame_id - prev_frames[-1] >= min_frame_gap):
-                # crop = frame[y1:y2, x1:x2]
-                expand_left = int((x2 - x1) * 0.1)
-                expand_right = int((x2 - x1) * 0.1)
-                expand_top = int((y2 - y1) * 0.05)
+            expand_left = int((x2 - x1) * 0.1)
+            expand_right = int((x2 - x1) * 0.1)
+            expand_top = int((y2 - y1) * 0.05)
 
-                x1_exp = max(0, x1 - expand_left)
-                x2_exp = min(frame.shape[1], x2 + expand_right)
-                y1_exp = max(0, y1 - expand_top)
-                y2_exp = y2
+            x1_exp = max(0, x1 - expand_left)
+            x2_exp = min(frame.shape[1], x2 + expand_right)
+            y1_exp = max(0, y1 - expand_top)
+            y2_exp = y2
 
-                crop = frame[y1_exp:y2_exp, x1_exp:x2_exp]
-                if crop.size == 0:
-                    continue
-                person_dir = os.path.join(pedestrian_img_dir, f"id_{track_id}")
-                os.makedirs(person_dir, exist_ok=True)
-                img_path = os.path.join(person_dir, f"frame_{frame_id}.jpg")
-                cv2.imwrite(img_path, crop, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-                saved_frame_ids[track_id].append(frame_id)
+            crop = frame[y1_exp:y2_exp, x1_exp:x2_exp]
+            if crop.size == 0:
+                continue
+
+            crops_dict[track_id][frame_id] = crop
+
+            if len(top3_heap[track_id]) < 3:
+                heapq.heappush(top3_heap[track_id], (area, frame_id))
+            else:
+                if area > top3_heap[track_id][0][0]:
+                    heapq.heapreplace(top3_heap[track_id], (area, frame_id))
 
     cap.release()
+
+    for track_id, heap_items in top3_heap.items():
+        person_dir = os.path.join(pedestrian_img_dir, f"id_{track_id}")
+        os.makedirs(person_dir, exist_ok=True)
+        for area, fid in sorted(heap_items, key=lambda x: x[0], reverse=True):
+            crop = crops_dict[track_id][fid]
+            img_path = os.path.join(person_dir, f"frame_{fid}.jpg")
+            cv2.imwrite(img_path, crop, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
     df = pd.DataFrame(results)
     df.to_csv(output_csv_path, index=False)

@@ -47,6 +47,7 @@ python main.py --mode face --source_video_path 'your_video'
 ```
 Result: [P6]age_gender_race.csv    
 https://github.com/serengil/deepface
+https://paddlepaddle.github.io/PaddleX/latest/pipeline_usage/tutorials/cv_pipelines/pedestrian_attribute_recognition.html
 #### (7) Gender
 ```bash
 python main.py --mode gender --source_video_path 'your_video'

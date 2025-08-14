@@ -1,4 +1,4 @@
-place,speed
+city,speed
 Pos Chiquito,1.9
 Oranjestad,1.53
 Kabul,1.04
@@ -12,8 +12,6 @@ Canillo,1.08
 Dubai,1.46
 Ajman,1.5
 Buenos Aires,1.48
-Buenos Aires,1.48
-Yerevan,1.1
 Yerevan,1.1
 Armavir,1.65
 Vanadzor,0.68
@@ -29,18 +27,15 @@ St. John's,1.4
 Sea view Farm,2.11
 Melbourne,0.98
 Sydney,0.98
-Sydney,0.98
 Brisbane,0.87
 Feldkirch,0.52
 Vienna,1.53
-Baku,1.38
 Baku,1.38
 Lankaran,1.82
 Xırdalan,1.71
 Sumgait,1.56
 Shaki,2.12
 Shirvan,1.86
-Bujumbura,1.66
 Bujumbura,1.66
 Muramvya,2.21
 Kayanza,2.05
@@ -50,10 +45,7 @@ Mpehe,2.09
 Antwerp,2
 Brussels,0.8
 Abomey Calavi,2.11
-Abomey Calavi,2.11
 Cotonou,0.99
-Cotonou,0.99
-Porto-Novo,1.35
 Porto-Novo,1.35
 Ouidah,1.21
 Sègbo,0.62
@@ -91,7 +83,6 @@ Cochabamba,0.92
 San José de Chiquitos,2.15
 Trinidad,1.16
 Sao Paulo,0.49
-Sao Paulo,0.49
 Aquidauana,1.4
 Campo Grande,0.9
 Oiapoque,1.93
@@ -109,7 +100,6 @@ Serowe,3.6
 Bangui,1.53
 Guerengou,1.39
 Damara,1.83
-"Toronto, ON",0.7
 "Toronto, ON",0.7
 "Montreal, QC",1.45
 "Zurich, ZH",1.03
@@ -138,7 +128,6 @@ Willemstad,1.74
 George Town,1.06
 Prague,1.05
 Berlin,1.78
-Berlin,1.78
 Frankfurt,1.31
 München,1.56
 Arta,3.38
@@ -149,32 +138,26 @@ Copenhagen,1.46
 Aarhus,1.54
 Santo Domingo,1.45
 Annaba,1.38
-Annaba,1.38
 Algiers,1.84
 El Madania,1.83
 El Harrach,1.77
 Oran,1.81
 Aïn Benian,3.38
 Dréan,1.48
-Dréan,1.48
 Quito,1.85
 Ambato,2.08
 Guaranda,1.03
 Tulcán,2.21
 Cairo,1.28
-Cairo,1.28
-Alexandria,0.91
 Alexandria,0.91
 New Cairo,2.16
 Giza,1.82
 Banha,1.33
 Mitsiwa,1.16
 Asmara,1.55
-Asmara,1.55
 Keren,1.42
 Mendefera,1.38
 Estepona,1.96
-Madrid,1.11
 Madrid,1.11
 Barcelona,1.06
 Melilla,1.85
@@ -184,11 +167,9 @@ Valencia,1.11
 Vincios,2.93
 Bilbao,1.5
 Tallinn,1.83
-Tallinn,1.83
 Narva,1.21
 Pärnu,1.32
 Tartu,1.5
-Addis Ababa,0.99
 Addis Ababa,0.99
 Gondar,1.42
 Hosanna,0.67
@@ -207,7 +188,6 @@ Mounana,1.89
 Port-Gentil,1.62
 London,2
 Tbilisi,1.13
-Tbilisi,1.13
 Batumi,1.6
 Zugdidi,1.28
 Rustavi,1.4
@@ -216,13 +196,11 @@ Kutaisi,1.43
 Poti,1.84
 Cape Coast,1.36
 Accra,1.28
-Accra,1.28
 Elmina,1.1
 Bunso,1.22
 Kumasi,1.31
 Tamale,1.58
 Navrongo,1.88
-Conakry,1.12
 Conakry,1.12
 Khorira,1.29
 Dubreka,1.16
@@ -236,9 +214,7 @@ Bouillante,0.54
 Saint-Claude,2.95
 Le Gosier,2.79
 Serrekunda,1.25
-Serrekunda,1.25
 Brikama,0.98
-Banjul,1.4
 Banjul,1.4
 Tanjeh,1.07
 Sanyang,0.79
@@ -260,7 +236,6 @@ Quetzaltenango,3.25
 Guatemala City,1.21
 Cayenne,1.44
 Linden,1.74
-Linden,1.74
 Georgetown,1.13
 Vreed en Hoop,1.11
 Nieuw Amsterdam,1.71
@@ -273,17 +248,12 @@ Choloma,1.57
 La Ceiba,1.51
 Port-au-Prince,1.63
 Denpasar,1.36
-Denpasar,1.36
 Jakarta,0.97
 "Thiruvananthapuram, KL",1.23
-"Thiruvananthapuram, KL",1.23
 "Thane, MH",1.93
-"Thane, MH",1.93
-"Mumbai, MH",1.06
 "Mumbai, MH",1.06
 "Shillong, ML",1.45
 "Kolhapur, MH",1.68
-"New Delhi, DL",1.28
 "New Delhi, DL",1.28
 "Kochi, KL",1.42
 "Calangute, GA",1.09
@@ -298,7 +268,6 @@ Jakarta,0.97
 Tehran,1.37
 Jerusalem,1.38
 Tel Aviv,1.19
-Tel Aviv,1.19
 Haifa,0.83
 Karmiel,0.89
 Be'er Sheva,2.93
@@ -311,15 +280,12 @@ Taranto,0.92
 Kingston,1.64
 Ocho Rios,0.81
 Montego Bay,1.41
-Montego Bay,1.41
 Lucea,0.64
-Spanish Town,1.1
 Spanish Town,1.1
 Mandeville,1.03
 Negril,1.04
 Portmore,0.91
 Linstead,1.39
-Tokyo,0.76
 Tokyo,0.76
 Aktau,2.45
 Almaty,1.31
@@ -341,7 +307,6 @@ Taraz,1.83
 Ekıbastuz,1.74
 Tobyl,1.22
 Nyahururu,2.58
-Nairobi,1.36
 Nairobi,1.36
 Eldoret,0.99
 Mururi,2.94
@@ -367,15 +332,12 @@ Nkubu,2.35
 Ngobit,1.81
 Ntharene,2.82
 Bishkek,1.28
-Bishkek,1.28
 Kyzyl-Kyya,1.1
 Karakol,1.07
 Tokmok,1.99
 Osh,0.92
 Jalal-Abad,2.12
 Phnom Penh,1.47
-Phnom Penh,1.47
-Sihanoukville,1.47
 Sihanoukville,1.47
 Kampong Chhnang,2.02
 Kampot,1.95
@@ -388,8 +350,6 @@ Basseterre,1.36
 Charlestown,1.49
 Old Road Town,0.65
 Seoul,0.8
-Seoul,0.8
-Vientiane,0.98
 Vientiane,0.98
 Beirut,1.91
 Bsharri,0.35
@@ -415,14 +375,11 @@ Teyateyaneng,1.75
 Kaunas,1.51
 Vilnius,2.31
 Riga,1.32
-Riga,1.32
 Liepaja,0.86
 Marigot,1.61
 Sandy Ground,0.87
 Mont Vernon,2.42
 Casablanca,1.17
-Casablanca,1.17
-Rabat,1.34
 Rabat,1.34
 Fnideq,1.29
 Ouarzazate,1.51
@@ -432,7 +389,6 @@ Agadir,1.56
 Aghbalou,1.72
 Saidia,2.92
 Al Hoceima,1.51
-Tangier,1.58
 Tangier,1.58
 Jerada,1.39
 Fez,1.47
@@ -460,7 +416,6 @@ Căușeni,0.74
 Orhei,1.54
 Toamasina,1.71
 Antananarivo,1.15
-Antananarivo,1.15
 Toliara,2.08
 Malé,1.22
 Gan,0.43
@@ -472,7 +427,6 @@ Ouélessébougou,1.89
 Bamako,1.69
 Paola,2.11
 Gżira,3.46
-Qormi,1.72
 Qormi,1.72
 Naxxar,1.25
 Żurrieq,1.76
@@ -487,7 +441,6 @@ St Paul's Bay,1.84
 Zabbar,1.83
 Birżebbuġa,1.89
 Yangon,1.43
-Ulaanbaatar,1.47
 Ulaanbaatar,1.47
 Maputo,0.8
 Beira,1.61
@@ -523,10 +476,8 @@ Minna,1.11
 Niamey,1.11
 Port Harcourt,1.34
 Lagos,1.06
-Lagos,1.06
 Afikpo,1.59
 Umuahia,1.5
-Abuja,1.45
 Abuja,1.45
 Lekki,1.67
 Abeokuta,0.68
@@ -536,7 +487,6 @@ Ibadan,1.48
 Awka,1.77
 Lugbe,1.2
 Badagry,1.68
-Enugu,1.41
 Enugu,1.41
 Aba,1.76
 Abakaliki,1.53
@@ -558,22 +508,18 @@ Amsterdam,2.01
 Haarlem,2.06
 Eindhoven,2.03
 Kathmandu,1.22
-Kathmandu,1.22
 Nibok,2.36
 Ronave,1.03
 Baitsi,0.87
 Auckland,1.48
 Muscat,2.92
-Muscat,2.92
 Qurayyat,1.85
 Tiwi,1.07
 Sur,1.56
 Karachi,0.97
-Karachi,0.97
 Panama City,1.38
 La Chorrera,1.98
 La Oroya,0.71
-Lima,1.22
 Lima,1.22
 Huacho,1.58
 Huancayo,1.33
@@ -605,14 +551,12 @@ Funchal,1.62
 Nazaré,1.06
 Asunción,1.83
 Papeete,1.28
-Papeete,1.28
 Maharepa,3.06
 Paraoro,1.01
 Punaʻauia,0.78
 Timisoara,0.87
 Saint Petersburg,1.42
 Salekhard,1.26
-Moscow,1.21
 Moscow,1.21
 Stavropol,1.18
 Omsk,1.99
@@ -629,7 +573,6 @@ Rostov-on-Don,1.18
 Astrakhan,1.06
 Novosibirsk,1.25
 Murmansk,0.96
-Murmansk,0.96
 Surgut,1.16
 Arkhangelsk,1.23
 Lipetsk,2.05
@@ -639,7 +582,6 @@ Chita,1.74
 Yuzhno-Sakhalinsk,1.51
 Yaroslavl,1.27
 Kazan,0.96
-Kazan,0.96
 Gorno-Altaysk,1.4
 Mikhaylovsk,1.98
 Volgograd,1.71
@@ -647,8 +589,6 @@ Samara,1.36
 Nevinnomyssk,1.2
 Norilsk,1.84
 Krasnodar,1.74
-Krasnodar,1.74
-Yakutsk,2.21
 Yakutsk,2.21
 Bryansk,0.68
 Tyumen,1.5
@@ -659,19 +599,14 @@ Podolsk,1.62
 Naberezhnye Chelny,1.4
 Kamensk-Uralsky,1.31
 Khabarovsk,1.52
-Khabarovsk,1.52
 Pyatigorsk,1.47
 Apatity,2.68
-Krasnoyarsk,1.78
 Krasnoyarsk,1.78
 Vladivostok,1.73
 Tuapse,2.37
 Cherkessk,0.98
-Cherkessk,0.98
 Lakhdenpokhya,1.48
 Makhachkala,1.13
-Makhachkala,1.13
-Irkutsk,1.71
 Irkutsk,1.71
 Irbit,2.16
 Labinsk,1.64
@@ -680,10 +615,8 @@ Engels,1.16
 Tiksi,1.72
 Severodvinsk,1.81
 Kaliningrad,1.48
-Kaliningrad,1.48
 Apsheronsk,2.42
 Kursk,1.15
-Magadan,0.96
 Magadan,0.96
 Shadrinsk,1.13
 Tobolsk,2.27
@@ -703,15 +636,11 @@ Rwamagana,1.62
 Omdurman,1.98
 Khartoum,2.37
 Kaolack,1.42
-Kaolack,1.42
 Dakar,1.39
-Dakar,1.39
-Ziguinchor,1.55
 Ziguinchor,1.55
 N'Dofan,1.57
 Fatick,0.86
 Honiara,1.77
-Freetown,1.04
 Freetown,1.04
 Pendembu,1.6
 Koidu,1.9
@@ -761,7 +690,6 @@ San Salvador,1.33
 San Marino,1.41
 Afgoye,1.11
 Mogadishu,1.63
-Mogadishu,1.63
 Hargeisa,0.68
 Borama,1.77
 Vršac,0.9
@@ -782,7 +710,6 @@ Aleppo,1.16
 Tartus,1.26
 Hama,2.51
 N'Djamena,1.52
-Lomé,1.15
 Lomé,1.15
 Atakpame,3.75
 Notsé,1.96
@@ -807,15 +734,11 @@ Istanbul,0.92
 Funafuti,1.37
 Namanga,2.11
 Kampala,1.16
-Kampala,1.16
 Kyiv,1.29
 Truskavets,1.68
 Odesa,1.7
-Odesa,1.7
 Lutsk,1.42
 Lviv,1.51
-Lviv,1.51
-Kharkiv,0.87
 Kharkiv,0.87
 Chernihiv,1.38
 Rivne,1.28
@@ -824,7 +747,6 @@ Zaporizhzhia,1.04
 Makiivka,1.65
 Sevastopol,1.2
 Luhansk,1.17
-Donetsk,0.96
 Donetsk,0.96
 Kryvyi Rih,1.49
 Kovel,1.05
@@ -835,7 +757,6 @@ Uman,1.66
 Vinnytsia,1.25
 Khmelnytskyi,1.37
 Uzhhorod,1.64
-Simferopol,1.23
 Simferopol,1.23
 Vasylkiv,1
 Chernivtsi,1.73
@@ -871,17 +792,12 @@ Pan de Azúcar,1.71
 Minas,1.55
 Piriápolis,1.48
 "New York, NY",1.18
-"New York, NY",1.18
 "Las Vegas, NV",1.21
-"Las Vegas, NV",1.21
-"Los Angeles, CA",1.67
 "Los Angeles, CA",1.67
 "Portland, OR",1.03
 "San Francisco, CA",1.44
 "Houston, TX",1.54
-"Houston, TX",1.54
 "Pittsburgh, PA",0.72
-"Chicago, IL",1.35
 "Chicago, IL",1.35
 "Savannah, GA",1.14
 "Austin, TX",1.53
@@ -892,11 +808,9 @@ Piriápolis,1.48
 "Atlanta, GA",1.34
 "Stockton, CA",2.03
 "Santa Barbara, CA",1.32
-"Santa Barbara, CA",1.32
 "Philadelphia, PA",0.98
 "San Diego, CA",1.13
 "Cincinnati, OH",1.09
-Samarkand,1.56
 Samarkand,1.56
 Olmaliq,1.16
 Toshkent,1.69
@@ -911,7 +825,6 @@ Biabou,1.33
 Brighton,2.46
 Arnos Vale,2.64
 Belmont,1.53
-Caracas,0.76
 Caracas,0.76
 Road Town,1.75
 Ho Chi Minh City,0.57

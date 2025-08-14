@@ -1,0 +1,779 @@
+city,state,time,speed
+Sainte-Rose,,25,2.87
+Łódź,,23.5,1.3
+Berlin,,8.44,1.78
+Utrecht,,12.77,2.27
+Sao Paulo,,6.35,0.49
+Lisbon,,11.67,0.42
+Alexandria,,5.65,0.91
+Mururi,,10.67,2.94
+Riga,,5.25,1.32
+Phnom Penh,,5.19,1.47
+Seoul,,4.97,0.8
+Vientiane,,4.82,0.98
+La Oroya,,9.46,0.71
+San Juan,,4.7,1.41
+Managua,,9.27,3.36
+Santa Barbara,CA,4.63,1.32
+Sydney,,4.57,0.98
+Madrid,,4.49,1.11
+Tokyo,,4.44,0.76
+Lima,,4.27,1.22
+Thiruvananthapuram,KL,4.19,1.23
+Tel Aviv,,4.13,1.19
+Settat,,8,1.95
+Tulcán,,8,2.21
+Ho Chi Minh City,,7.95,0.57
+Mumbai,MH,3.94,1.06
+Caracas,,3.88,0.76
+Chicago,IL,3.83,1.35
+Ilulissat,,7.64,0.75
+Karachi,,3.7,0.97
+Sihanoukville,,3.68,1.47
+Metz,,7.25,1.29
+Toronto,ON,3.61,0.7
+Buenos Aires,,3.54,1.48
+Denpasar,,3.48,1.36
+Las Vegas,NV,3.44,1.21
+New Delhi,DL,3.44,1.28
+Ta Khmau,,6.86,1.69
+Guatemala City,,3.4,1.21
+Rabat,,3.36,1.34
+Krasnoyarsk,,3.36,1.78
+Bucoli,,6.67,0.91
+Kharkiv,,3.31,0.87
+Juba,,6.6,1.53
+Abomey Calavi,,3.3,2.11
+Ziguinchor,,3.29,1.55
+Cherkessk,,6.56,0.98
+Los Angeles,CA,3.19,1.67
+Apia,,3.19,1.65
+Auckland,,6.22,1.48
+Moscow,,3.08,1.21
+Kazan,,3.07,0.96
+New York,NY,3.05,1.18
+Gaborone,,6.04,1.41
+Makhachkala,,3,1.13
+Nibok,,5.83,2.36
+Odesa,,2.89,1.7
+Kampala,,2.88,1.16
+München,,5.72,1.56
+Francistown,,5.67,1.65
+Moynaq,,5.67,0.35
+Bishkek,,5.65,1.28
+Atlanta,GA,5.65,1.34
+Freetown,,2.82,1.04
+Yerevan,,2.82,1.1
+Turin,,5.64,1.81
+Annaba,,2.82,1.38
+Lomé,,2.81,1.15
+Takeo,,5.62,1.64
+Porto-Novo,,2.8,1.35
+Asmara,,2.77,1.55
+Sofia,,5.54,0.86
+Rostov-on-Don,,5.52,1.18
+Pittsburgh,PA,5.5,0.72
+Murmansk,,2.75,0.96
+Campo Grande,,5.46,0.9
+Kathmandu,,2.7,1.22
+Addis Ababa,,2.69,0.99
+Cairo,,2.68,1.28
+Baku,,2.66,1.38
+Oranjestad,,5.25,1.53
+Conakry,,2.62,1.12
+Kaolack,,2.62,1.42
+Road Town,,2.59,1.75
+Kampot,,5.14,1.95
+Columbus,OH,5.1,1.24
+Kampong Chhnang,,5.09,2.02
+Almaty,,5.04,1.31
+Seattle,WA,5.03,1.13
+Nairobi,,2.52,1.36
+Thane,MH,2.51,1.93
+Masvingo,,5,1.23
+Manila,,4.99,1.3
+Serrekunda,,2.46,1.25
+Accra,,2.44,1.28
+Ulaanbaatar,,2.43,1.47
+Enugu,,2.4,1.41
+Dréan,,2.4,1.48
+Milan,,4.79,1.14
+Nizhny Tagil,,4.78,3.47
+Tangier,,2.39,1.58
+Montego Bay,,2.38,1.41
+Lucea,,4.76,0.64
+Toshkent,,2.38,1.69
+Yakutsk,,2.38,2.21
+Kurgan,,4.73,2.14
+Maputo,,2.35,0.8
+San Salvador,,4.68,1.33
+Gros Islet,,4.67,2.42
+Nouméa,,4.67,1.1
+Petropavlovsk-Kamchatsky,,4.66,0.9
+Victoria,,2.32,2.31
+Abidjan,,2.31,1.84
+Lagos,,2.31,1.06
+Miami,FL,4.58,1.73
+Banjul,,2.28,1.4
+Abuja,,2.27,1.45
+Molepolole,,4.54,0.97
+Linden,,2.26,1.74
+Ouarzazate,,2.26,1.51
+Białystok,,4.52,0.78
+Tbilisi,,2.25,1.13
+Bangkok,,4.47,0.73
+Babruysk,,4.47,1.41
+Mariupol,,4.47,2.08
+Antananarivo,,2.23,1.15
+Houston,TX,4.44,1.54
+Asunción,,4.37,1.83
+Zhodzina,,4.33,1.76
+Oji River,,4.33,0.5
+Lviv,,2.16,1.51
+Spanish Town,,2.15,1.1
+Kuala Lumpur,,4.29,0.78
+Papeete,,4.29,1.28
+Parika,,4.26,1.25
+Mykolaiv,,4.26,1.24
+Podolsk,,4.26,1.62
+Lurigancho-Chosica,,4.23,0.94
+Casablanca,,2.1,1.17
+Mogadishu,,2.1,1.63
+Bafoussam,,4.19,0.79
+Cotonou,,4.19,0.99
+Paramaribo,,4.18,1.26
+Zheleznogorsk,,4.17,1.46
+Portland,OR,4.16,1.03
+Jakarta,,4.12,0.97
+Paris,,4.11,0.9
+Minsk,,2.05,1.41
+Nkubu,,4.09,2.35
+Irkutsk,,4.08,1.71
+Philadelphia,PA,4.03,0.98
+Lusaka,,2.01,1.39
+Grand Baie,,4.01,1.21
+Zabbar,,4,1.83
+Rotterdam,,4,1.05
+Bouillante,,4,0.54
+Melbourne,,3.99,0.98
+Awka,,3.99,1.77
+Cayenne,,3.96,1.44
+Brisbane,,3.96,0.87
+Thessaloniki,,3.95,0.97
+Pinsk,,3.94,1.37
+Barcelona,,3.92,1.06
+Yangon,,3.92,1.43
+Pothencode,KL,3.92,1.55
+Khabarovsk,,3.91,1.52
+Birżebbuġa,,3.9,1.89
+Bilbao,,3.89,1.5
+Marrakesh,,3.87,1.37
+Speightstown,,3.87,1.76
+Dakar,,1.92,1.39
+Baie Saint Anne,,3.83,1.33
+Magadan,,1.92,0.96
+Nuuk,,3.81,1.53
+Ouagadougou,,3.81,1.34
+Helsinki,,3.8,1.24
+Batumi,,1.9,1.6
+Phuket Town,,3.78,1.6
+Vacoas-Phoenix,,1.89,1.07
+Volgograd,,3.78,1.71
+Tomsk,,3.75,1.25
+Damascus,,3.74,1.01
+Kryvyi Rih,,3.74,1.49
+Muscat,,1.87,2.92
+Qormi,,1.86,1.72
+Estepona,,3.72,1.96
+Sant Julià de Lòria,,3.71,1.62
+Konotop,,3.69,0.49
+Bujumbura,,1.85,1.66
+La Paz,,3.68,0.9
+Ouélessébougou,,3.68,1.89
+San Pedro Sula,,1.83,1.4
+Sègbo,,3.67,0.62
+Vinnytsia,,3.67,1.25
+St. John's,,3.66,1.4
+Athens,,3.66,0.95
+Donetsk,,1.83,0.96
+Valencia,,3.65,1.11
+Tallinn,,3.64,1.83
+Haifa,,3.64,0.83
+Austin,TX,3.64,1.53
+Puerto Suárez,,3.64,1.49
+Aquidauana,,3.62,1.4
+Tirana,,3.62,1.13
+Simferopol,,3.62,1.23
+La Ceiba,,3.61,1.51
+Comayagua,,3.59,1.22
+Ravenna,,3.58,1.94
+Kursk,,3.58,1.15
+Gweru,,3.54,0.62
+San Francisco,CA,3.53,1.44
+Yuzhno-Sakhalinsk,,3.5,1.51
+Bissau,,3.48,1.62
+Dubai,,3.48,1.46
+Bishoftu,,3.47,1.26
+Mysore,KA,3.45,1.47
+Paola,,3.42,2.11
+Santa Cruz de la Sierra,,3.41,1.62
+Georgetown,,3.4,1.13
+Kigali,,3.4,1.21
+Quito,,3.39,1.85
+Janjanbureh,,3.38,1.63
+Qostanai,,3.37,1.25
+Jalal-Abad,,3.36,2.12
+Gelendzhik,,3.35,1.75
+Krasnodar,,3.35,1.74
+Kolhapur,MH,3.35,1.68
+Ijevan,,3.33,1.49
+Aguadilla,,3.33,1.5
+Tegucigalpa,,3.33,1.77
+Lutsk,,3.3,1.42
+Mbabane,,3.29,1.2
+Goodlands,,3.28,0.89
+St Paul's Bay,,3.28,1.84
+Windhoek,,3.27,1.4
+Port Gentil,,3.26,1.1
+Gomel,,3.25,1.23
+Porto,,3.25,0.83
+Manzini,,3.23,1.03
+Pune,MH,3.22,1.81
+Montevideo,,3.22,2.26
+Moyamba Junction,,3.21,1.34
+Hamilton,,3.21,0.67
+Bsharri,,3.19,0.35
+Malé,,3.18,1.22
+Swakopmund,,3.17,1.99
+San José de Chiquitos,,3.15,2.15
+Minas,,3.15,1.55
+Amsterdam,,3.15,2.01
+Vladivostok,,3.14,1.73
+Bridgetown,,3.14,1.52
+Khartoum,,3.13,2.37
+Banha,,3.12,1.33
+Ba,,3.12,0.77
+Agadir,,3.11,1.56
+Dibrugarh,AS,3.11,1.04
+Princes Town,,3.1,0.91
+Hosanna,,3.1,0.67
+Tehran,,3.1,1.37
+Novopolotsk,,3.09,1.2
+Frankfurt,,3.09,1.31
+Ipiales,,3.08,1.32
+Holetown,,3.07,1.55
+London,,3.07,2
+San Diego,CA,3.07,1.13
+Punta del Este,,3.07,1.5
+Mandeville,,3.07,1.03
+Barranquilla,,3.06,1.76
+Macapá,,3.06,2.02
+Kumba,,3.05,1.83
+Ocho Rios,,3.04,0.81
+Essaouira,,3.04,0.59
+Montreal,QC,3.04,1.45
+Jerusalem,,3.04,1.38
+Sochi,,3.04,1.32
+Balneário Camboriú,,3.04,1.77
+Sarajevo,,3.04,0.88
+Kremenchuk,,3.04,1.57
+Luhansk,,3.04,1.17
+Chuy,,3.04,0.93
+Fergana,,3.03,1.64
+Labinsk,,3.03,1.64
+Huancayo,,3.03,1.33
+Stavropol,,3.03,1.18
+Kochi,KL,3.01,1.42
+El Madania,,3,1.83
+Tarfaya,,3,2.09
+Belgrade,,3,0.8
+Kottayam,KL,3,3.62
+Cincinnati,OH,3,1.09
+Havana,,3,1.63
+Skopje,,2.99,1.5
+Rome,,2.99,1.46
+Andorra la Vella,,2.98,1.35
+Faro,,2.98,1.64
+Bengaluru,KA,2.97,1.13
+Astana,,2.97,1.56
+Astrakhan,,2.95,1.06
+Fes,,2.95,1.49
+Kingston,,2.95,1.64
+Vreed en Hoop,,2.94,1.11
+Saint Petersburg,,2.94,1.42
+Eldoret,,2.93,0.99
+Prague,,2.93,1.05
+Bila Tserkva,,2.92,1.42
+Johannesburg,,2.92,1.09
+Zhytomyr,,2.92,0.96
+Lankaran,,2.91,1.82
+Savannah,GA,2.88,1.14
+Ariana,,2.88,1.28
+Lucena,,2.88,1.95
+Novosibirsk,,2.88,1.25
+Jerada,,2.87,1.39
+Kyiv,,2.85,1.29
+Hargeisa,,2.85,0.68
+Ronda,,2.85,1.18
+Santo Domingo,,2.84,1.45
+George Town,,2.84,1.06
+Samarkand,,2.84,1.56
+Panningen,,2.83,2.61
+Chita,,2.83,1.74
+Quetzaltenango,,2.83,3.25
+Linstead,,2.83,1.39
+Philipsburg,,2.82,0.89
+Arkhangelsk,,2.81,1.23
+Poltava,,2.8,0.84
+Oiapoque,,2.79,1.93
+Quatre Bornes,,2.79,1.74
+Bamako,,2.78,1.69
+Rivne,,2.78,1.28
+Coimbatore,TN,2.78,1.18
+Eindhoven,,2.78,2.03
+Zurich,ZH,2.77,1.03
+Zaporizhzhia,,2.76,1.04
+Santiago,,2.76,0.89
+Kalamata,,2.75,1.05
+Copenhagen,,2.75,1.46
+Meru,,2.75,2.02
+Ouidah,,2.75,1.21
+Chernihiv,,2.74,1.38
+Port Louis,,2.74,1.46
+Monze,,2.73,1.03
+Antalya,,2.73,1.06
+Omdurman,,2.73,1.98
+Salekhard,,2.72,1.26
+Lipetsk,,2.7,2.05
+Siena,,2.69,0.84
+Huacho,,2.68,1.58
+St. David's,,2.67,1.4
+Tétouan,,2.67,1.1
+Owia,,1.33,1.01
+Tiwi,,2.67,1.07
+Sur,,2.67,1.56
+Tiksi,,2.67,1.72
+Stockton,CA,2.67,2.03
+Damara,,2.67,1.83
+Bo,,2.66,1.77
+Kovel,,2.66,1.05
+Dubreka,,2.66,1.16
+Vienna,,2.66,1.53
+Harare,,2.66,1.37
+Badagry,,2.65,1.68
+Pathanamthitta,KL,2.64,1.37
+Shaki,,2.64,2.12
+Cherkasy,,2.63,1.03
+Abeokuta,,2.63,0.68
+Bulawayo,,2.62,1.21
+Coimbra,,2.62,1.22
+Nadi,,2.62,1.19
+Sonsonate,,2.6,1.08
+Kingstown,,2.59,1.6
+Basseterre,,2.58,1.36
+Oruro,,2.58,1.25
+Prizren,,2.58,1.9
+Yekaterinburg,,2.58,1.41
+Istanbul,,2.58,0.92
+Gan,,2.58,0.43
+Ajman,,2.56,1.5
+Caranavi,,2.56,0.92
+Aleppo,,2.55,1.16
+Dhaka,,2.55,1.17
+Palenque,,2.54,1.52
+Corfu,,2.54,1.4
+Limbe,,2.54,1.28
+Tartus,,2.54,1.26
+N'Djamena,,2.52,1.52
+Port Harcourt,,2.52,1.34
+Omsk,,2.52,1.99
+Nazaré,,2.51,1.06
+San José,,2.51,1.08
+Brikama,,2.51,0.98
+Ta Khmao,,2.51,1.27
+Oran,,2.5,1.81
+Asaba,,2.5,1.89
+Mitunguu,,2.5,2.17
+Sanaa,,2.5,1.83
+Babonneau,,2.49,2.04
+Gyumri,,2.49,1.4
+Castries,,2.49,1.72
+Lilongwe,,2.48,1.49
+Tyumen,,2.48,1.5
+Makeni,,2.47,1.61
+Alasia,,2.47,1.11
+Toamasina,,2.46,1.71
+Ibadan,,2.46,1.48
+Korosten,,2.44,1.07
+Kathwana,,2.44,2.94
+Perm,,2.44,1.39
+Grenville,,2.43,1.47
+Sarny,,2.43,1.42
+Cochabamba,,2.42,0.92
+Maseru,,2.42,1.55
+Petit Valley,,2.42,2.15
+Kabul,,2.42,1.04
+Farafenni,,2.42,0.93
+Sea view Farm,,2.42,2.11
+Bangui,,2.41,1.53
+Granada,,2.41,1.53
+Ivano-Frankivsk,,2.41,1.66
+Kirov,,2.41,1.12
+Olmaliq,,2.41,1.16
+Tanjeh,,2.4,1.07
+Fez,,2.4,1.47
+Kherson,,2.4,2.65
+Skeldon,,2.4,1.51
+Guaranda,,2.4,1.03
+Tunis,,2.4,1.33
+Melilla,,2.4,1.85
+Khmelnytskyi,,2.4,1.37
+Chișinău,,2.4,1.3
+Port-au-Prince,,2.4,1.63
+Muramvya,,2.39,2.21
+Shymkent,,2.39,1.16
+Dingli,,2.39,0.92
+José Pedro Varela,,2.39,0.8
+Saint-François,,2.38,1.18
+Rustavi,,2.38,1.4
+Libreville,,2.37,1.67
+Ternopil,,2.37,1.21
+Pristina,,2.37,1.08
+Nyeri,,2.37,1.56
+Lugbe,,2.36,1.2
+Paro,,2.36,1.63
+Giza,,2.35,1.82
+Tamale,,2.34,1.58
+Playa del Carmen,,2.34,1.67
+Embu,,2.33,1.89
+Sumy,,2.33,1.02
+Brighton,,2.33,2.46
+Antwerp,,2.33,2
+Mutengene,,2.33,2.57
+Liepaja,,2.33,0.86
+Saint-Claude,,2.33,2.95
+Sinkunia,,2.33,1.91
+Lakhdenpokhya,,2.33,1.48
+Grodno,,2.33,1.93
+Saratov,,2.32,1.26
+Abakaliki,,2.32,1.53
+Khemisset,,2.32,1.62
+Aarhus,,2.31,1.54
+Valletta,,2.31,2.01
+Pärnu,,2.3,1.32
+Sesimbra,,2.3,1.64
+Funchal,,2.3,1.62
+Kramatorsk,,2.3,1.28
+Kaduna,,2.3,1.55
+Dnipro,,2.29,1.03
+Keren,,2.29,1.42
+Warsaw,,2.29,1.18
+Douala,,2.27,1.78
+Vagharshapat,,2.27,1.57
+Kalangba,,2.27,1.91
+Roseau,,2.25,2.07
+Punaʻauia,,2.25,0.78
+Port-Gentil,,2.25,1.62
+Luzern,,2.25,0.89
+Kaliningrad,,2.24,1.48
+Khorira,,2.24,1.29
+Yalta,,2.23,1.29
+Oujda,,2.23,1.52
+Kenema,,2.23,1.9
+Niamey,,2.22,1.11
+Dushanbe,,2.22,1.21
+Guenfouda,,2.22,0.92
+Thimphu,,2.21,1.31
+Malabo,,2.21,1.81
+Coyah,,2.21,1.46
+Tartu,,2.21,1.5
+Chuka,,2.2,1.66
+Armavir,,2.2,1.65
+Aveiro,,2.2,1.8
+Panama City,,2.2,1.38
+Afgoye,,2.19,1.11
+Monrovia,,2.18,1.35
+Yaoundé,,2.17,1.76
+Gżira,,2.17,3.46
+Lodrino,,2.17,0.91
+Cascais,,2.17,0.86
+Lobamba,,2.17,2.45
+Pyatigorsk,,2.17,1.47
+Fray Bentos,,2.17,0.72
+Choloma,,2.17,1.57
+Birgu,,2.17,1.54
+Novy Urengoy,,2.17,2.43
+Benin City,,2.16,1.33
+Bizerte,,2.16,1.03
+Port Vila,,2.16,1.88
+Ilovaisk,,2.15,2.05
+Kabala,,2.15,1.66
+Peja,,2.15,1.2
+San Marino,,2.15,1.41
+Irbit,,2.14,2.16
+Notsé,,2.14,1.96
+Laura,,2.13,0.63
+Voronezh,,2.12,0.92
+Ambato,,2.12,2.08
+Canillo,,2.11,1.08
+Huntington Beach,CA,2.11,1.26
+Bryansk,,2.1,0.68
+Kano,,2.1,1.19
+Kutaisi,,2.1,1.43
+Gelan,,2.08,0.57
+Bo Waterside,,2.08,1.95
+Calangute,GA,2.08,1.09
+Baranavichy,,2.07,1.27
+Sanyang,,2.07,0.79
+Al Hoceima,,2.06,1.51
+Polotsk,,2.06,2.13
+Lekki,,2.05,1.67
+Zomba,,2.05,1.89
+Tobruk,,2.05,1.38
+Brussels,,2.05,0.8
+La Massana,,2.05,1.45
+Taiz,,2.04,1.45
+Nouakchott,,2.04,1.52
+Brest,,2.04,1.48
+Djibouti,,2.04,1.89
+El Harrach,,2.04,1.77
+Luanda,,2.02,1.63
+Uzhhorod,,2.02,1.64
+Sare,,2.01,1.43
+Shillong,ML,2.01,1.45
+Uman,,2,1.66
+Chernivtsi,,2,1.73
+Willemstad,,2,1.74
+Vanadzor,,2,0.68
+Kamensk-Uralsky,,2,1.31
+Ndola,,2,1.38
+Robertsport,,2,1.24
+Korçë,,2,2.1
+Amouli,,2,0.84
+Old Road Town,,2,0.65
+Franceville,,2,1.57
+Sisimiut,,2,1.96
+Pelican Key,,2,1.81
+Arta,,2,3.38
+Baucau,,2,1.36
+Kitengela,,2,1.62
+Malajira,,1.99,1.43
+Teyateyaneng,,1.99,1.75
+Koidu,,1.99,1.9
+Kumasi,,1.98,1.31
+Batkanu,,1.98,1.42
+Kyzyl-Kyya,,1.98,1.1
+Nefza,,1.97,1.17
+Sussex,,1.96,1.56
+Poti,,1.96,1.84
+Pujehun,,1.96,1.75
+Soma,,1.96,0.93
+Pleebo,,1.96,1.46
+Mounana,,1.96,1.89
+Mogilev,,1.95,0.79
+Salé,,1.95,1.48
+Algiers,,1.95,1.84
+Boryspil,,1.94,0.93
+Chogoria,,1.93,2.17
+Aghbalou,,1.93,1.72
+Kropyvnytskyi,,1.92,1.93
+Zhezkazgan,,1.92,2.2
+Marigot,,1.9,1.61
+Ufa,,1.9,1.29
+Surgut,,1.89,1.16
+Buchanan,,1.89,2.16
+Kaunas,,1.89,1.51
+Moroni,,1.89,1.42
+Biabou,,1.88,1.33
+Ourika,,1.88,2.38
+Narva,,1.88,1.21
+Kayanza,,1.87,2.05
+Namanga,,1.87,2.11
+Aral,,1.85,2.68
+Kambia,,1.85,1.71
+Elmina,,1.84,1.1
+Beira,,1.84,1.61
+Cape Coast,,1.84,1.36
+Bender,,1.83,1.89
+Makwasa,,1.83,2.21
+Temara,,1.83,2.71
+Ahfir,,1.83,0.91
+Samara,,1.83,1.36
+Leiria,,1.83,1.31
+Żurrieq,,1.83,1.76
+Blantyre,,1.83,0.95
+Szczecin,,1.83,1.72
+Pavlodar,,1.83,1.44
+Taraz,,1.82,1.83
+Morne Fortune,,1.81,1.61
+Isabela,,1.8,3.07
+Karakol,,1.8,1.07
+Monaco,,1.8,2.73
+Vladikavkaz,,1.79,1.6
+Masingbi,,1.79,1.46
+Taranto,,1.79,0.92
+Inyi,,1.78,1.23
+Toliara,,1.78,2.08
+Naxxar,,1.78,1.25
+Betio,,1.78,1.18
+Pyongyang,,1.78,1.96
+Mont Vernon,,1.78,2.42
+Bamenda,,1.77,1.05
+Tuapse,,1.77,2.37
+Guerengou,,1.75,1.39
+Barnesville,,1.73,1.86
+Piriápolis,,1.73,1.48
+Minna,,1.73,1.11
+Port Loko,,1.72,1.56
+Gondar,,1.72,1.42
+Sumgait,,1.7,1.56
+Tintafor,,1.7,1.57
+Ponta do Ouro,,1.69,1.4
+Berkane,,1.69,1.82
+Kralendijk,,1.69,1.93
+Sevastopol,,1.69,1.2
+Falabe,,1.67,1.5
+Lunsar,,1.67,1.21
+Nyahururu,,1.67,2.58
+Vermont,,1.67,1.82
+Vitebsk,,1.67,0.84
+Rechytsa,,1.67,1.52
+Karagandy,,1.67,1.75
+Port Moresby,,1.67,2.47
+Labuan,,1.67,1.81
+Enhams,,1.67,0.54
+Akhfennir,,1.67,1.8
+Binkolo,,1.67,1.85
+Kionyo,,1.67,1.7
+Mendefera,,1.67,1.38
+Ntoum,,1.67,1.44
+Serowe,,1.67,3.6
+Onitsha,,1.67,1.68
+Gorongosa,,1.67,1.37
+Anua,,1.67,0.7
+Thyolo,,1.67,1.86
+Trinidad,,1.67,1.16
+Belize City,,1.67,1.57
+Goris,,1.67,2.35
+Petifu Junction,,1.67,1.31
+Mambolo,,1.67,1.74
+Sukhumi,,1.67,1.12
+Caguas,,1.67,2.06
+Kansk,,1.67,0.9
+Chefchaouen,,1.64,2.09
+Fatick,,1.63,0.86
+Shadrinsk,,1.62,1.13
+Ekpoma,,1.6,1.18
+Pago Pago,,1.6,1.34
+Durban,,1.6,1.18
+Naberezhnye Chelny,,1.6,1.4
+São Tomé,,1.58,1.97
+Waterloo,,1.57,1.68
+Magburaka,,1.56,1.86
+Makiivka,,1.56,1.65
+Luqa,,1.56,2.08
+N'Dofan,,1.56,1.57
+Pos Chiquito,,1.56,1.9
+Ntsaouéni,,1.55,2.35
+Masoila,,1.54,1.73
+Forecariah,,1.53,1.97
+Zugdidi,,1.53,1.28
+Căușeni,,1.53,0.74
+Moyamba,,1.52,2.11
+Umuahia,,1.51,1.5
+Saidia,,1.5,2.92
+Yoshkar-Ola,,1.5,0.85
+Rîbnița,,1.5,2.17
+Tiko,,1.5,2.88
+Nassau,,1.48,0.8
+Moria,,1.47,1.46
+Haarlem,,1.46,2.06
+Aba,,1.46,1.76
+Hama,,1.46,2.51
+Pendembu,,1.46,1.6
+Buea,,1.45,1.59
+Les Anses-d'Arlet,,1.44,1.21
+Iconi,,1.44,2.05
+Mpehe,,1.44,2.09
+Kakata,,1.43,2.43
+Funafuti,,1.42,1.37
+Tokmok,,1.42,1.99
+Taiama,,1.4,1.86
+Rokupr,,1.38,1.78
+Mamana,,1.36,1.37
+Ngozi,,1.36,2.19
+New Cairo,,1.33,2.16
+Oskemen,,1.33,1.45
+Nukuʻalofa,,1.33,1.51
+Kabuga,,1.33,1.57
+Norilsk,,1.33,1.84
+San Juan del Sur,,1.33,2.97
+Siġġiewi,,1.33,2.3
+Angren,,1.33,0.84
+Engels,,1.33,1.16
+Nieuw Amsterdam,,1.33,1.71
+Nabeul,,1.33,1.97
+Shirvan,,1.33,1.86
+Nizhnevartovsk,,1.33,3.59
+Sandy Ground,,1.33,0.87
+Kiawara,,1.33,1.31
+Atyrau,,1.33,2.18
+Tobolsk,,1.33,2.27
+Skhirat,,1.33,0.98
+Navrongo,,1.33,1.88
+Chelyabinsk,,1.33,2.47
+Ekıbastuz,,1.33,1.74
+Mikhaylovsk,,1.28,1.98
+Fadugu,,1.28,1.83
+Borama,,1.27,1.77
+Matru,,1.26,1.71
+Honiara,,1.26,1.77
+Masiaka,,1.25,1.66
+Kailahun,,1.25,1.76
+Afikpo,,1.22,1.59
+Bălți,,1.22,2.8
+Saba,,1.22,1.87
+Kassirie,,1.21,1.82
+Gbinti,,1.19,1.59
+Melitopol,,1.19,1.92
+Segbwema,,1.18,1.97
+Xırdalan,,1.18,1.71
+Pointe-à-Pitre,,1.17,1.59
+Jendema,,1.17,1.03
+Vasylkiv,,1.17,1
+Mitsiwa,,1.17,1.16
+Ngobit,,1.17,1.81
+Qacha's Nek,,1.17,1.92
+Sousse,,1.17,2.47
+Bakhchysarai,,1.17,0.67
+Mange,,1.13,1.84
+Kamakwie,,1.13,1.83
+Daru,,1.12,1.59
+Makolo,,1.11,1.61
+Dilijan,,1.11,1.69
+Gorno-Altaysk,,1.11,1.4
+Kagbantama,,1.11,2.18
+Bandajuma,,1.1,1.47
+Ashgabat,,1.09,2.34
+Luawa,,1,1.72
+Kerch,,1,0.73
+Lourinhã,,1,2.16
+Ivatsevichy,,1,0.96
+Apatity,,1,2.68
+Isinya,,1,2.46
+Baħar iċ-Ċagħaq,,1,2.09
+Negril,,1,1.04
+Petropavl,,1,3.61
+Carolina,,1,0.89
+Yevpatoria,,1,0.78
+Charlestown,,1,1.49
+Tui,,1,0.9
+Moengo,,1,2.56
+Aïn Benian,,1,3.38
+Vilnius,,1,2.31
+Anse Volbert,,1,1.13
+Be'er Sheva,,1,2.93
+Barre Denis,,1,1.4
+Zeerust,,1,0.37
+Żejtun,,1,1.48
+Orsha,,1,2.54

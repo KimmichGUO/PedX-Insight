@@ -48,6 +48,7 @@ from modules.crosswalk.crosswalk import run_crosswalk_detection
 from modules.accident.accident import run_accident_scene_detection
 
 from modules.count_vehicle.count_vehicle import vehicle_count
+from modules.age_gender.age_gender_detect import run_age_gender
 
 import subprocess
 import os
@@ -62,6 +63,8 @@ from modules.crossed_pede_info.crossed_info import extract_pedestrian_info
 from modules.pede_on_lane.pede_on_lane import pedestrian_on_lane
 from modules.crossed_pede_info.env_info import merge_env_info
 from modules.summary.video_info import generate_video_env_stats
+from modules.summary.pede_info import summary_all_info
+from modules.pede_around_count.pede_around import calculate_nearby_count
 
 import numpy as np
 np.float = float
@@ -77,12 +80,12 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["id", "id_img","count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face","gender",
+        choices=["id", "id_img","count", "waiting", "tracking_pede", "speed_pede", "clothing", "phone", "belongings", "face","gender", "ag",
                  "vehicle_type", "car_distance", "pede_distance", "lane", "speed", "count_vehicle",
                  "weather", "traffic_sign", "width", "light", "road_condition", "daytime", "crosswalk", "accident", "sidewalk",
-                 "risky", "acc", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "personal_info", "on_lane", "env_info",
+                 "risky", "acc", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "personal_info", "on_lane", "env_info", "nearby",
                  "all", "pedestrian", "vehicle", "environment", "analysis", "other", "analysis",
-                 "sum"
+                 "sum", "sum_pede"
                  ],
         help="Choose the analysis mode",
     )
@@ -150,6 +153,10 @@ def main():
         )
     elif args.mode == "face":
         run_face_analysis(
+            video_path=args.source_video_path
+        )
+    elif args.mode == "ag":
+        run_age_gender(
             video_path=args.source_video_path
         )
     elif args.mode == "gender":
@@ -232,6 +239,10 @@ def main():
         determine_red_light_violation(
             video_path=args.source_video_path,
         )
+    elif args.mode == "nearby":
+        calculate_nearby_count(
+            video_path=args.source_video_path,
+        )
     elif args.mode == "personal_info":
         extract_pedestrian_info(
             video_path=args.source_video_path,
@@ -246,6 +257,10 @@ def main():
         )
     elif args.mode == "sum":
         generate_video_env_stats(
+            video_path=args.source_video_path,
+        )
+    elif args.mode == "sum_pede":
+        summary_all_info(
             video_path=args.source_video_path,
         )
     elif args.mode == "all":
@@ -277,8 +292,8 @@ def main():
                 run_mode("waiting", video_path)
                 run_mode("tracking_pede", video_path)
                 run_mode("phone", video_path)
-                run_mode("face", video_path)
-                run_mode("gender", video_path)
+                # run_mode("face", video_path)
+                run_mode("ag", video_path)
                 run_mode("clothing", video_path)
                 run_mode("belongings", video_path)
 
@@ -311,9 +326,11 @@ def main():
                 run_mode("personal_info", video_path)
                 run_mode("on_lane", video_path)
                 run_mode("env_info", video_path)
+                run_mode("nearby", video_path)
 
                 # final
                 run_mode("sum", video_path)
+                run_mode("sum_pede", video_path)
 
     elif args.mode == "analysis":
         video_dir = args.source_video_path
@@ -341,11 +358,11 @@ def main():
             run_mode("id_img", video_path)
             # run_mode("count", video_path)
             # run_mode("speed_pede", video_path)
-            # run_mode("waiting", video_path)
+            run_mode("waiting", video_path)
             # run_mode("tracking_pede", video_path)
             run_mode("phone", video_path)
             # run_mode("face", video_path)
-            run_mode("gender", video_path)
+            run_mode("ag", video_path)
             run_mode("clothing", video_path)
             run_mode("belongings", video_path)
 
@@ -375,12 +392,14 @@ def main():
             run_mode("crosswalk_usage", video_path)
             run_mode("run_red", video_path)
             run_mode("crossing_vehicle_count", video_path)
+            run_mode("nearby", video_path)
             run_mode("personal_info", video_path)
             run_mode("on_lane", video_path)
             run_mode("env_info", video_path)
 
             # final
             run_mode("sum", video_path)
+            run_mode("sum_pede", video_path)
 
     elif args.mode == "pedestrian":
         video_dir = args.source_video_path

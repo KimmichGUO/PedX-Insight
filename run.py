@@ -2,7 +2,7 @@ import pandas as pd
 import subprocess
 import os
 
-df = pd.read_csv('mapping_ex.csv')
+df = pd.read_csv('mapping_ex_filtered.csv')
 
 video_folder = './videos'
 os.makedirs(video_folder, exist_ok=True)

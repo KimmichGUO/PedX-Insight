@@ -25,7 +25,7 @@ def predict_age_gender(image_path, pipeline):
     return age, gender
 
 
-def analyze_video(video_path):
+def run_age_gender(video_path):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     img_root = os.path.join('./analysis_results', video_name, 'pedestrian_img')
 
@@ -62,9 +62,10 @@ def analyze_video(video_path):
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     with open(csv_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
-        writer.writerow(['person_id', 'age', 'gender'])
+        writer.writerow(['id', 'age', 'gender'])
         for person_id, res in final_results.items():
-            writer.writerow([person_id, res['age'], res['gender']])
+            clean_id = person_id.replace("id_", "")
+            writer.writerow([clean_id, res['age'], res['gender']])
 
     print(f"Age and gender results saved to {csv_path}")
     return final_results

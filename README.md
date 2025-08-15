@@ -216,6 +216,13 @@ python main.py --mode env_info --source_video_path 'your_video'
 ```
 Result: [C9]crossing_env_info.csv  
 This function is used to extract the information of environment when a pedestrian has crossed the streets, including weather, daytime, accident or not, road condition.
+#### (10) Nearby pedestrian count
+```bash
+python main.py --mode nearby --source_video_path 'your_video'
+```
+Result: [C10]nearby_count.csv  
+This function is used to count how many people are around pedestrians who are crossing the road.
+
 ### 5. Combination Analysis at the city level
 #### (1) Extract video information
 ```bash

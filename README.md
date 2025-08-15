@@ -224,12 +224,18 @@ Result: [C10]nearby_count.csv
 This function is used to count how many people are around pedestrians who are crossing the road.
 
 ### 5. Combination Analysis at the city level
-#### (1) Extract video information
+#### (1) Extract all video information
 ```bash
 python main.py --mode sum --source_video_path 'your_video'
 ```
 Result: [A1]video_info.csv  
-This function is used to extract and summary the information of whole video
+This function is used to extract and summary the information of whole video.
+#### (2) Extract all crossed pedestrians information
+```bash
+python main.py --mode sum_pede --source_video_path 'your_video'
+```
+Result: [A2]pedestrian_info.csv 
+This function is used to extract and summary the information of all crossed pedestrians from whole video.
 
 ## Dataset
 https://github.com/Shaadalam9/pedestrians-in-youtube

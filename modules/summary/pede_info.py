@@ -7,7 +7,7 @@ def summary_all_info(video_path, personal_info_csv = None, env_info_csv=None, ou
     os.makedirs(output_dir, exist_ok=True)
 
     if output_csv_path is None:
-        output_csv_path = os.path.join(output_dir, "[A2]summary_info.csv")
+        output_csv_path = os.path.join(output_dir, "[A2]pedestrian_info.csv")
     if personal_info_csv is None:
         personal_info_csv = os.path.join(output_dir, "[C7]crossing_pe_info.csv")
     if env_info_csv is None:

@@ -226,7 +226,7 @@ This function is used to count how many people are around pedestrians who are cr
 ### 5. Combination Analysis at the city level
 #### (1) Extract all video information
 ```bash
-python main.py --mode sum --source_video_path 'your_video'
+python main.py --mode sum_video --source_video_path 'your_video'
 ```
 Result: [A1]video_info.csv  
 This function is used to extract and summary the information of whole video.

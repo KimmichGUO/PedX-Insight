@@ -85,7 +85,7 @@ def main():
                  "weather", "traffic_sign", "width", "light", "road_condition", "daytime", "crosswalk", "accident", "sidewalk",
                  "risky", "acc", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "personal_info", "on_lane", "env_info", "nearby",
                  "all", "pedestrian", "vehicle", "environment", "analysis", "other", "analysis",
-                 "sum", "sum_pede"
+                 "sum_video", "sum_pede"
                  ],
         help="Choose the analysis mode",
     )
@@ -255,7 +255,7 @@ def main():
         pedestrian_on_lane(
             video_path=args.source_video_path,
         )
-    elif args.mode == "sum":
+    elif args.mode == "sum_video":
         generate_video_env_stats(
             video_path=args.source_video_path,
         )
@@ -329,7 +329,7 @@ def main():
                 run_mode("nearby", video_path)
 
                 # final
-                run_mode("sum", video_path)
+                run_mode("sum_video", video_path)
                 run_mode("sum_pede", video_path)
 
     elif args.mode == "analysis":
@@ -398,7 +398,7 @@ def main():
             run_mode("env_info", video_path)
 
             # final
-            run_mode("sum", video_path)
+            run_mode("sum_video", video_path)
             run_mode("sum_pede", video_path)
 
     elif args.mode == "pedestrian":

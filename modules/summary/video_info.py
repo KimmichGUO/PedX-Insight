@@ -15,6 +15,7 @@ def generate_video_env_stats(video_path,
                              output_csv_path=None,
                              run_red_csv=None,
                              risky_csv_path=None,
+                             traffic_sign_path=None
                              ):
 
     # 1 name
@@ -45,6 +46,9 @@ def generate_video_env_stats(video_path,
         run_red_csv = os.path.join(output_dir, "[C5]red_light_runner.csv")
     if risky_csv_path is None:
         risky_csv_path = os.path.join(output_dir, "[C1]risky_crossing.csv")
+    if traffic_sign_path is None:
+        traffic_sign_path = os.path.join(output_dir, "[E3]traffic_sign.csv")
+
 
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -63,9 +67,17 @@ def generate_video_env_stats(video_path,
     accident_df = pd.read_csv(accident_csv_path)
     runred_df = pd.read_csv(run_red_csv)
     risky_df = pd.read_csv(risky_csv_path)
+    traffic_sign_df = pd.read_csv(traffic_sign_path)
 
     # 4 total pedestrians
-    total_pedestrians = tracked_df['track_id'].nunique()
+    min_frames_threshold = fps * 0.5
+
+    valid_pedestrians = []
+    for tid, group in tracked_df.groupby('track_id'):
+        if len(group) >= min_frames_threshold:
+            valid_pedestrians.append(tid)
+    # total_pedestrians = tracked_df['track_id'].nunique()
+    total_pedestrians = len(valid_pedestrians)
 
     if 'track_id' in risky_df.columns and 'risk' in risky_df.columns:
         crossed_ids = risky_df['track_id'].unique()
@@ -128,6 +140,18 @@ def generate_video_env_stats(video_path,
         else:
             accident_probs[cls] = None
 
+    # 18 traffic sign total count
+    total_traffic_signs = 0
+    if 'sign_classes_1' in traffic_sign_df.columns and 'sign_classes_2' in traffic_sign_df.columns:
+        count_1 = traffic_sign_df['sign_classes_1'].fillna('').apply(lambda x: len([s for s in str(x).split(';') if s.strip() != ''])).sum()
+        count_2 = traffic_sign_df['sign_classes_2'].fillna('').apply(lambda x: len([s for s in str(x).split(';') if s.strip() != ''])).sum()
+        total_traffic_signs = int(count_1 + count_2)
+
+    else:
+        total_traffic_signs = None
+    signs_rate = total_traffic_signs / total_frames
+
+
     data = [
         ["video_name", video_name],
         ["duration_seconds", duration],
@@ -135,6 +159,7 @@ def generate_video_env_stats(video_path,
         ["total_pedestrians", total_pedestrians],
         ["risky_crossing_ratio", risky_crossing_ratio],
         ["run_red_light_ratio", runred_ratio],
+        ["traffic_signs_ratio", signs_rate],
         ["total_vehicles", total_vehicles],
         ["top3_vehicles", top3_vehicles],
         ["main_weather", main_weather],

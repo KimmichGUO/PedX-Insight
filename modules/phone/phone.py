@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from ultralytics import YOLO
 
-def run_phone_detection(video_path, weights = "yolov8n.pt", tracking_csv_path=None, output_csv_path=None):
+def run_phone_detection(video_path, weights = "yolo11n.pt", tracking_csv_path=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if tracking_csv_path is None:

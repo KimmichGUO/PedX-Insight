@@ -72,7 +72,7 @@ def estimate_distance(bbox_width, bbox_height):
     distance = (known_width * focal_length) / bbox_width if bbox_width > 0 else 0
     return distance
 
-def run_lane_detection(video_path, weights="yolov8n.pt", output_csv_path=None):
+def run_lane_detection(video_path, weights="yolo11n.pt", output_csv_path=None):
     model = YOLO(weights)
     cap = cv2.VideoCapture(video_path)
     video_name = os.path.splitext(os.path.basename(video_path))[0]

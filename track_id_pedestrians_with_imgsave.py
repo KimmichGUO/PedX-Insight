@@ -8,7 +8,7 @@ import numpy as np
 
 np.float = float
 
-def run_pedestrian_tracking_with_imgsave(video_path, weights="yolov8n.pt", output_csv_path=None):
+def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
@@ -104,8 +104,8 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolov8n.pt", outpu
                     os.makedirs(person_dir, exist_ok=True)
                     # img_path = os.path.join(person_dir, f"frame_{frame_id}.jpg")
                     # cv2.imwrite(img_path, crop, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-                    # img_path = os.path.join(person_dir, f"frame_{frame_id}.png")
-                    # cv2.imwrite(img_path, crop)
+                    img_path = os.path.join(person_dir, f"frame_{frame_id}.png")
+                    cv2.imwrite(img_path, crop)
                     saved_frames[track_id].append(frame_id)
 
     cap.release()

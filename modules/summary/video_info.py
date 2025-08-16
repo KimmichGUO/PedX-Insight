@@ -193,8 +193,11 @@ def generate_video_env_stats(video_path,
     # 23 on_lane ratio
     on_lane_df = pd.read_csv(on_lane_csv)
     on_lane_ratio = 0
-    if 'entered_lane' in on_lane_df.columns:
-        on_lane_ratio = (on_lane_df['entered_lane'] == True).sum() / len(on_lane_df) if len(on_lane_df) > 0 else 0
+    # if 'entered_lane' in on_lane_df.columns:
+    #     on_lane_ratio = (on_lane_df['entered_lane'] == True).sum() / len(on_lane_df) if len(on_lane_df) > 0 else 0
+    if 'entered_lane' in on_lane_df.columns and len(on_lane_df) > 0:
+        track_entered = on_lane_df.groupby('track_id')['entered_lane'].any()
+        on_lane_ratio = track_entered.sum() / len(track_entered)
 
     data = [
         ["video_name", video_name],

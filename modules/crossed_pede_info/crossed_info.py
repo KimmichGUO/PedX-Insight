@@ -56,7 +56,7 @@ def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=
         pid = row['track_id']
         crossed = True
 
-        gender_row = gender_df[gender_df['person_id'] == pid]
+        gender_row = gender_df[gender_df['id'] == pid]
         gender = gender_row['gender'].values[0] if not gender_row.empty else 'Unknown'
         age = gender_row['age'].values[0] if not gender_row.empty else 'Unknown'
 

@@ -4,7 +4,7 @@ import pandas as pd
 from ultralytics import YOLO
 from collections import defaultdict
 
-def run_belongings_detection(video_path, weights = "yolov8n.pt", tracking_csv_path=None, output_csv_path=None):
+def run_belongings_detection(video_path, weights = "yolo11n.pt", tracking_csv_path=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if tracking_csv_path is None:
         tracking_csv_path = os.path.join("analysis_results", video_name, "[B1]tracked_pedestrians.csv")

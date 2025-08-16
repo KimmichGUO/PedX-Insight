@@ -4,7 +4,6 @@ from paddlex import create_pipeline
 import numpy as np
 import csv
 
-
 def predict_age_gender(image_path, pipeline):
     output_gen = pipeline.predict(image_path, cls_threshold=1e-10)
     output = list(output_gen)
@@ -40,7 +39,7 @@ def run_age_gender(video_path):
 
         ages, genders = [], []
         for img_file in os.listdir(person_folder):
-            if not img_file.lower().endswith('.jpg'):
+            if not img_file.lower().endswith('.png'):
                 continue
             img_path = os.path.join(person_folder, img_file)
             age, gender = predict_age_gender(img_path, pipeline)

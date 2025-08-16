@@ -15,7 +15,11 @@ def generate_video_env_stats(video_path,
                              output_csv_path=None,
                              run_red_csv=None,
                              risky_csv_path=None,
-                             traffic_sign_path=None
+                             traffic_sign_path=None,
+                             phone_csv_path=None,
+                             age_csv_path=None,
+                             crosswalk_usage_csv=None,
+                             on_lane_csv=None
                              ):
 
     # 1 name
@@ -48,6 +52,16 @@ def generate_video_env_stats(video_path,
         risky_csv_path = os.path.join(output_dir, "[C1]risky_crossing.csv")
     if traffic_sign_path is None:
         traffic_sign_path = os.path.join(output_dir, "[E3]traffic_sign.csv")
+    if phone_csv_path is None:
+        phone_csv_path = os.path.join(output_dir, "[P5]phone_usage.csv")
+    if age_csv_path is None:
+        age_csv_path = os.path.join(output_dir, "[P6]age_gender.csv")
+    if crosswalk_usage_csv is None:
+        crosswalk_usage_csv = os.path.join(output_dir, "[C4]crosswalk_usage.csv")
+    if on_lane_csv is None:
+        on_lane_csv = os.path.join(output_dir, "[C8]pedestrian_on_lane.csv")
+
+
 
 
     cap = cv2.VideoCapture(video_path)
@@ -151,14 +165,49 @@ def generate_video_env_stats(video_path,
         total_traffic_signs = None
     signs_rate = total_traffic_signs / total_frames
 
+    # 19 total crossed pedestrians
+    total_crossed_pedestrians = runred_df['track_id'].nunique() if 'track_id' in runred_df.columns else 0
+
+    # 20 phone usage ratio
+    phone_df = pd.read_csv(phone_csv_path)
+    phone_usage_ratio = 0
+    if not phone_df.empty:
+        phone_summary = phone_df.groupby('track_id')['phone_using'].mean()
+        phone_using_true_count = (phone_summary > 0.1).sum()
+        total_track_ids = phone_summary.shape[0]
+        phone_usage_ratio = phone_using_true_count / total_track_ids if total_track_ids > 0 else 0
+
+    # 21 crosswalk usage ratio
+    crosswalk_usage_df = pd.read_csv(crosswalk_usage_csv)
+    crosswalk_ratio = 0
+    if 'used_crosswalk' in crosswalk_usage_df.columns:
+        crosswalk_ratio = (crosswalk_usage_df['used_crosswalk'] == True).sum() / len(crosswalk_usage_df) if len(
+            crosswalk_usage_df) > 0 else 0
+
+    # 22 age mode
+    age_df = pd.read_csv(age_csv_path)
+    age_mode = None
+    if 'age' in age_df.columns:
+        age_mode = age_df['age'].mode().iloc[0] if not age_df['age'].mode().empty else None
+
+    # 23 on_lane ratio
+    on_lane_df = pd.read_csv(on_lane_csv)
+    on_lane_ratio = 0
+    if 'entered_lane' in on_lane_df.columns:
+        on_lane_ratio = (on_lane_df['entered_lane'] == True).sum() / len(on_lane_df) if len(on_lane_df) > 0 else 0
 
     data = [
         ["video_name", video_name],
         ["duration_seconds", duration],
         ["total_frames", total_frames],
         ["total_pedestrians", total_pedestrians],
+        ["total_crossed_pedestrians", total_crossed_pedestrians],
+        ["average_age", age_mode],
+        ["phone_usage_ratio", phone_usage_ratio],
         ["risky_crossing_ratio", risky_crossing_ratio],
         ["run_red_light_ratio", runred_ratio],
+        ["crosswalk_usage_ratio", crosswalk_ratio],
+        ["walk_on_lane_ratio", on_lane_ratio],
         ["traffic_signs_ratio", signs_rate],
         ["total_vehicles", total_vehicles],
         ["top3_vehicles", top3_vehicles],

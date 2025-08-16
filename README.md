@@ -239,3 +239,15 @@ This function is used to extract and summary the information of all crossed pede
 
 ## Dataset
 https://github.com/Shaadalam9/pedestrians-in-youtube
+
+## Run
+```bash
+python run.py --start_row 1 --start_step 1
+```
+-start_row: Specifies the row number to start processing from, default=1.  
+-start_step: Specifies the processing step to start from (useful for resuming interrupted runs), default=1.  
+Possible values:
+
+    1 : Download the video  
+    2 : Analyze the video and save the results  
+    3 : Delete the video  

@@ -122,13 +122,14 @@ python main.py --mode light --source_video_path pedestrian.mp4
 ```  
 Result: [E2]traffic_light.csv  
 https://github.com/alasarerhan/Real-Time-Traffic-Light-and-Sign-Detection-with-YOLO11
+https://github.com/maheshpaulj/Traffic-Light-Detection-YOLOv8
 #### (3) Traffic sign 
 ```bash
 python main.py --mode traffic_sign --source_video_path 'your_video'
 ```
 Result: [E3]traffic_sign.csv  
-https://github.com/MDhamani/Traffic-Sign-Recognition-Using-YOLO
-https://github.com/KL-lovesagiri/YOLOv8_GUI_For_Traffic_Sign_Detection
+https://github.com/MDhamani/Traffic-Sign-Recognition-Using-YOLO  
+https://github.com/KL-lovesagiri/YOLOv8_GUI_For_Traffic_Sign_Detection 
 https://github.com/Kartik-Aggarwal/Real-Time-Traffic-Sign-Detection
 #### (4) Road Condition
 ```bash

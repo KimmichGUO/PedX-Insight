@@ -1,606 +1,606 @@
-id,name,city,video,time_of_day,start_time,end_time
-1,Toronto,Toronto,3ai7SUaPoHM,0,27,3250
-2,Jakarta,Jakarta,gmDBzijaIAA,0,29,2968
-3,Manila,Manila,JY-Xyiept88,0,43,4844
-4,Sydney,Sydney,wMu6Va5PhGY,0,41,3040
-5,Melbourne,Melbourne,81n46krHrQA,0,42,2964
-6,Cincinnati,Cincinnati,G1I_PlmL_YA,0,78,2729
-7,Brisbane,Brisbane,9pPBmcKvFOc,0,23,2922
-8,Monaco,Monaco,ij6xccYYIuE,1,22,1875
-9,Milan,Milan,ZByZSqoqzaI,0,18,3333
-10,Kuala Lumpur,Kuala Lumpur,AxQcSoA9vGQ,0,23,3140
-11,Chicago,Chicago,XzwI2rGmf04,0,22,3730
-12,Las Vegas,Las Vegas,KWciBlhQjRA,0,20,4569
-13,Los Angeles,Los Angeles,4uhMg5na888,0,13,2687
-14,New York,New York,_Wyg213IZDI,0,18,3133
-15,Damascus,Damascus,qzimFzMh6lA,0,0,1339
-16,Luanda,Luanda,z3Gx2hp3Vo8,0,0,1836
-17,Moscow,Moscow,wCKLtcGQnWc,0,0,2253
-18,Seoul,Seoul,qOx5CwCrN9k,0,14,1417
-19,Tokyo,Tokyo,oDejyTLYUTE,0,23,2310
-20,Dhaka,Dhaka,ZruaEnhtYLA,0,58,1531
-21,Mumbai,Mumbai,MAj6y23vNuU,0,23,4132
-22,Buenos Aires,Buenos Aires,-TPJot7-HTs,0,33,2948
-23,New Delhi,New Delhi,Af0SUwah1bQ,0,22,2773
-24,Auckland,Auckland,HdEMxWMXgPQ,0,27,3468
-25,Barcelona,Barcelona,VaSFsM3s5bI,0,65,4005
-26,Vienna,Vienna,TC64wRJt3JA,0,18,2949
-27,Madrid,Madrid,C911U_Fo-QU,0,23,929
-28,Kampala,Kampala,qeFr7pCSbYU,0,48,1233
-29,Juba,Juba,f52Ttwcw-ak,0,9,2603
-30,Santiago,Santiago,VMEsuZRIYs0,0,27,2851
-31,Johannesburg,Johannesburg,B3BrV2N4tDM,0,24,1935
-32,Dubai,Dubai,Rl3zyHDjSIs,0,19,4828
-34,Cairo,Cairo,86pZTI5gJQM,1,22,3716
-35,London,London,QI4_dGvZ5yE,0,26,3210
-36,Copenhagen,Copenhagen,_7xMQCCxTLY,0,0,1840
-38,Bangkok,Bangkok,GuyazY5xtuI,0,26,3813
-41,Sao Paulo,Sao Paulo,Ic2ERD7kt4o,0,30,3829
-43,Paris,Paris,AdqE7mFQ7Y4,0,31,2252
-46,Istanbul,Istanbul,EekQAq5bufc,0,65,3300
-48,Helsinki,Helsinki,X_Gdgh07k8E,0,19,2644
-49,Algiers,Algiers,v2UmU4knL0c,0,0,2123
-50,Lagos,Lagos,umBS-HEUImM,0,0,3866
-51,Nairobi,Nairobi,VNLqnwoJqmM,0,0,1214
-53,Lima,Lima,dk-NdzCrxvw,0,27,4099
-54,Sofia,Sofia,SNQAfWsEVOQ,0,0,1823
-55,Belgrade,Belgrade,Bf2ZTOJ2k4A,0,0,1799
-56,Rabat,Rabat,ETjahDd78_o,0,0,3105
-58,Kyiv,Kyiv,KPns9K6wJPw,0,0,1779
-59,Warsaw,Warsaw,unU8hTgfHNc,0,0,2385
-65,Minsk,Minsk,5py-m9Fg7ck,0,0,1638
-66,Chelyabinsk,Chelyabinsk,ngf_1BKP1AI,0,1,1504
-67,Miami,Miami,9FGFA7Ki4-4,0,25,2226
-68,Seattle,Seattle,Nyk4ySw5QXs,0,67,2530
-69,Frankfurt,Frankfurt,2054gi9TzcA,1,37,2161
-71,Portland,Portland,MYYqxdszIoM,0,0,2520
-73,Philadelphia,Philadelphia,wE5SyGMmA7I,0,92,1934
-79,Houston,Houston,AdYYTIiWceo,0,15,2031
-116,San Francisco,San Francisco,6F6YWRjHD0Y,0,26,2863
-124,Montreal,Montreal,mhJaRDYV1Cg,0,25,2449
-128,Savannah,Savannah,imlVO9WOjs4,0,25,2320
-130,San Diego,San Diego,ax3IdgXx0iI,0,25,2462
-138,Columbus,Columbus,mDEgH6lN9Yk,0,25,1991
-139,Atlanta,Atlanta,mnARGT8rnXU,0,25,2530
-144,Pittsburgh,Pittsburgh,U3Zxe80ysd4,1,65,3690
-148,Amsterdam,Amsterdam,Ve4DvQNnDDQ,0,23,3429
-149,Yangon,Yangon,Il-4y-IPnfg,0,10,2183
-150,Tunis,Tunis,0wsuONzLXp0,0,31,3148
-151,Santa Barbara,Santa Barbara,n5H0SrfsTQ0,0,60,4980
-152,Lisbon,Lisbon,Lh9vwKMsEWE,0,70,908
-153,Coimbra,Coimbra,FuzbMSNdpP4,0,1,1417
-154,Leiria,Leiria,RAP9ze1fItQ,0,11,2042
-156,Aveiro,Aveiro,ADSLw81FY7k,0,80,2470
-158,Antalya,Antalya,xEzsSPPSLgU,0,37,4922
-160,Porto,Porto,VIWikUUl5YQ,0,0,1740
-163,Athens,Athens,UzmCmQ1-Rlg,0,0,1424
-164,Prague,Prague,jeS5VPBrXLo,0,55,2445
-170,Rome,Rome,aJw5od-0p2I,1,30,1565
-172,Novopolotsk,Novopolotsk,Mh8vi6Sh4Cg,0,5,3165
-173,Skopje,Skopje,NPIveID4qqU,0,80,3645
-175,Tirana,Tirana,8cJcUWHV5AY,0,65,3240
-177,Thessaloniki,Thessaloniki,dV0yxPmfdg8,1,75,3835
-182,San Marino,San Marino,E0TcC2B5iQk,0,50,1255
-183,München,München,OolZqtF1bhE,0,0,3250
-197,Berlin,Berlin,R_qfsPcnw-w,0,0,2153
-199,Zurich,Zurich,J2ijH7j7GDU,0,0,2340
-200,Vitebsk,Vitebsk,QE-VqiYbITY,0,18,4796
-203,Siena,Siena,XlgkfFROZ5g,1,0,1423
-204,Taranto,Taranto,T74MhZ1Sjt4,1,0,780
-205,Ravenna,Ravenna,bJwAtw5UpMQ,0,0,1605
-206,Kalamata,Kalamata,_LWbJjpOyBU,0,34,1350
-207,Astana,Astana,YPYPP3VbQEU,0,90,2863
-208,Corfu,Corfu,f7bPg5UTOFs,0,0,890
-209,Bilbao,Bilbao,k4SNj4eyLrk,0,0,3570
-210,Tallinn,Tallinn,6tDaEas8C4E,0,0,2342
-211,Ajman,Ajman,y5M4mX4oVlo,0,0,2912
-212,Vilnius,Vilnius,TqLWALg_Ko8,0,0,3464
-218,Białystok,Białystok,OGiX9uiA9lA,0,78,748
-222,Kaunas,Kaunas,mVg6wRRytNo,0,0,2753
-223,Chișinău,Chișinău,19rgXCNoKPM,0,10,1763
-225,Bender,Bender,Fa9nuJFf3l0,0,17,744
-231,Aarhus,Aarhus,FXqkK18qZc8,0,0,729
-234,Tel Aviv,Tel Aviv,Ips0sR23vdk,0,6,2575
-236,Aleppo,Aleppo,cq1rEXREmvw,0,2,722
-242,Prizren,Prizren,WkBxHIikVWU,0,22,964
-243,Pristina,Pristina,cvaQdOWdmio,0,50,2340
-246,Brussels,Brussels,T91xv0KO6T0,0,19,1120
-247,Fes,Fes,-2Aow7NXjR4,1,23,3218
-248,Luzern,Luzern,PiisukCaTkQ,1,85,1276
-249,Playa del Carmen,Playa del Carmen,kKSaSxsPqys,0,80,3913
-250,Palenque,Palenque,HGrN0WDChw4,0,90,3458
-252,Denpasar,Denpasar,cFI5ZcqGIvM,0,17,2547
-253,Phuket Town,Phuket Town,Eiee9FfbjYA,0,20,4196
-254,Balneário Camboriú,Balneário Camboriú,xEnN-LERkVE,0,19,4471
-255,Riga,Riga,BJbHMgiyIFY,0,3,2071
-256,Tartu,Tartu,hdCDu5dKFB4,0,0,1970
-257,Sarajevo,Sarajevo,fHVBMP2Ul14,0,0,1168
-262,Santo Domingo,Santo Domingo,J7ONuy3XSd4,0,0,2782
-263,Valencia,Valencia,G7wQRZ3nopk,0,0,2772
-264,Korçë,Korçë,waRzDmTRpEo,1,0,3810
-265,Łódź,Łódź,5k3LuoGhMRA,0,94,1885
-266,Liepaja,Liepaja,Scquy5bjQJw,0,90,1402
-267,Szczecin,Szczecin,o1DWTDFKCsA,0,90,2900
-268,Hama,Hama,4xUxRv8ZAl4,0,2,708
-269,Tartus,Tartus,aGuIh68N2l0,0,4,654
-270,Havana,Havana,vCywf9saDlY,0,0,3202
-271,Yerevan,Yerevan,kHWh0KgQqAc,0,0,1560
-272,Gyumri,Gyumri,ROpZcgEsI7A,0,0,1283
-273,Caracas,Caracas,h5foQ470048,0,0,3688
-275,Panama City,Panama City,38bWKtCoF0k,0,0,1384
-277,Lviv,Lviv,ESycRog1sQA,0,45,1235
-278,Sevastopol,Sevastopol,qiPbnvqdw_g,0,18,2480
-279,Bila Tserkva,Bila Tserkva,9JRkkIIY6N0,0,41,1733
-280,Chernivtsi,Chernivtsi,HIHqj8bo7Vk,0,1,1580
-281,Dnipro,Dnipro,utGFyklNlpc,0,1,1423
-282,Vasylkiv,Vasylkiv,m-2sDPZgYcQ,0,40,1475
-283,Kharkiv,Kharkiv,PbEWojNwTKQ,0,1,269
-284,Khmelnytskyi,Khmelnytskyi,de_W6Z1PAc0,0,1,596
-285,Odesa,Odesa,JILxTxsN49k,0,1,2172
-286,Uzhhorod,Uzhhorod,sPBEtLGzDn0,0,1,3177
-287,Mykolaiv,Mykolaiv,A0fWs5Y0g08,0,1,1200
-288,Zhytomyr,Zhytomyr,Kv_e8WOUTCg,0,1,677
-290,Zaporizhzhia,Zaporizhzhia,A4cL3vNWCJY,0,20,1333
-291,Vinnytsia,Vinnytsia,3Xn3KdRIUnc,0,1,695
-292,Ternopil,Ternopil,lJBuNM3MQNE,0,13,1164
-293,Ivano-Frankivsk,Ivano-Frankivsk,ohzl9Vcdyl0,0,3,1084
-294,Luhansk,Luhansk,wB_FT9f41eA,0,1,1595
-295,Melitopol,Melitopol,3mOYZXTIvjM,0,1,1366
-296,Mariupol,Mariupol,IpHo3dvUdYc,0,1,400
-300,Kherson,Kherson,WGjo8VncGqQ,0,71,210
-301,Poltava,Poltava,xkAtt7yFRC0,0,29,1410
-304,Simferopol,Simferopol,524HhzbbYtc,0,1,223
-306,Sumy,Sumy,hri7Nh5lDfM,0,60,330
-307,Chernihiv,Chernihiv,GdBblodlKkk,0,1,309
-310,Lutsk,Lutsk,Xs7oGHqTYis,0,95,1378
-311,Kryvyi Rih,Kryvyi Rih,5E7l734ku-8,0,20,1021
-313,Kremenchuk,Kremenchuk,APLYNtBA5LE,0,66,1215
-315,Cherkasy,Cherkasy,pbSxYRwJt8U,0,95,1669
-316,Kropyvnytskyi,Kropyvnytskyi,1Fc_Tcjl6s0,0,31,785
-319,Sarny,Sarny,s0q6hntdvqs,0,24,1179
-321,Konotop,Konotop,ij-urgZpaQc,0,25,141
-322,Uman,Uman,1Hac2cVkMCE,0,79,407
-324,Voronezh,Voronezh,ARg7YuS9Smc,0,1,1564
-325,Krasnodar,Krasnodar,KuUMduPeP4U,0,6,985
-326,Yekaterinburg,Yekaterinburg,CArayrfolE8,0,60,1437
-327,Novosibirsk,Novosibirsk,JDB3vQ8AOW4,0,81,184
-328,Murmansk,Murmansk,GRXPi_jZ5rI,0,1,731
-329,Rostov-on-Don,Rostov-on-Don,FV_xB23NaAw,0,24,1601
-330,Tyumen,Tyumen,IknPmOLkeWM,0,1,1643
-331,Omsk,Omsk,eH0Rw3f2LOc,0,1,2381
-332,Kurgan,Kurgan,8NfZFxG_Phg,0,1,1644
-333,Tobolsk,Tobolsk,8EFKlyw58Uo,0,1,1603
-334,Irbit,Irbit,bhyIyHLJxYk,0,1,1395
-336,Sochi,Sochi,izKS1HTT0pU,0,1,958
-337,Khabarovsk,Khabarovsk,nOwLsRi61_E,1,19,1975
-338,Kursk,Kursk,Lc0Y-Gtam8Q,0,39,947
-340,Volgograd,Volgograd,1dJYyh9wcMQ,0,2,2788
-341,Shadrinsk,Shadrinsk,utrQRrCm19E,0,16,778
-343,Gelendzhik,Gelendzhik,Q7TjMdJ5WZk,0,11,1617
-344,Tomsk,Tomsk,6c6OcQUyHSc,0,1,1020
-345,Kamensk-Uralsky,Kamensk-Uralsky,pfHuIOQhUt4,0,28,942
-347,Saint Petersburg,Saint Petersburg,vKD8_m88tuk,0,1,4406
-348,Saratov,Saratov,7g031vJSoCo,0,1,2627
-349,Lipetsk,Lipetsk,cuwfoxU7Uxw,0,2,990
-350,Kirov,Kirov,7Xbi2LiYmD8,0,40,494
-351,Samara,Samara,nSLBWzfcTnA,0,54,234
-355,Podolsk,Podolsk,EsFYRxazowo,0,1,1827
-357,Bryansk,Bryansk,IDVJ28LtBGc,0,0,1128
-359,Kazan,Kazan,q7OC4VuTPVs,1,21,932
-360,Naberezhnye Chelny,Naberezhnye Chelny,XXxgZoBKvUE,0,0,931
-361,Krasnoyarsk,Krasnoyarsk,mUWRf5puR3U,0,35,2108
-363,Brest,Brest,9D_bzVYS9v4,0,30,424
-364,Polotsk,Polotsk,xl7AoP-WraU,0,70,1087
-366,Gomel,Gomel,VVEagSMGUP4,0,0,600
-367,Grodno,Grodno,gwQZGJLIssw,0,72,1144
-368,Mogilev,Mogilev,BWHZyxm8xEs,0,16,776
-370,Babruysk,Babruysk,YKfJc2VP5nM,0,48,2181
-372,Rechytsa,Rechytsa,uI0nNHDBJLo,0,6,419
-374,Pinsk,Pinsk,SoOV-9AMaoQ,0,19,510
-375,Ivatsevichy,Ivatsevichy,G0ZJUdQQFRk,0,57,168
-379,Tbilisi,Tbilisi,fAe9QhZW8ks,0,10,1462
-380,Rustavi,Rustavi,jMbQ2K3nZo8,0,0,315
-381,Batumi,Batumi,hYyx6gD-gd4,0,0,2583
-382,Kutaisi,Kutaisi,kEz4RVtalxc,0,0,642
-383,Zugdidi,Zugdidi,XfBh7HaZTck,0,10,1038
-384,Poti,Poti,g7FDf34WbNg,0,20,369
-385,Sukhumi,Sukhumi,7NkEw2HZERQ,0,8,1035
-386,Vladivostok,Vladivostok,DoWNuThrb1I,0,0,736
-387,Baku,Baku,KDHjh4WQvug,0,0,844
-388,Shaki,Shaki,7MUN-26YS1E,0,11,1193
-389,Xırdalan,Xırdalan,thn9uBVDG7o,0,16,818
-390,Sumgait,Sumgait,QWmD2_-gFAo,0,55,680
-392,Lankaran,Lankaran,c0dlpaspxd4,0,16,2161
-393,Vagharshapat,Vagharshapat,vosNsn4HUL4,0,0,368
-396,Armavir,Armavir,3TpgtM1Qje8,0,0,1149
-397,Ijevan,Ijevan,LodEX7dc6Uk,0,44,734
-399,Goris,Goris,W4HXW_xtJ6k,0,68,639
-402,Arkhangelsk,Arkhangelsk,rfFQhm_SCzk,0,18,1431
-403,Engels,Engels,dTmUQv3V6mE,0,30,1121
-409,Kansk,Kansk,k72BFysB_zY,0,2,1646
-416,Irkutsk,Irkutsk,vGc6uE5LaeI,0,90,795
-417,Yakutsk,Yakutsk,f3nSUWzLL6M,0,0,587
-418,Yuzhno-Sakhalinsk,Yuzhno-Sakhalinsk,uHu6O4_Z2L0,0,18,796
-419,Apatity,Apatity,foAFGYA3fhc,0,20,146
-423,Chita,Chita,sQqC2FNNMdM,0,0,187
-426,Kaliningrad,Kaliningrad,cbRSL5ErGhM,0,19,1476
-427,Stavropol,Stavropol,ba1IzyvSkgI,0,0,1250
-429,Mikhaylovsk,Mikhaylovsk,vIyH8oNWXeY,0,0,118
-431,Tuapse,Tuapse,6Wj7HetPeYE,0,0,960
-432,Pyatigorsk,Pyatigorsk,tzpPEL0WgFs,0,0,303
-436,Labinsk,Labinsk,m9Wgs7fZ5S8,0,0,562
-439,Astrakhan,Astrakhan,Q3y1snZnnyg,0,20,757
-440,Yalta,Yalta,iAPxrtCGGr8,0,27,1233
-441,Bakhchysarai,Bakhchysarai,vAycmZzP8Lw,0,61,511
-442,Yevpatoria,Yevpatoria,OoRLyf5_EbI,0,0,423
-443,Toshkent,Toshkent,BJef1jG0naE,0,7,1549
-444,Almaty,Almaty,wkWbW8iMFV4,0,0,1616
-449,Petropavl,Petropavl,fMzlmeiS_YA,0,33,595
-452,Karagandy,Karagandy,dUolIDYSLN0,0,0,210
-457,Aral,Aral,_UElDmNKJmk,0,19,1213
-459,Zhezkazgan,Zhezkazgan,K0yYBqQO4DY,0,7,1289
-460,Angren,Angren,PpbLyn8YWrg,0,0,32
-462,Fergana,Fergana,bGNUKviytUk,0,14,756
-463,Shymkent,Shymkent,S8aCI48xB0c,0,24,1715
-464,Oskemen,Oskemen,5gj_Ux4msYM,0,6,1538
-465,Taraz,Taraz,raIjz7zf6sg,0,25,1384
-466,Qostanai,Qostanai,nBcVo-bllsU,0,0,1832
-468,Pavlodar,Pavlodar,uhqun1WggI8,0,0,58
-469,Samarkand,Samarkand,Ov_6Znvur1g,0,22,1100
-470,Olmaliq,Olmaliq,tZdl6JBQpWI,0,16,1289
-473,Bishkek,Bishkek,g9zV7uQf4FI,0,92,1003
-474,Gorno-Altaysk,Gorno-Altaysk,DK3NVxMwIrA,0,50,332
-475,Tokmok,Tokmok,QfJ_7vGQSgs,0,0,576
-478,Jalal-Abad,Jalal-Abad,BgCNoUDP4Ns,0,0,905
-479,Karakol,Karakol,SLpCHGJATkY,0,0,525
-480,Kyzyl-Kyya,Kyzyl-Kyya,HDxLOg09K-0,0,0,376
-481,Ashgabat,Ashgabat,3H38ZPwxsO8,0,0,761
-482,Dushanbe,Dushanbe,oLHPlvDRj8Q,0,6,2952
-489,Rîbnița,Rîbnița,qJwarRmuv5o,0,21,984
-490,Donetsk,Donetsk,BsV8oAaiphs,0,0,1248
-491,Makiivka,Makiivka,aBAuD4GhVQI,0,0,72
-493,Ilovaisk,Ilovaisk,J9omBy0CIIM,0,0,133
-495,Kramatorsk,Kramatorsk,_OdVeleKlts,0,0,447
-497,Makhachkala,Makhachkala,iPsy5THSWU4,0,0,1568
-498,Shillong,Shillong,aGdgEMeefIg,0,0,1254
-499,Dibrugarh,Dibrugarh,KEXW5lYrJfo,0,3,353
-500,Mysore,Mysore,KJUb0-_sMCA,0,47,1825
-501,Bengaluru,Bengaluru,NdPAVDBjSUA,0,5,1255
-502,Calangute,Calangute,ChBV1zh37y4,0,5,868
-503,Coimbatore,Coimbatore,U-ZlI8AY_uw,0,0,665
-504,Pothencode,Pothencode,h6zuPtiB3rc,0,0,648
-505,Thiruvananthapuram,Thiruvananthapuram,k7UbcNzseME,0,0,1439
-506,Pathanamthitta,Pathanamthitta,uAs3nwPM6TU,0,0,1548
-508,Kottayam,Kottayam,Ae-9_73biLU,0,0,879
-509,Kochi,Kochi,jf5HcCDLI88,0,0,623
-511,Thane,Thane,HO2_SqdP8AU,0,52,3397
-512,Pune,Pune,MxmEz7c_pAw,0,49,1378
-513,Kolhapur,Kolhapur,yP1jnAbD0rY,0,6,1601
-514,Karachi,Karachi,o7Qr5q92Zgk,0,5,955
-515,Kathmandu,Kathmandu,cN4eNspisZM,0,0,1160
-516,Phnom Penh,Phnom Penh,Wuqi0BNth0k,0,57,1952
-517,Ta Khmau,Ta Khmau,lt7N2TQlVSE,0,31,1836
-518,Kampot,Kampot,EGIyh6CXC2o,0,26,1895
-519,Kampong Chhnang,Kampong Chhnang,lzhWOyj0ew8,0,67,2802
-520,Takeo,Takeo,HHvBv2lGkCs,0,40,1805
-522,Ta Khmao,Ta Khmao,njIDklh9MN8,0,11,1105
-523,Sihanoukville,Sihanoukville,lUDNjOTHOYE,0,100,2520
-524,Magadan,Magadan,qX1cO8J-V-Y,1,0,237
-526,Surgut,Surgut,KVy9ZpoMIhg,0,12,410
-530,Petropavlovsk-Kamchatsky,Petropavlovsk-Kamchatsky,P6nzA2UyUS8,0,28,1623
-531,Narva,Narva,4m90rSoG5z8,0,64,1303
-532,Pärnu,Pärnu,W2cGgqKP6t8,0,0,238
-533,Ulaanbaatar,Ulaanbaatar,CF2TXaXmvkk,0,0,2455
-534,Georgetown,Georgetown,mNgm1YGQHOg,0,8,1720
-535,Linden,Linden,tktOLvwDXnE,0,22,755
-538,Vreed en Hoop,Vreed en Hoop,mTcO_rxJJXE,0,20,374
-540,Paramaribo,Paramaribo,PymrJ6l75eY,0,52,1001
-541,Cayenne,Cayenne,f476eozrFmc,0,11,2843
-542,Oiapoque,Oiapoque,ncnztMwgIiI,0,50,498
-543,Macapá,Macapá,N8eKQDCYwJI,0,13,1344
-544,Moengo,Moengo,P08v6qwYuXw,0,55,451
-545,Ambato,Ambato,KQU-5_VewEw,0,0,1447
-546,Quito,Quito,3venZOgsaYY,0,0,516
-549,Tulcán,Tulcán,eJwtHqAJfXg,0,42,745
-551,Caranavi,Caranavi,T_O4lojb7Wo,0,6,801
-552,La Paz,La Paz,LJDPBxG1FjU,0,11,3229
-554,Trinidad,Trinidad,cbocYysKxOc,0,3,2359
-555,Santa Cruz de la Sierra,Santa Cruz de la Sierra,EKps57wUalI,0,83,2661
-556,San José de Chiquitos,San José de Chiquitos,v90ZGf3njp0,0,60,367
-557,Puerto Suárez,Puerto Suárez,949WwaJWsuw,0,15,278
-558,Aquidauana,Aquidauana,HQXYp2eOngM,0,40,519
-559,Campo Grande,Campo Grande,98yLpKYBPOM,0,10,2714
-560,Cochabamba,Cochabamba,sGaOnQ71Skw,0,13,3250
-561,Oruro,Oruro,kf2JCik_5zI,0,43,2033
-562,Asunción,Asunción,SyWYr61V_3o,0,12,935
-563,Punta del Este,Punta del Este,DfCyGGZJe5g,0,26,398
-564,Chuy,Chuy,lOLKiexEuy4,0,60,350
-565,José Pedro Varela,José Pedro Varela,ESC_uAlLVbI,0,19,1035
-566,Minas,Minas,TIlq30myAdY,0,85,380
-568,Montevideo,Montevideo,Sz9nRHTofkQ,0,1,1393
-571,Fray Bentos,Fray Bentos,biaaHNOsI3I,1,28,1166
-572,Guatemala City,Guatemala City,lso5Zyz-sMw,0,33,1343
-575,Comayagua,Comayagua,coWiD5iJzdc,0,5,2865
-576,Tegucigalpa,Tegucigalpa,T3eozp8TZpQ,0,95,997
-577,La Ceiba,La Ceiba,GDOrxIjjSLU,0,21,3207
-579,San Pedro Sula,San Pedro Sula,wv9KsuviuUM,0,50,1714
-580,San Salvador,San Salvador,bemqMHN0Dlc,0,5,2185
-582,Managua,Managua,X2oPzSPsiPQ,0,75,230
-584,San Juan del Sur,San Juan del Sur,9_TpO0TIJKg,0,26,473
-585,San José,San José,ZPOuwPi0Ghs,0,0,475
-586,Kingston,Kingston,XeA0ZTmX6i8,0,80,123
-587,Ocho Rios,Ocho Rios,55-rBgI1MUA,0,40,485
-589,Montego Bay,Montego Bay,LX-MWknZnZc,1,5,3488
-590,Spanish Town,Spanish Town,cGLbNBqcRgY,0,15,1101
-595,Port-au-Prince,Port-au-Prince,ySkoRAbT70U,0,82,2290
-596,San Juan,San Juan,HJSa0WeXTMk,0,37,843
-597,Carolina,Carolina,fHKSXeYg9g4,1,0,754
-598,Isabela,Isabela,aJ3eOJBzwHo,0,26,868
-602,Caguas,Caguas,FZ7UJ_Gmm6k,0,0,2711
-603,Princes Town,Princes Town,u07o5uniPqg,0,0,112
-604,Petit Valley,Petit Valley,E9CzlKpiEoU,0,56,693
-608,Victoria,Victoria,X4EuhO0PyRY,0,51,228
-609,Roseau,Roseau,stMbkRFQidI,0,0,504
-610,Huancayo,Huancayo,Yg3u3pRs4zo,0,21,2440
-619,Bridgetown,Bridgetown,VlciVJuF9Bw,0,26,836
-622,Hamilton,Hamilton,Di61A7comPI,0,18,1557
-626,Nassau,Nassau,ggeWCex3Y8Y,0,0,1650
-633,Charlestown,Charlestown,eHLoSvcpTcA,0,0,491
-634,Basseterre,Basseterre,8ES3aEcEDdQ,0,8,392
-636,St. John's,St. John's,htItY1_KKgc,0,12,390
-637,Sea view Farm,Sea view Farm,hyRTk8aESTs,0,3,911
-640,Thimphu,Thimphu,0huxbfJBSRA,0,0,363
-641,Nouméa,Nouméa,mpd_eZG5CBE,0,0,358
-642,Port Louis,Port Louis,wPfatZjpiOI,0,30,806
-646,Vacoas-Phoenix,Vacoas-Phoenix,1lz2v4wcCxo,0,45,539
-647,Grand Baie,Grand Baie,_V4xAzANdjE,0,72,1011
-653,Willemstad,Willemstad,eyVN6fypLyU,0,0,62
-654,Pyongyang,Pyongyang,nQ_R9hhHB5A,0,82,3872
-655,Malé,Malé,3IPkNOBCm1M,0,5,299
-658,Les Anses-d'Arlet,Les Anses-d'Arlet,3Xc86Pu7zXA,0,30,247
-661,Castries,Castries,RQ618y4Ato8,0,28,187
-663,Babonneau,Babonneau,s3d-2VufeUM,0,30,275
-667,Kingstown,Kingstown,9A2nqtmerIE,0,0,118
-672,Vermont,Vermont,kErVZqYURs0,0,30,677
-674,Brighton,Brighton,Gl07tLi8oSc,0,34,240
-677,Sainte-Rose,Sainte-Rose,eKy0Kj-_PEk,0,32,759
-678,Pointe-à-Pitre,Pointe-à-Pitre,V4bseJC9svQ,0,21,530
-681,Bouillante,Bouillante,DbneXFHYKJk,0,92,488
-684,Saint-François,Saint-François,qQfBLRXw0Vg,0,76,491
-686,Pelican Key,Pelican Key,cmpCF1BOUDE,0,79,423
-688,Marigot,Marigot,tItevXXD1Zg,0,77,228
-701,Road Town,Road Town,ZMhtpElX9CM,0,0,810
-705,George Town,George Town,AZJVdhRSjVg,0,15,1941
-719,Antananarivo,Antananarivo,ZBwk5YJidZc,0,51,1794
-720,Toamasina,Toamasina,UFsdlCfdFls,0,38,2043
-721,Toliara,Toliara,K8u6MUAERJ0,0,31,1216
-723,Port Moresby,Port Moresby,e7SAPvfvbZg,0,3,226
-726,Nukuʻalofa,Nukuʻalofa,Hxg7TblRMlI,0,60,1567
-730,Apia,Apia,CDW8T-TZYJs,1,24,504
-740,Honiara,Honiara,HkHWZIJlL9U,0,59,237
-741,Port Vila,Port Vila,n95sVQh3VE4,0,44,1005
-745,Papeete,Papeete,PXTOoIyqXds,0,31,1527
-756,Nadi,Nadi,dFBUd20pVKU,0,10,1083
-767,Laura,Laura,5jjB02i0fHI,0,77,225
-788,Funafuti,Funafuti,8bFAihDuDM0,0,30,374
-808,Vientiane,Vientiane,OCtESrtTFos,0,0,1997
-835,Nuuk,Nuuk,WJ92rHr-sH8,0,68,1435
-837,Ilulissat,Ilulissat,c5je9ZObT1c,0,20,602
-858,Naxxar,Naxxar,qTLQ441N8Sc,0,0,1590
-860,Zabbar,Zabbar,dHhK0JgVcz0,0,0,486
-862,Valletta,Valletta,4Sj6LfLos2g,0,11,2611
-868,Birgu,Birgu,fsXk8bHD6uc,0,23,1044
-872,Dingli,Dingli,xx8-5K6DIxI,0,34,840
-874,St Paul's Bay,St Paul's Bay,-NKN0M4q6WQ,0,20,98
-875,Luqa,Luqa,5FMGg6JoYAA,0,0,46
-883,Gżira,Gżira,d8fHXwNYfSk,0,6,250
-887,Andorra la Vella,Andorra la Vella,tL_zMUNrhUw,0,0,491
-888,Canillo,Canillo,0eflYQNAZq4,0,11,80
-891,Sant Julià de Lòria,Sant Julià de Lòria,C30KC89jMwE,0,0,156
-892,La Massana,La Massana,0qbqg_3XcZs,0,31,375
-932,Maseru,Maseru,aTUTzj7Br4M,0,0,316
-937,Teyateyaneng,Teyateyaneng,1yd383o1ycc,0,0,419
-942,Manzini,Manzini,oreiMRvlsDo,0,0,438
-943,Mbabane,Mbabane,5DOgshHF_vw,0,33,760
-945,Swakopmund,Swakopmund,wWRuPnjz9F8,0,12,135
-947,Windhoek,Windhoek,guqexstDK88,0,5,2345
-951,Francistown,Francistown,wmzG0aqGnhM,0,90,565
-952,Gaborone,Gaborone,vlqtvspPmrg,0,3,1419
-955,Ponta do Ouro,Ponta do Ouro,KlOQvqQL5Mw,0,0,440
-956,Beira,Beira,qD9-pBB2i0A,0,0,386
-957,Maputo,Maputo,e37EakncZWw,0,81,155
-958,Gorongosa,Gorongosa,vIOR4xAb1lg,0,52,197
-959,Harare,Harare,SUYOKNVuhAM,0,20,1479
-960,Bulawayo,Bulawayo,RUF7RfnLrKA,0,15,1062
-963,Limbe,Limbe,YHsLa8BwFdo,0,62,2178
-964,Zomba,Zomba,WzFS5ODQyqE,0,60,450
-966,Blantyre,Blantyre,2JmdT2shcBI,0,13,1028
-970,Lusaka,Lusaka,TNzb0TGxngg,0,8,193
-971,Monze,Monze,Fbx96h9dF88,0,30,1624
-972,Lilongwe,Lilongwe,vKa5C8VxX78,0,2,421
-976,Durban,Durban,1v9fOgD2AUQ,0,0,1410
-978,Ndola,Ndola,tBoY_54Sut8,0,0,20
-980,Thyolo,Thyolo,jq2_QZssHRY,0,1,100
-983,Cascais,Cascais,lDdqny7BTIE,0,59,461
-986,Stockton,Stockton,cU7QOtN0vM0,0,40,1577
-992,Lucena,Lucena,Cn5539ftMIU,0,42,737
-993,Oran,Oran,LLO_J9yL3qg,0,40,435
-994,Moroni,Moroni,J3TQia2hmd4,0,0,692
-1008,Bujumbura,Bujumbura,Zg9nFyIx-Es,0,7,43
-1009,Ngozi,Ngozi,WdSgpPaMh-U,0,0,368
-1011,Mpehe,Mpehe,13kft1lcLFk,0,0,150
-1014,Kigali,Kigali,58mwcxaIZVA,0,0,3346
-1023,Lodrino,Lodrino,D6mUOH993D8,0,23,114
-1028,Iconi,Iconi,9F3ixwy_1Xg,0,0,1637
-1034,Franceville,Franceville,0LrA4BjXl5E,0,0,580
-1035,Ntoum,Ntoum,Ch1VVxd8bm4,0,0,264
-1036,Mounana,Mounana,FRCcRJJi79Q,0,0,310
-1038,Libreville,Libreville,2D0V14I2mO8,0,0,627
-1039,Port Gentil,Port Gentil,eReyDV1Amig,0,0,1433
-1040,Rotterdam,Rotterdam,ADt1e5B3KoM,0,32,630
-1042,Bangui,Bangui,k5nwg-7BKpk,0,23,885
-1043,Malabo,Malabo,l4yc1co19_o,0,0,451
-1044,Douala,Douala,NSBxcwBDRI4,0,61,577
-1045,Buea,Buea,gQMSk2YEsOw,0,0,659
-1049,Bafoussam,Bafoussam,TaqdmwyJPnQ,0,0,497
-1050,Yaoundé,Yaoundé,5MLN46S7cxE,0,0,222
-1052,Bamenda,Bamenda,MM2X4Bz-8DE,0,0,1495
-1053,Lomé,Lomé,kYOc0Em12vY,0,0,601
-1056,Addis Ababa,Addis Ababa,75QmOtqxLFM,0,0,1465
-1057,Bishoftu,Bishoftu,eOuC0QcAmvk,0,78,814
-1060,Gondar,Gondar,e963nL7vo8U,0,15,1935
-1061,Hosanna,Hosanna,Xj6lYDetFDo,0,0,20
-1064,Nyeri,Nyeri,9_ZXbRo4EN4,0,48,880
-1072,Meru,Meru,gxyoPAvRkjc,0,38,967
-1077,Chogoria,Chogoria,M0DOTYYpZXs,0,39,474
-1115,Eldoret,Eldoret,QQKrdWS6q9Y,0,53,1340
-1116,Mogadishu,Mogadishu,NE-6HWxzMPM,0,0,1093
-1117,Afgoye,Afgoye,BSGxl4zVgZM,0,0,58
-1118,Borama,Borama,ZtjStKvgvnw,0,5,610
-1119,Hargeisa,Hargeisa,Nxn-FO3Z7zw,0,5,594
-1120,Djibouti,Djibouti,oRBHrKXO_ec,0,0,2887
-1123,Asmara,Asmara,RQVltW3QBG4,0,49,747
-1124,Keren,Keren,lAM9iNMPIzM,0,5,590
-1130,Mendefera,Mendefera,f4UrQp8I6rA,0,17,450
-1133,Mitsiwa,Mitsiwa,NB5_-HGuY7g,0,32,586
-1134,Omdurman,Omdurman,-qCoMpoB6ys,0,0,82
-1136,Khartoum,Khartoum,XW-c5iHIWTw,0,0,301
-1137,N'Djamena,N'Djamena,xZiioLx86Z4,0,0,791
-1138,Minna,Minna,aqsRFjWIExI,0,25,128
-1139,Niamey,Niamey,d8O5LsoYWPg,0,0,1392
-1140,Bamako,Bamako,stcF4ss4Mgc,0,0,871
-1142,Abidjan,Abidjan,S9sUTNozlM4,0,0,787
-1143,Cotonou,Cotonou,oJNmHusRVaY,0,0,2898
-1144,Benin City,Benin City,lmgVZTQpNyM,0,0,1575
-1149,Porto-Novo,Porto-Novo,IC1WRUfMDx0,0,26,2161
-1150,Austin,Austin,AL5Cmyk3y4E,0,14,2439
-1159,Belize City,Belize City,tyh1U2u8rCs,0,52,752
-1160,Tiksi,Tiksi,hqiKzShfEOw,1,35,486
-1161,Lourinhã,Lourinhã,jxdQQsi_eKI,0,1,2709
-1163,Funchal,Funchal,MdmynDuLEy8,0,2,1977
-1165,Nazaré,Nazaré,JFHENHLxsYM,0,1,1650
-1174,Ibadan,Ibadan,djlE77MnWYs,0,51,2225
-1180,Abuja,Abuja,WD76kfYiocg,0,30,515
-1182,Umuahia,Umuahia,-OOnVR3Db6k,0,0,1217
-1183,Port Harcourt,Port Harcourt,wxVTfvrIjZw,0,0,71
-1184,Onitsha,Onitsha,rtXE8XPqvII,0,7,141
-1185,Enugu,Enugu,xZRxSTqzlrM,0,12,1448
-1186,Awka,Awka,ie12h7I-A-c,0,6,183
-1188,Lekki,Lekki,InROrJHFbag,0,39,1010
-1189,Aba,Aba,yIrN7u2bvqI,0,0,965
-1190,Abakaliki,Abakaliki,sQSU3RfphLE,0,0,125
-1194,Kano,Kano,YsdNklvnZ10,0,60,370
-1195,Kaduna,Kaduna,pAhGUk7AAXM,0,0,24
-1196,Afikpo,Afikpo,-rHgolonAt0,0,60,1239
-1197,Kumasi,Kumasi,qzFXq3M4TKs,0,7,2826
-1198,Accra,Accra,7L7SPteLX9k,0,0,1265
-1199,Cape Coast,Cape Coast,pj0C8jouofY,0,90,105
-1200,Tamale,Tamale,XTZWfMzwZ3o,0,1,1377
-1207,Ouagadougou,Ouagadougou,2vwIPzKmaAI,0,0,103
-1208,Banjul,Banjul,PWmODxVQm-0,0,0,364
-1211,Salekhard,Salekhard,6KHDNhzoUaA,0,7,1574
-1213,Lakhdenpokhya,Lakhdenpokhya,93tK91w-C8w,0,0,533
-1214,Monrovia,Monrovia,ipqfA_aFlJA,0,0,569
-1215,Kabul,Kabul,Uz418IJRcTg,0,0,1588
-1216,Robertsport,Robertsport,doZhwg-J0iA,0,6,45
-1219,Pleebo,Pleebo,uQQ0ajS7XlI,0,0,46
-1222,Buchanan,Buchanan,b5y96Esky0c,0,0,270
-1224,Freetown,Freetown,XXMNmEeU94c,0,34,2230
-1225,Bo,Bo,gh2OLpW3nxI,0,23,4572
-1226,Kenema,Kenema,gj_MIl9GFy0,0,22,283
-1228,Moyamba,Moyamba,Km2_sECQJEU,0,13,1305
-1230,Koidu,Koidu,F_M7S_nQgH8,0,20,2662
-1231,Pujehun,Pujehun,CE8q9RUpBpI,0,13,1680
-1232,Magburaka,Magburaka,oy3MWTA1xxo,0,20,2652
-1233,Makeni,Makeni,W-0T9TzoIv8,0,12,2096
-1234,Segbwema,Segbwema,JkOab4ODhMc,0,64,1723
-1235,Rokupr,Rokupr,FLJIhlfsoF4,0,100,920
-1236,Kailahun,Kailahun,p-EV2UCysF0,0,13,1479
-1237,Taiama,Taiama,ZRGoUof73Ek,0,20,1235
-1238,Mange,Mange,EhI4C_c3y3w,0,13,2370
-1239,Matru,Matru,rLFXdQc_7KM,0,18,1945
-1240,Kalangba,Kalangba,YKtysexI-ok,0,25,2572
-1241,Lunsar,Lunsar,G_wMpTrv1QQ,0,48,1373
-1242,Tintafor,Tintafor,SVnn_QYyrbw,0,24,2230
-1243,Mamana,Mamana,2gh8zQKKN9k,0,35,1263
-1244,Kabala,Kabala,5t_n9bHxWmI,0,10,1865
-1246,Petifu Junction,Petifu Junction,vnd4ycsYI_c,0,11,1569
-1247,Mambolo,Mambolo,mxlM2baTzzE,0,28,2544
-1248,Masoila,Masoila,ibDGjfLB_eQ,0,20,2302
-1249,Kambia,Kambia,_LGt09Rkvjw,0,30,1972
-1251,Waterloo,Waterloo,NyNOQAEB_Fs,0,38,2090
-1254,Binkolo,Binkolo,AZMnu5ZEgx4,0,28,3031
-1256,Port Loko,Port Loko,qAq5UnG290Y,0,14,1557
-1257,Masiaka,Masiaka,GI5DKRFMt3k,0,20,1945
-1258,Daru,Daru,dT1rrLUQ4Io,0,13,1566
-1259,Pendembu,Pendembu,mAfB0hZHJ2M,0,12,1827
-1260,Gbinti,Gbinti,1zcr8DQDkUQ,0,17,1005
-1261,Luawa,Luawa,eC7tZeRYM14,0,18,1473
-1262,Batkanu,Batkanu,rJiIJhCaKa4,0,39,2222
-1263,Fadugu,Fadugu,V6xdlN27bio,0,40,1420
-1264,Sussex,Sussex,C1jvLzxc73E,0,29,1850
-1265,Makolo,Makolo,uQU-KOc2ohY,0,28,1865
-1266,Kagbantama,Kagbantama,WgFTBLyMhY8,0,28,1820
-1267,Moyamba Junction,Moyamba Junction,yFS_1s26Tb8,0,11,265
-1269,Kassirie,Kassirie,v5gm054tG0o,0,22,1396
-1270,Sinkunia,Sinkunia,wMtirsw4adk,0,38,1185
-1271,Bandajuma,Bandajuma,noxAjh0g5yE,0,93,2030
-1272,Berkane,Berkane,sMBxVchHwv8,0,0,367
-1273,Marrakesh,Marrakesh,5aLjFLy64g4,0,13,2843
-1274,Casablanca,Casablanca,1dc8qjbtG2Q,0,0,1236
-1275,Tangier,Tangier,6Re-AuESJqc,0,14,2075
-1276,Agadir,Agadir,LbB2xWRwKtk,0,0,1621
-1278,Tétouan,Tétouan,H0X4XnxQ1pM,0,60,1798
-1279,Ahfir,Ahfir,gBtu-PibUwc,0,0,63
-1282,Fez,Fez,tVI4_HK3c1A,0,0,1572
-1283,Settat,Settat,AetbK5RG5ZE,0,5,726
-1284,Al Hoceima,Al Hoceima,EAWodskJ_gs,0,10,843
-1285,Ouarzazate,Ouarzazate,xXe0UenuVeg,0,8,804
-1288,Salé,Salé,J0E9Ch3oKqA,0,20,679
-1290,Tobruk,Tobruk,SSNjfdk7o90,0,0,1704
-1291,New Cairo,New Cairo,SXp9JIK96P0,0,49,436
-1293,Giza,Giza,KnhIiOtmdQo,0,6,1592
-1294,Banha,Banha,UvhZBFiBsQM,0,7,775
-1295,Alexandria,Alexandria,02kJc-cjI3Q,1,30,1040
-1296,Bissau,Bissau,1oiUIANQv6A,0,0,677
-1297,Brikama,Brikama,p2IkteJp7ws,0,0,580
-1298,Sanyang,Sanyang,dS_3TcxG3mY,0,1,395
-1299,Serrekunda,Serrekunda,ESa6QOfl9xM,0,25,1224
-1302,Sesimbra,Sesimbra,-loKmVacOPU,0,1,1439
-1303,Ziguinchor,Ziguinchor,PYFB7nMiFTM,0,30,620
-1304,Dakar,Dakar,R4Gp3N36eYc,0,66,1162
-1325,Tanjeh,Tanjeh,fV9eYk2sQbo,0,0,1077
-1331,Port-Gentil,Port-Gentil,AxcX2kqPrPo,0,35,659
-1332,Conakry,Conakry,xcaR88rLA_Q,0,82,230
-1333,Dubreka,Dubreka,W-cZHIHIsXQ,0,0,283
-1334,Forecariah,Forecariah,9f-nFI3qSpA,0,0,190
-1336,Khorira,Khorira,nrmPlzB56EE,0,0,12
-1337,Panningen,Panningen,dMYR9NDnkSc,0,12,607
-1338,Antwerp,Antwerp,axVMvxJyO2U,0,0,391
-1339,Eindhoven,Eindhoven,_88FXb3Rr6A,0,38,1213
-1340,Coyah,Coyah,61ND78qCa7E,0,24,700
-1341,Nouakchott,Nouakchott,4IaKhverJk8,0,0,1624
-1345,Jerada,Jerada,rz7vMS8fERA,0,76,1386
-1346,Oujda,Oujda,9pa7mXTwrp4,0,60,2357
-1348,Skhirat,Skhirat,LOtYimIdf48,0,5,500
-1350,Khemisset,Khemisset,XdPlReG6avk,0,0,1715
-1354,Ronda,Ronda,MvN1yEuis00,0,50,615
-1355,Melilla,Melilla,LgxvfBqSs18,0,35,1422
-1358,Saidia,Saidia,c_poErpGYnI,0,0,908
-1361,Annaba,Annaba,9la5b3lwXRU,0,4,528
-1363,El Madania,El Madania,KlD6281um-U,0,27,485
-1364,El Harrach,El Harrach,rtlbVbWKz6I,0,0,645
-1369,Ariana,Ariana,0wsuONzLXp0,0,0,1618
-1371,Sanaa,Sanaa,6jMP4fn59Ms,0,65,147
-1372,Taiz,Taiz,KxNelAeELQ8,0,0,1111
-1373,Sousse,Sousse,5ja3nZYvmBI,0,8,612
-1374,Nabeul,Nabeul,V95A4aDxFi0,0,0,373
-1375,Muscat,Muscat,62-e-rcxCgc,0,57,1576
-1377,Utrecht,Utrecht,jj0lIgFInD0,0,0,2219
-1379,Tiwi,Tiwi,MC4cvrDgcmA,0,1,645
-1380,Sur,Sur,00oxaRUK7hk,0,2,515
-1384,Haifa,Haifa,eNqef9pbHwQ,0,39,807
-1386,Jerusalem,Jerusalem,b7wdJAawLqE,0,0,600
-1387,Be'er Sheva,Be'er Sheva,MClZXRTWYY8,0,20,788
-1389,Tehran,Tehran,2GLGl1QCwSo,0,7,1830
-1422,Ho Chi Minh City,Ho Chi Minh City,4BB6l7wfNpM,0,22,2580
+id,name,city,video,time_of_day,start_time,end_time,finished
+1,Toronto,Toronto,3ai7SUaPoHM,0,27,3250,TRUE
+2,Jakarta,Jakarta,gmDBzijaIAA,0,29,2968,TRUE
+3,Manila,Manila,JY-Xyiept88,0,43,4844,TRUE
+4,Sydney,Sydney,wMu6Va5PhGY,0,41,3040,TRUE
+5,Melbourne,Melbourne,81n46krHrQA,0,42,2964,TRUE
+6,Cincinnati,Cincinnati,G1I_PlmL_YA,0,78,2729,
+7,Brisbane,Brisbane,9pPBmcKvFOc,0,23,2922,
+8,Monaco,Monaco,ij6xccYYIuE,1,22,1875,
+9,Milan,Milan,ZByZSqoqzaI,0,18,3333,
+10,Kuala Lumpur,Kuala Lumpur,AxQcSoA9vGQ,0,23,3140,
+11,Chicago,Chicago,XzwI2rGmf04,0,22,3730,
+12,Las Vegas,Las Vegas,KWciBlhQjRA,0,20,4569,
+13,Los Angeles,Los Angeles,4uhMg5na888,0,13,2687,
+14,New York,New York,_Wyg213IZDI,0,18,3133,
+15,Damascus,Damascus,qzimFzMh6lA,0,0,1339,
+16,Luanda,Luanda,z3Gx2hp3Vo8,0,0,1836,
+17,Moscow,Moscow,wCKLtcGQnWc,0,0,2253,
+18,Seoul,Seoul,qOx5CwCrN9k,0,14,1417,
+19,Tokyo,Tokyo,oDejyTLYUTE,0,23,2310,
+20,Dhaka,Dhaka,ZruaEnhtYLA,0,58,1531,
+21,Mumbai,Mumbai,MAj6y23vNuU,0,23,4132,
+22,Buenos Aires,Buenos Aires,#NAME?,0,33,2948,
+23,New Delhi,New Delhi,Af0SUwah1bQ,0,22,2773,
+24,Auckland,Auckland,HdEMxWMXgPQ,0,27,3468,
+25,Barcelona,Barcelona,VaSFsM3s5bI,0,65,4005,
+26,Vienna,Vienna,TC64wRJt3JA,0,18,2949,
+27,Madrid,Madrid,C911U_Fo-QU,0,23,929,
+28,Kampala,Kampala,qeFr7pCSbYU,0,48,1233,
+29,Juba,Juba,f52Ttwcw-ak,0,9,2603,
+30,Santiago,Santiago,VMEsuZRIYs0,0,27,2851,
+31,Johannesburg,Johannesburg,B3BrV2N4tDM,0,24,1935,
+32,Dubai,Dubai,Rl3zyHDjSIs,0,19,4828,
+34,Cairo,Cairo,86pZTI5gJQM,1,22,3716,
+35,London,London,QI4_dGvZ5yE,0,26,3210,
+36,Copenhagen,Copenhagen,_7xMQCCxTLY,0,0,1840,
+38,Bangkok,Bangkok,GuyazY5xtuI,0,26,3813,
+41,Sao Paulo,Sao Paulo,Ic2ERD7kt4o,0,30,3829,
+43,Paris,Paris,AdqE7mFQ7Y4,0,31,2252,
+46,Istanbul,Istanbul,EekQAq5bufc,0,65,3300,
+48,Helsinki,Helsinki,X_Gdgh07k8E,0,19,2644,
+49,Algiers,Algiers,v2UmU4knL0c,0,0,2123,
+50,Lagos,Lagos,umBS-HEUImM,0,0,3866,
+51,Nairobi,Nairobi,VNLqnwoJqmM,0,0,1214,
+53,Lima,Lima,dk-NdzCrxvw,0,27,4099,
+54,Sofia,Sofia,SNQAfWsEVOQ,0,0,1823,
+55,Belgrade,Belgrade,Bf2ZTOJ2k4A,0,0,1799,
+56,Rabat,Rabat,ETjahDd78_o,0,0,3105,
+58,Kyiv,Kyiv,KPns9K6wJPw,0,0,1779,
+59,Warsaw,Warsaw,unU8hTgfHNc,0,0,2385,
+65,Minsk,Minsk,5py-m9Fg7ck,0,0,1638,
+66,Chelyabinsk,Chelyabinsk,ngf_1BKP1AI,0,1,1504,
+67,Miami,Miami,9FGFA7Ki4-4,0,25,2226,
+68,Seattle,Seattle,Nyk4ySw5QXs,0,67,2530,
+69,Frankfurt,Frankfurt,2054gi9TzcA,1,37,2161,
+71,Portland,Portland,MYYqxdszIoM,0,0,2520,
+73,Philadelphia,Philadelphia,wE5SyGMmA7I,0,92,1934,
+79,Houston,Houston,AdYYTIiWceo,0,15,2031,
+116,San Francisco,San Francisco,6F6YWRjHD0Y,0,26,2863,
+124,Montreal,Montreal,mhJaRDYV1Cg,0,25,2449,
+128,Savannah,Savannah,imlVO9WOjs4,0,25,2320,
+130,San Diego,San Diego,ax3IdgXx0iI,0,25,2462,
+138,Columbus,Columbus,mDEgH6lN9Yk,0,25,1991,
+139,Atlanta,Atlanta,mnARGT8rnXU,0,25,2530,
+144,Pittsburgh,Pittsburgh,U3Zxe80ysd4,1,65,3690,
+148,Amsterdam,Amsterdam,Ve4DvQNnDDQ,0,23,3429,
+149,Yangon,Yangon,Il-4y-IPnfg,0,10,2183,
+150,Tunis,Tunis,0wsuONzLXp0,0,31,3148,
+151,Santa Barbara,Santa Barbara,n5H0SrfsTQ0,0,60,4980,
+152,Lisbon,Lisbon,Lh9vwKMsEWE,0,70,908,
+153,Coimbra,Coimbra,FuzbMSNdpP4,0,1,1417,
+154,Leiria,Leiria,RAP9ze1fItQ,0,11,2042,
+156,Aveiro,Aveiro,ADSLw81FY7k,0,80,2470,
+158,Antalya,Antalya,xEzsSPPSLgU,0,37,4922,
+160,Porto,Porto,VIWikUUl5YQ,0,0,1740,
+163,Athens,Athens,UzmCmQ1-Rlg,0,0,1424,
+164,Prague,Prague,jeS5VPBrXLo,0,55,2445,
+170,Rome,Rome,aJw5od-0p2I,1,30,1565,
+172,Novopolotsk,Novopolotsk,Mh8vi6Sh4Cg,0,5,3165,
+173,Skopje,Skopje,NPIveID4qqU,0,80,3645,
+175,Tirana,Tirana,8cJcUWHV5AY,0,65,3240,
+177,Thessaloniki,Thessaloniki,dV0yxPmfdg8,1,75,3835,
+182,San Marino,San Marino,E0TcC2B5iQk,0,50,1255,
+183,München,München,OolZqtF1bhE,0,0,3250,
+197,Berlin,Berlin,R_qfsPcnw-w,0,0,2153,
+199,Zurich,Zurich,J2ijH7j7GDU,0,0,2340,
+200,Vitebsk,Vitebsk,QE-VqiYbITY,0,18,4796,
+203,Siena,Siena,XlgkfFROZ5g,1,0,1423,
+204,Taranto,Taranto,T74MhZ1Sjt4,1,0,780,
+205,Ravenna,Ravenna,bJwAtw5UpMQ,0,0,1605,
+206,Kalamata,Kalamata,_LWbJjpOyBU,0,34,1350,
+207,Astana,Astana,YPYPP3VbQEU,0,90,2863,
+208,Corfu,Corfu,f7bPg5UTOFs,0,0,890,
+209,Bilbao,Bilbao,k4SNj4eyLrk,0,0,3570,
+210,Tallinn,Tallinn,6tDaEas8C4E,0,0,2342,
+211,Ajman,Ajman,y5M4mX4oVlo,0,0,2912,
+212,Vilnius,Vilnius,TqLWALg_Ko8,0,0,3464,
+218,Białystok,Białystok,OGiX9uiA9lA,0,78,748,
+222,Kaunas,Kaunas,mVg6wRRytNo,0,0,2753,
+223,Chișinău,Chișinău,19rgXCNoKPM,0,10,1763,
+225,Bender,Bender,Fa9nuJFf3l0,0,17,744,
+231,Aarhus,Aarhus,FXqkK18qZc8,0,0,729,
+234,Tel Aviv,Tel Aviv,Ips0sR23vdk,0,6,2575,
+236,Aleppo,Aleppo,cq1rEXREmvw,0,2,722,
+242,Prizren,Prizren,WkBxHIikVWU,0,22,964,
+243,Pristina,Pristina,cvaQdOWdmio,0,50,2340,
+246,Brussels,Brussels,T91xv0KO6T0,0,19,1120,
+247,Fes,Fes,-2Aow7NXjR4,1,23,3218,
+248,Luzern,Luzern,PiisukCaTkQ,1,85,1276,
+249,Playa del Carmen,Playa del Carmen,kKSaSxsPqys,0,80,3913,
+250,Palenque,Palenque,HGrN0WDChw4,0,90,3458,
+252,Denpasar,Denpasar,cFI5ZcqGIvM,0,17,2547,
+253,Phuket Town,Phuket Town,Eiee9FfbjYA,0,20,4196,
+254,Balneário Camboriú,Balneário Camboriú,xEnN-LERkVE,0,19,4471,
+255,Riga,Riga,BJbHMgiyIFY,0,3,2071,
+256,Tartu,Tartu,hdCDu5dKFB4,0,0,1970,
+257,Sarajevo,Sarajevo,fHVBMP2Ul14,0,0,1168,
+262,Santo Domingo,Santo Domingo,J7ONuy3XSd4,0,0,2782,
+263,Valencia,Valencia,G7wQRZ3nopk,0,0,2772,
+264,Korçë,Korçë,waRzDmTRpEo,1,0,3810,
+265,Łódź,Łódź,5k3LuoGhMRA,0,94,1885,
+266,Liepaja,Liepaja,Scquy5bjQJw,0,90,1402,
+267,Szczecin,Szczecin,o1DWTDFKCsA,0,90,2900,
+268,Hama,Hama,4xUxRv8ZAl4,0,2,708,
+269,Tartus,Tartus,aGuIh68N2l0,0,4,654,
+270,Havana,Havana,vCywf9saDlY,0,0,3202,
+271,Yerevan,Yerevan,kHWh0KgQqAc,0,0,1560,
+272,Gyumri,Gyumri,ROpZcgEsI7A,0,0,1283,
+273,Caracas,Caracas,h5foQ470048,0,0,3688,
+275,Panama City,Panama City,38bWKtCoF0k,0,0,1384,
+277,Lviv,Lviv,ESycRog1sQA,0,45,1235,
+278,Sevastopol,Sevastopol,qiPbnvqdw_g,0,18,2480,
+279,Bila Tserkva,Bila Tserkva,9JRkkIIY6N0,0,41,1733,
+280,Chernivtsi,Chernivtsi,HIHqj8bo7Vk,0,1,1580,
+281,Dnipro,Dnipro,utGFyklNlpc,0,1,1423,
+282,Vasylkiv,Vasylkiv,m-2sDPZgYcQ,0,40,1475,
+283,Kharkiv,Kharkiv,PbEWojNwTKQ,0,1,269,
+284,Khmelnytskyi,Khmelnytskyi,de_W6Z1PAc0,0,1,596,
+285,Odesa,Odesa,JILxTxsN49k,0,1,2172,
+286,Uzhhorod,Uzhhorod,sPBEtLGzDn0,0,1,3177,
+287,Mykolaiv,Mykolaiv,A0fWs5Y0g08,0,1,1200,
+288,Zhytomyr,Zhytomyr,Kv_e8WOUTCg,0,1,677,
+290,Zaporizhzhia,Zaporizhzhia,A4cL3vNWCJY,0,20,1333,
+291,Vinnytsia,Vinnytsia,3Xn3KdRIUnc,0,1,695,
+292,Ternopil,Ternopil,lJBuNM3MQNE,0,13,1164,
+293,Ivano-Frankivsk,Ivano-Frankivsk,ohzl9Vcdyl0,0,3,1084,
+294,Luhansk,Luhansk,wB_FT9f41eA,0,1,1595,
+295,Melitopol,Melitopol,3mOYZXTIvjM,0,1,1366,
+296,Mariupol,Mariupol,IpHo3dvUdYc,0,1,400,
+300,Kherson,Kherson,WGjo8VncGqQ,0,71,210,
+301,Poltava,Poltava,xkAtt7yFRC0,0,29,1410,
+304,Simferopol,Simferopol,524HhzbbYtc,0,1,223,
+306,Sumy,Sumy,hri7Nh5lDfM,0,60,330,
+307,Chernihiv,Chernihiv,GdBblodlKkk,0,1,309,
+310,Lutsk,Lutsk,Xs7oGHqTYis,0,95,1378,
+311,Kryvyi Rih,Kryvyi Rih,5E7l734ku-8,0,20,1021,
+313,Kremenchuk,Kremenchuk,APLYNtBA5LE,0,66,1215,
+315,Cherkasy,Cherkasy,pbSxYRwJt8U,0,95,1669,
+316,Kropyvnytskyi,Kropyvnytskyi,1Fc_Tcjl6s0,0,31,785,
+319,Sarny,Sarny,s0q6hntdvqs,0,24,1179,
+321,Konotop,Konotop,ij-urgZpaQc,0,25,141,
+322,Uman,Uman,1Hac2cVkMCE,0,79,407,
+324,Voronezh,Voronezh,ARg7YuS9Smc,0,1,1564,
+325,Krasnodar,Krasnodar,KuUMduPeP4U,0,6,985,
+326,Yekaterinburg,Yekaterinburg,CArayrfolE8,0,60,1437,
+327,Novosibirsk,Novosibirsk,JDB3vQ8AOW4,0,81,184,
+328,Murmansk,Murmansk,GRXPi_jZ5rI,0,1,731,
+329,Rostov-on-Don,Rostov-on-Don,FV_xB23NaAw,0,24,1601,
+330,Tyumen,Tyumen,IknPmOLkeWM,0,1,1643,
+331,Omsk,Omsk,eH0Rw3f2LOc,0,1,2381,
+332,Kurgan,Kurgan,8NfZFxG_Phg,0,1,1644,
+333,Tobolsk,Tobolsk,8EFKlyw58Uo,0,1,1603,
+334,Irbit,Irbit,bhyIyHLJxYk,0,1,1395,
+336,Sochi,Sochi,izKS1HTT0pU,0,1,958,
+337,Khabarovsk,Khabarovsk,nOwLsRi61_E,1,19,1975,
+338,Kursk,Kursk,Lc0Y-Gtam8Q,0,39,947,
+340,Volgograd,Volgograd,1dJYyh9wcMQ,0,2,2788,
+341,Shadrinsk,Shadrinsk,utrQRrCm19E,0,16,778,
+343,Gelendzhik,Gelendzhik,Q7TjMdJ5WZk,0,11,1617,
+344,Tomsk,Tomsk,6c6OcQUyHSc,0,1,1020,
+345,Kamensk-Uralsky,Kamensk-Uralsky,pfHuIOQhUt4,0,28,942,
+347,Saint Petersburg,Saint Petersburg,vKD8_m88tuk,0,1,4406,
+348,Saratov,Saratov,7g031vJSoCo,0,1,2627,
+349,Lipetsk,Lipetsk,cuwfoxU7Uxw,0,2,990,
+350,Kirov,Kirov,7Xbi2LiYmD8,0,40,494,
+351,Samara,Samara,nSLBWzfcTnA,0,54,234,
+355,Podolsk,Podolsk,EsFYRxazowo,0,1,1827,
+357,Bryansk,Bryansk,IDVJ28LtBGc,0,0,1128,
+359,Kazan,Kazan,q7OC4VuTPVs,1,21,932,
+360,Naberezhnye Chelny,Naberezhnye Chelny,XXxgZoBKvUE,0,0,931,
+361,Krasnoyarsk,Krasnoyarsk,mUWRf5puR3U,0,35,2108,
+363,Brest,Brest,9D_bzVYS9v4,0,30,424,
+364,Polotsk,Polotsk,xl7AoP-WraU,0,70,1087,
+366,Gomel,Gomel,VVEagSMGUP4,0,0,600,
+367,Grodno,Grodno,gwQZGJLIssw,0,72,1144,
+368,Mogilev,Mogilev,BWHZyxm8xEs,0,16,776,
+370,Babruysk,Babruysk,YKfJc2VP5nM,0,48,2181,
+372,Rechytsa,Rechytsa,uI0nNHDBJLo,0,6,419,
+374,Pinsk,Pinsk,SoOV-9AMaoQ,0,19,510,
+375,Ivatsevichy,Ivatsevichy,G0ZJUdQQFRk,0,57,168,
+379,Tbilisi,Tbilisi,fAe9QhZW8ks,0,10,1462,
+380,Rustavi,Rustavi,jMbQ2K3nZo8,0,0,315,
+381,Batumi,Batumi,hYyx6gD-gd4,0,0,2583,
+382,Kutaisi,Kutaisi,kEz4RVtalxc,0,0,642,
+383,Zugdidi,Zugdidi,XfBh7HaZTck,0,10,1038,
+384,Poti,Poti,g7FDf34WbNg,0,20,369,
+385,Sukhumi,Sukhumi,7NkEw2HZERQ,0,8,1035,
+386,Vladivostok,Vladivostok,DoWNuThrb1I,0,0,736,
+387,Baku,Baku,KDHjh4WQvug,0,0,844,
+388,Shaki,Shaki,7MUN-26YS1E,0,11,1193,
+389,Xırdalan,Xırdalan,thn9uBVDG7o,0,16,818,
+390,Sumgait,Sumgait,QWmD2_-gFAo,0,55,680,
+392,Lankaran,Lankaran,c0dlpaspxd4,0,16,2161,
+393,Vagharshapat,Vagharshapat,vosNsn4HUL4,0,0,368,
+396,Armavir,Armavir,3TpgtM1Qje8,0,0,1149,
+397,Ijevan,Ijevan,LodEX7dc6Uk,0,44,734,
+399,Goris,Goris,W4HXW_xtJ6k,0,68,639,
+402,Arkhangelsk,Arkhangelsk,rfFQhm_SCzk,0,18,1431,
+403,Engels,Engels,dTmUQv3V6mE,0,30,1121,
+409,Kansk,Kansk,k72BFysB_zY,0,2,1646,
+416,Irkutsk,Irkutsk,vGc6uE5LaeI,0,90,795,
+417,Yakutsk,Yakutsk,f3nSUWzLL6M,0,0,587,
+418,Yuzhno-Sakhalinsk,Yuzhno-Sakhalinsk,uHu6O4_Z2L0,0,18,796,
+419,Apatity,Apatity,foAFGYA3fhc,0,20,146,
+423,Chita,Chita,sQqC2FNNMdM,0,0,187,
+426,Kaliningrad,Kaliningrad,cbRSL5ErGhM,0,19,1476,
+427,Stavropol,Stavropol,ba1IzyvSkgI,0,0,1250,
+429,Mikhaylovsk,Mikhaylovsk,vIyH8oNWXeY,0,0,118,
+431,Tuapse,Tuapse,6Wj7HetPeYE,0,0,960,
+432,Pyatigorsk,Pyatigorsk,tzpPEL0WgFs,0,0,303,
+436,Labinsk,Labinsk,m9Wgs7fZ5S8,0,0,562,
+439,Astrakhan,Astrakhan,Q3y1snZnnyg,0,20,757,
+440,Yalta,Yalta,iAPxrtCGGr8,0,27,1233,
+441,Bakhchysarai,Bakhchysarai,vAycmZzP8Lw,0,61,511,
+442,Yevpatoria,Yevpatoria,OoRLyf5_EbI,0,0,423,
+443,Toshkent,Toshkent,BJef1jG0naE,0,7,1549,
+444,Almaty,Almaty,wkWbW8iMFV4,0,0,1616,
+449,Petropavl,Petropavl,fMzlmeiS_YA,0,33,595,
+452,Karagandy,Karagandy,dUolIDYSLN0,0,0,210,
+457,Aral,Aral,_UElDmNKJmk,0,19,1213,
+459,Zhezkazgan,Zhezkazgan,K0yYBqQO4DY,0,7,1289,
+460,Angren,Angren,PpbLyn8YWrg,0,0,32,
+462,Fergana,Fergana,bGNUKviytUk,0,14,756,
+463,Shymkent,Shymkent,S8aCI48xB0c,0,24,1715,
+464,Oskemen,Oskemen,5gj_Ux4msYM,0,6,1538,
+465,Taraz,Taraz,raIjz7zf6sg,0,25,1384,
+466,Qostanai,Qostanai,nBcVo-bllsU,0,0,1832,
+468,Pavlodar,Pavlodar,uhqun1WggI8,0,0,58,
+469,Samarkand,Samarkand,Ov_6Znvur1g,0,22,1100,
+470,Olmaliq,Olmaliq,tZdl6JBQpWI,0,16,1289,
+473,Bishkek,Bishkek,g9zV7uQf4FI,0,92,1003,
+474,Gorno-Altaysk,Gorno-Altaysk,DK3NVxMwIrA,0,50,332,
+475,Tokmok,Tokmok,QfJ_7vGQSgs,0,0,576,
+478,Jalal-Abad,Jalal-Abad,BgCNoUDP4Ns,0,0,905,
+479,Karakol,Karakol,SLpCHGJATkY,0,0,525,
+480,Kyzyl-Kyya,Kyzyl-Kyya,HDxLOg09K-0,0,0,376,
+481,Ashgabat,Ashgabat,3H38ZPwxsO8,0,0,761,
+482,Dushanbe,Dushanbe,oLHPlvDRj8Q,0,6,2952,
+489,Rîbnița,Rîbnița,qJwarRmuv5o,0,21,984,
+490,Donetsk,Donetsk,BsV8oAaiphs,0,0,1248,
+491,Makiivka,Makiivka,aBAuD4GhVQI,0,0,72,
+493,Ilovaisk,Ilovaisk,J9omBy0CIIM,0,0,133,
+495,Kramatorsk,Kramatorsk,_OdVeleKlts,0,0,447,
+497,Makhachkala,Makhachkala,iPsy5THSWU4,0,0,1568,
+498,Shillong,Shillong,aGdgEMeefIg,0,0,1254,
+499,Dibrugarh,Dibrugarh,KEXW5lYrJfo,0,3,353,
+500,Mysore,Mysore,KJUb0-_sMCA,0,47,1825,
+501,Bengaluru,Bengaluru,NdPAVDBjSUA,0,5,1255,
+502,Calangute,Calangute,ChBV1zh37y4,0,5,868,
+503,Coimbatore,Coimbatore,U-ZlI8AY_uw,0,0,665,
+504,Pothencode,Pothencode,h6zuPtiB3rc,0,0,648,
+505,Thiruvananthapuram,Thiruvananthapuram,k7UbcNzseME,0,0,1439,
+506,Pathanamthitta,Pathanamthitta,uAs3nwPM6TU,0,0,1548,
+508,Kottayam,Kottayam,Ae-9_73biLU,0,0,879,
+509,Kochi,Kochi,jf5HcCDLI88,0,0,623,
+511,Thane,Thane,HO2_SqdP8AU,0,52,3397,
+512,Pune,Pune,MxmEz7c_pAw,0,49,1378,
+513,Kolhapur,Kolhapur,yP1jnAbD0rY,0,6,1601,
+514,Karachi,Karachi,o7Qr5q92Zgk,0,5,955,
+515,Kathmandu,Kathmandu,cN4eNspisZM,0,0,1160,
+516,Phnom Penh,Phnom Penh,Wuqi0BNth0k,0,57,1952,
+517,Ta Khmau,Ta Khmau,lt7N2TQlVSE,0,31,1836,
+518,Kampot,Kampot,EGIyh6CXC2o,0,26,1895,
+519,Kampong Chhnang,Kampong Chhnang,lzhWOyj0ew8,0,67,2802,
+520,Takeo,Takeo,HHvBv2lGkCs,0,40,1805,
+522,Ta Khmao,Ta Khmao,njIDklh9MN8,0,11,1105,
+523,Sihanoukville,Sihanoukville,lUDNjOTHOYE,0,100,2520,
+524,Magadan,Magadan,qX1cO8J-V-Y,1,0,237,
+526,Surgut,Surgut,KVy9ZpoMIhg,0,12,410,
+530,Petropavlovsk-Kamchatsky,Petropavlovsk-Kamchatsky,P6nzA2UyUS8,0,28,1623,
+531,Narva,Narva,4m90rSoG5z8,0,64,1303,
+532,Pärnu,Pärnu,W2cGgqKP6t8,0,0,238,
+533,Ulaanbaatar,Ulaanbaatar,CF2TXaXmvkk,0,0,2455,
+534,Georgetown,Georgetown,mNgm1YGQHOg,0,8,1720,
+535,Linden,Linden,tktOLvwDXnE,0,22,755,
+538,Vreed en Hoop,Vreed en Hoop,mTcO_rxJJXE,0,20,374,
+540,Paramaribo,Paramaribo,PymrJ6l75eY,0,52,1001,
+541,Cayenne,Cayenne,f476eozrFmc,0,11,2843,
+542,Oiapoque,Oiapoque,ncnztMwgIiI,0,50,498,
+543,Macapá,Macapá,N8eKQDCYwJI,0,13,1344,
+544,Moengo,Moengo,P08v6qwYuXw,0,55,451,
+545,Ambato,Ambato,KQU-5_VewEw,0,0,1447,
+546,Quito,Quito,3venZOgsaYY,0,0,516,
+549,Tulcán,Tulcán,eJwtHqAJfXg,0,42,745,
+551,Caranavi,Caranavi,T_O4lojb7Wo,0,6,801,
+552,La Paz,La Paz,LJDPBxG1FjU,0,11,3229,
+554,Trinidad,Trinidad,cbocYysKxOc,0,3,2359,
+555,Santa Cruz de la Sierra,Santa Cruz de la Sierra,EKps57wUalI,0,83,2661,
+556,San José de Chiquitos,San José de Chiquitos,v90ZGf3njp0,0,60,367,
+557,Puerto Suárez,Puerto Suárez,949WwaJWsuw,0,15,278,
+558,Aquidauana,Aquidauana,HQXYp2eOngM,0,40,519,
+559,Campo Grande,Campo Grande,98yLpKYBPOM,0,10,2714,
+560,Cochabamba,Cochabamba,sGaOnQ71Skw,0,13,3250,
+561,Oruro,Oruro,kf2JCik_5zI,0,43,2033,
+562,Asunción,Asunción,SyWYr61V_3o,0,12,935,
+563,Punta del Este,Punta del Este,DfCyGGZJe5g,0,26,398,
+564,Chuy,Chuy,lOLKiexEuy4,0,60,350,
+565,José Pedro Varela,José Pedro Varela,ESC_uAlLVbI,0,19,1035,
+566,Minas,Minas,TIlq30myAdY,0,85,380,
+568,Montevideo,Montevideo,Sz9nRHTofkQ,0,1,1393,
+571,Fray Bentos,Fray Bentos,biaaHNOsI3I,1,28,1166,
+572,Guatemala City,Guatemala City,lso5Zyz-sMw,0,33,1343,
+575,Comayagua,Comayagua,coWiD5iJzdc,0,5,2865,
+576,Tegucigalpa,Tegucigalpa,T3eozp8TZpQ,0,95,997,
+577,La Ceiba,La Ceiba,GDOrxIjjSLU,0,21,3207,
+579,San Pedro Sula,San Pedro Sula,wv9KsuviuUM,0,50,1714,
+580,San Salvador,San Salvador,bemqMHN0Dlc,0,5,2185,
+582,Managua,Managua,X2oPzSPsiPQ,0,75,230,
+584,San Juan del Sur,San Juan del Sur,9_TpO0TIJKg,0,26,473,
+585,San José,San José,ZPOuwPi0Ghs,0,0,475,
+586,Kingston,Kingston,XeA0ZTmX6i8,0,80,123,
+587,Ocho Rios,Ocho Rios,55-rBgI1MUA,0,40,485,
+589,Montego Bay,Montego Bay,LX-MWknZnZc,1,5,3488,
+590,Spanish Town,Spanish Town,cGLbNBqcRgY,0,15,1101,
+595,Port-au-Prince,Port-au-Prince,ySkoRAbT70U,0,82,2290,
+596,San Juan,San Juan,HJSa0WeXTMk,0,37,843,
+597,Carolina,Carolina,fHKSXeYg9g4,1,0,754,
+598,Isabela,Isabela,aJ3eOJBzwHo,0,26,868,
+602,Caguas,Caguas,FZ7UJ_Gmm6k,0,0,2711,
+603,Princes Town,Princes Town,u07o5uniPqg,0,0,112,
+604,Petit Valley,Petit Valley,E9CzlKpiEoU,0,56,693,
+608,Victoria,Victoria,X4EuhO0PyRY,0,51,228,
+609,Roseau,Roseau,stMbkRFQidI,0,0,504,
+610,Huancayo,Huancayo,Yg3u3pRs4zo,0,21,2440,
+619,Bridgetown,Bridgetown,VlciVJuF9Bw,0,26,836,
+622,Hamilton,Hamilton,Di61A7comPI,0,18,1557,
+626,Nassau,Nassau,ggeWCex3Y8Y,0,0,1650,
+633,Charlestown,Charlestown,eHLoSvcpTcA,0,0,491,
+634,Basseterre,Basseterre,8ES3aEcEDdQ,0,8,392,
+636,St. John's,St. John's,htItY1_KKgc,0,12,390,
+637,Sea view Farm,Sea view Farm,hyRTk8aESTs,0,3,911,
+640,Thimphu,Thimphu,0huxbfJBSRA,0,0,363,
+641,Nouméa,Nouméa,mpd_eZG5CBE,0,0,358,
+642,Port Louis,Port Louis,wPfatZjpiOI,0,30,806,
+646,Vacoas-Phoenix,Vacoas-Phoenix,1lz2v4wcCxo,0,45,539,
+647,Grand Baie,Grand Baie,_V4xAzANdjE,0,72,1011,
+653,Willemstad,Willemstad,eyVN6fypLyU,0,0,62,
+654,Pyongyang,Pyongyang,nQ_R9hhHB5A,0,82,3872,
+655,Malé,Malé,3IPkNOBCm1M,0,5,299,
+658,Les Anses-d'Arlet,Les Anses-d'Arlet,3Xc86Pu7zXA,0,30,247,
+661,Castries,Castries,RQ618y4Ato8,0,28,187,
+663,Babonneau,Babonneau,s3d-2VufeUM,0,30,275,
+667,Kingstown,Kingstown,9A2nqtmerIE,0,0,118,
+672,Vermont,Vermont,kErVZqYURs0,0,30,677,
+674,Brighton,Brighton,Gl07tLi8oSc,0,34,240,
+677,Sainte-Rose,Sainte-Rose,eKy0Kj-_PEk,0,32,759,
+678,Pointe-à-Pitre,Pointe-à-Pitre,V4bseJC9svQ,0,21,530,
+681,Bouillante,Bouillante,DbneXFHYKJk,0,92,488,
+684,Saint-François,Saint-François,qQfBLRXw0Vg,0,76,491,
+686,Pelican Key,Pelican Key,cmpCF1BOUDE,0,79,423,
+688,Marigot,Marigot,tItevXXD1Zg,0,77,228,
+701,Road Town,Road Town,ZMhtpElX9CM,0,0,810,
+705,George Town,George Town,AZJVdhRSjVg,0,15,1941,
+719,Antananarivo,Antananarivo,ZBwk5YJidZc,0,51,1794,
+720,Toamasina,Toamasina,UFsdlCfdFls,0,38,2043,
+721,Toliara,Toliara,K8u6MUAERJ0,0,31,1216,
+723,Port Moresby,Port Moresby,e7SAPvfvbZg,0,3,226,
+726,Nukuʻalofa,Nukuʻalofa,Hxg7TblRMlI,0,60,1567,
+730,Apia,Apia,CDW8T-TZYJs,1,24,504,
+740,Honiara,Honiara,HkHWZIJlL9U,0,59,237,
+741,Port Vila,Port Vila,n95sVQh3VE4,0,44,1005,
+745,Papeete,Papeete,PXTOoIyqXds,0,31,1527,
+756,Nadi,Nadi,dFBUd20pVKU,0,10,1083,
+767,Laura,Laura,5jjB02i0fHI,0,77,225,
+788,Funafuti,Funafuti,8bFAihDuDM0,0,30,374,
+808,Vientiane,Vientiane,OCtESrtTFos,0,0,1997,
+835,Nuuk,Nuuk,WJ92rHr-sH8,0,68,1435,
+837,Ilulissat,Ilulissat,c5je9ZObT1c,0,20,602,
+858,Naxxar,Naxxar,qTLQ441N8Sc,0,0,1590,
+860,Zabbar,Zabbar,dHhK0JgVcz0,0,0,486,
+862,Valletta,Valletta,4Sj6LfLos2g,0,11,2611,
+868,Birgu,Birgu,fsXk8bHD6uc,0,23,1044,
+872,Dingli,Dingli,xx8-5K6DIxI,0,34,840,
+874,St Paul's Bay,St Paul's Bay,#NAME?,0,20,98,
+875,Luqa,Luqa,5FMGg6JoYAA,0,0,46,
+883,Gżira,Gżira,d8fHXwNYfSk,0,6,250,
+887,Andorra la Vella,Andorra la Vella,tL_zMUNrhUw,0,0,491,
+888,Canillo,Canillo,0eflYQNAZq4,0,11,80,
+891,Sant Julià de Lòria,Sant Julià de Lòria,C30KC89jMwE,0,0,156,
+892,La Massana,La Massana,0qbqg_3XcZs,0,31,375,
+932,Maseru,Maseru,aTUTzj7Br4M,0,0,316,
+937,Teyateyaneng,Teyateyaneng,1yd383o1ycc,0,0,419,
+942,Manzini,Manzini,oreiMRvlsDo,0,0,438,
+943,Mbabane,Mbabane,5DOgshHF_vw,0,33,760,
+945,Swakopmund,Swakopmund,wWRuPnjz9F8,0,12,135,
+947,Windhoek,Windhoek,guqexstDK88,0,5,2345,
+951,Francistown,Francistown,wmzG0aqGnhM,0,90,565,
+952,Gaborone,Gaborone,vlqtvspPmrg,0,3,1419,
+955,Ponta do Ouro,Ponta do Ouro,KlOQvqQL5Mw,0,0,440,
+956,Beira,Beira,qD9-pBB2i0A,0,0,386,
+957,Maputo,Maputo,e37EakncZWw,0,81,155,
+958,Gorongosa,Gorongosa,vIOR4xAb1lg,0,52,197,
+959,Harare,Harare,SUYOKNVuhAM,0,20,1479,
+960,Bulawayo,Bulawayo,RUF7RfnLrKA,0,15,1062,
+963,Limbe,Limbe,YHsLa8BwFdo,0,62,2178,
+964,Zomba,Zomba,WzFS5ODQyqE,0,60,450,
+966,Blantyre,Blantyre,2JmdT2shcBI,0,13,1028,
+970,Lusaka,Lusaka,TNzb0TGxngg,0,8,193,
+971,Monze,Monze,Fbx96h9dF88,0,30,1624,
+972,Lilongwe,Lilongwe,vKa5C8VxX78,0,2,421,
+976,Durban,Durban,1v9fOgD2AUQ,0,0,1410,
+978,Ndola,Ndola,tBoY_54Sut8,0,0,20,
+980,Thyolo,Thyolo,jq2_QZssHRY,0,1,100,
+983,Cascais,Cascais,lDdqny7BTIE,0,59,461,
+986,Stockton,Stockton,cU7QOtN0vM0,0,40,1577,
+992,Lucena,Lucena,Cn5539ftMIU,0,42,737,
+993,Oran,Oran,LLO_J9yL3qg,0,40,435,
+994,Moroni,Moroni,J3TQia2hmd4,0,0,692,
+1008,Bujumbura,Bujumbura,Zg9nFyIx-Es,0,7,43,
+1009,Ngozi,Ngozi,WdSgpPaMh-U,0,0,368,
+1011,Mpehe,Mpehe,13kft1lcLFk,0,0,150,
+1014,Kigali,Kigali,58mwcxaIZVA,0,0,3346,
+1023,Lodrino,Lodrino,D6mUOH993D8,0,23,114,
+1028,Iconi,Iconi,9F3ixwy_1Xg,0,0,1637,
+1034,Franceville,Franceville,0LrA4BjXl5E,0,0,580,
+1035,Ntoum,Ntoum,Ch1VVxd8bm4,0,0,264,
+1036,Mounana,Mounana,FRCcRJJi79Q,0,0,310,
+1038,Libreville,Libreville,2D0V14I2mO8,0,0,627,
+1039,Port Gentil,Port Gentil,eReyDV1Amig,0,0,1433,
+1040,Rotterdam,Rotterdam,ADt1e5B3KoM,0,32,630,
+1042,Bangui,Bangui,k5nwg-7BKpk,0,23,885,
+1043,Malabo,Malabo,l4yc1co19_o,0,0,451,
+1044,Douala,Douala,NSBxcwBDRI4,0,61,577,
+1045,Buea,Buea,gQMSk2YEsOw,0,0,659,
+1049,Bafoussam,Bafoussam,TaqdmwyJPnQ,0,0,497,
+1050,Yaoundé,Yaoundé,5MLN46S7cxE,0,0,222,
+1052,Bamenda,Bamenda,MM2X4Bz-8DE,0,0,1495,
+1053,Lomé,Lomé,kYOc0Em12vY,0,0,601,
+1056,Addis Ababa,Addis Ababa,75QmOtqxLFM,0,0,1465,
+1057,Bishoftu,Bishoftu,eOuC0QcAmvk,0,78,814,
+1060,Gondar,Gondar,e963nL7vo8U,0,15,1935,
+1061,Hosanna,Hosanna,Xj6lYDetFDo,0,0,20,
+1064,Nyeri,Nyeri,9_ZXbRo4EN4,0,48,880,
+1072,Meru,Meru,gxyoPAvRkjc,0,38,967,
+1077,Chogoria,Chogoria,M0DOTYYpZXs,0,39,474,
+1115,Eldoret,Eldoret,QQKrdWS6q9Y,0,53,1340,
+1116,Mogadishu,Mogadishu,NE-6HWxzMPM,0,0,1093,
+1117,Afgoye,Afgoye,BSGxl4zVgZM,0,0,58,
+1118,Borama,Borama,ZtjStKvgvnw,0,5,610,
+1119,Hargeisa,Hargeisa,Nxn-FO3Z7zw,0,5,594,
+1120,Djibouti,Djibouti,oRBHrKXO_ec,0,0,2887,
+1123,Asmara,Asmara,RQVltW3QBG4,0,49,747,
+1124,Keren,Keren,lAM9iNMPIzM,0,5,590,
+1130,Mendefera,Mendefera,f4UrQp8I6rA,0,17,450,
+1133,Mitsiwa,Mitsiwa,NB5_-HGuY7g,0,32,586,
+1134,Omdurman,Omdurman,#NAME?,0,0,82,
+1136,Khartoum,Khartoum,XW-c5iHIWTw,0,0,301,
+1137,N'Djamena,N'Djamena,xZiioLx86Z4,0,0,791,
+1138,Minna,Minna,aqsRFjWIExI,0,25,128,
+1139,Niamey,Niamey,d8O5LsoYWPg,0,0,1392,
+1140,Bamako,Bamako,stcF4ss4Mgc,0,0,871,
+1142,Abidjan,Abidjan,S9sUTNozlM4,0,0,787,
+1143,Cotonou,Cotonou,oJNmHusRVaY,0,0,2898,
+1144,Benin City,Benin City,lmgVZTQpNyM,0,0,1575,
+1149,Porto-Novo,Porto-Novo,IC1WRUfMDx0,0,26,2161,
+1150,Austin,Austin,AL5Cmyk3y4E,0,14,2439,
+1159,Belize City,Belize City,tyh1U2u8rCs,0,52,752,
+1160,Tiksi,Tiksi,hqiKzShfEOw,1,35,486,
+1161,Lourinhã,Lourinhã,jxdQQsi_eKI,0,1,2709,
+1163,Funchal,Funchal,MdmynDuLEy8,0,2,1977,
+1165,Nazaré,Nazaré,JFHENHLxsYM,0,1,1650,
+1174,Ibadan,Ibadan,djlE77MnWYs,0,51,2225,
+1180,Abuja,Abuja,WD76kfYiocg,0,30,515,
+1182,Umuahia,Umuahia,#NAME?,0,0,1217,
+1183,Port Harcourt,Port Harcourt,wxVTfvrIjZw,0,0,71,
+1184,Onitsha,Onitsha,rtXE8XPqvII,0,7,141,
+1185,Enugu,Enugu,xZRxSTqzlrM,0,12,1448,
+1186,Awka,Awka,ie12h7I-A-c,0,6,183,
+1188,Lekki,Lekki,InROrJHFbag,0,39,1010,
+1189,Aba,Aba,yIrN7u2bvqI,0,0,965,
+1190,Abakaliki,Abakaliki,sQSU3RfphLE,0,0,125,
+1194,Kano,Kano,YsdNklvnZ10,0,60,370,
+1195,Kaduna,Kaduna,pAhGUk7AAXM,0,0,24,
+1196,Afikpo,Afikpo,#NAME?,0,60,1239,
+1197,Kumasi,Kumasi,qzFXq3M4TKs,0,7,2826,
+1198,Accra,Accra,7L7SPteLX9k,0,0,1265,
+1199,Cape Coast,Cape Coast,pj0C8jouofY,0,90,105,
+1200,Tamale,Tamale,XTZWfMzwZ3o,0,1,1377,
+1207,Ouagadougou,Ouagadougou,2vwIPzKmaAI,0,0,103,
+1208,Banjul,Banjul,PWmODxVQm-0,0,0,364,
+1211,Salekhard,Salekhard,6KHDNhzoUaA,0,7,1574,
+1213,Lakhdenpokhya,Lakhdenpokhya,93tK91w-C8w,0,0,533,
+1214,Monrovia,Monrovia,ipqfA_aFlJA,0,0,569,
+1215,Kabul,Kabul,Uz418IJRcTg,0,0,1588,
+1216,Robertsport,Robertsport,doZhwg-J0iA,0,6,45,
+1219,Pleebo,Pleebo,uQQ0ajS7XlI,0,0,46,
+1222,Buchanan,Buchanan,b5y96Esky0c,0,0,270,
+1224,Freetown,Freetown,XXMNmEeU94c,0,34,2230,
+1225,Bo,Bo,gh2OLpW3nxI,0,23,4572,
+1226,Kenema,Kenema,gj_MIl9GFy0,0,22,283,
+1228,Moyamba,Moyamba,Km2_sECQJEU,0,13,1305,
+1230,Koidu,Koidu,F_M7S_nQgH8,0,20,2662,
+1231,Pujehun,Pujehun,CE8q9RUpBpI,0,13,1680,
+1232,Magburaka,Magburaka,oy3MWTA1xxo,0,20,2652,
+1233,Makeni,Makeni,W-0T9TzoIv8,0,12,2096,
+1234,Segbwema,Segbwema,JkOab4ODhMc,0,64,1723,
+1235,Rokupr,Rokupr,FLJIhlfsoF4,0,100,920,
+1236,Kailahun,Kailahun,p-EV2UCysF0,0,13,1479,
+1237,Taiama,Taiama,ZRGoUof73Ek,0,20,1235,
+1238,Mange,Mange,EhI4C_c3y3w,0,13,2370,
+1239,Matru,Matru,rLFXdQc_7KM,0,18,1945,
+1240,Kalangba,Kalangba,YKtysexI-ok,0,25,2572,
+1241,Lunsar,Lunsar,G_wMpTrv1QQ,0,48,1373,
+1242,Tintafor,Tintafor,SVnn_QYyrbw,0,24,2230,
+1243,Mamana,Mamana,2gh8zQKKN9k,0,35,1263,
+1244,Kabala,Kabala,5t_n9bHxWmI,0,10,1865,
+1246,Petifu Junction,Petifu Junction,vnd4ycsYI_c,0,11,1569,
+1247,Mambolo,Mambolo,mxlM2baTzzE,0,28,2544,
+1248,Masoila,Masoila,ibDGjfLB_eQ,0,20,2302,
+1249,Kambia,Kambia,_LGt09Rkvjw,0,30,1972,
+1251,Waterloo,Waterloo,NyNOQAEB_Fs,0,38,2090,
+1254,Binkolo,Binkolo,AZMnu5ZEgx4,0,28,3031,
+1256,Port Loko,Port Loko,qAq5UnG290Y,0,14,1557,
+1257,Masiaka,Masiaka,GI5DKRFMt3k,0,20,1945,
+1258,Daru,Daru,dT1rrLUQ4Io,0,13,1566,
+1259,Pendembu,Pendembu,mAfB0hZHJ2M,0,12,1827,
+1260,Gbinti,Gbinti,1zcr8DQDkUQ,0,17,1005,
+1261,Luawa,Luawa,eC7tZeRYM14,0,18,1473,
+1262,Batkanu,Batkanu,rJiIJhCaKa4,0,39,2222,
+1263,Fadugu,Fadugu,V6xdlN27bio,0,40,1420,
+1264,Sussex,Sussex,C1jvLzxc73E,0,29,1850,
+1265,Makolo,Makolo,uQU-KOc2ohY,0,28,1865,
+1266,Kagbantama,Kagbantama,WgFTBLyMhY8,0,28,1820,
+1267,Moyamba Junction,Moyamba Junction,yFS_1s26Tb8,0,11,265,
+1269,Kassirie,Kassirie,v5gm054tG0o,0,22,1396,
+1270,Sinkunia,Sinkunia,wMtirsw4adk,0,38,1185,
+1271,Bandajuma,Bandajuma,noxAjh0g5yE,0,93,2030,
+1272,Berkane,Berkane,sMBxVchHwv8,0,0,367,
+1273,Marrakesh,Marrakesh,5aLjFLy64g4,0,13,2843,
+1274,Casablanca,Casablanca,1dc8qjbtG2Q,0,0,1236,
+1275,Tangier,Tangier,6Re-AuESJqc,0,14,2075,
+1276,Agadir,Agadir,LbB2xWRwKtk,0,0,1621,
+1278,Tétouan,Tétouan,H0X4XnxQ1pM,0,60,1798,
+1279,Ahfir,Ahfir,gBtu-PibUwc,0,0,63,
+1282,Fez,Fez,tVI4_HK3c1A,0,0,1572,
+1283,Settat,Settat,AetbK5RG5ZE,0,5,726,
+1284,Al Hoceima,Al Hoceima,EAWodskJ_gs,0,10,843,
+1285,Ouarzazate,Ouarzazate,xXe0UenuVeg,0,8,804,
+1288,Salé,Salé,J0E9Ch3oKqA,0,20,679,
+1290,Tobruk,Tobruk,SSNjfdk7o90,0,0,1704,
+1291,New Cairo,New Cairo,SXp9JIK96P0,0,49,436,
+1293,Giza,Giza,KnhIiOtmdQo,0,6,1592,
+1294,Banha,Banha,UvhZBFiBsQM,0,7,775,
+1295,Alexandria,Alexandria,02kJc-cjI3Q,1,30,1040,
+1296,Bissau,Bissau,1oiUIANQv6A,0,0,677,
+1297,Brikama,Brikama,p2IkteJp7ws,0,0,580,
+1298,Sanyang,Sanyang,dS_3TcxG3mY,0,1,395,
+1299,Serrekunda,Serrekunda,ESa6QOfl9xM,0,25,1224,
+1302,Sesimbra,Sesimbra,#NAME?,0,1,1439,
+1303,Ziguinchor,Ziguinchor,PYFB7nMiFTM,0,30,620,
+1304,Dakar,Dakar,R4Gp3N36eYc,0,66,1162,
+1325,Tanjeh,Tanjeh,fV9eYk2sQbo,0,0,1077,
+1331,Port-Gentil,Port-Gentil,AxcX2kqPrPo,0,35,659,
+1332,Conakry,Conakry,xcaR88rLA_Q,0,82,230,
+1333,Dubreka,Dubreka,W-cZHIHIsXQ,0,0,283,
+1334,Forecariah,Forecariah,9f-nFI3qSpA,0,0,190,
+1336,Khorira,Khorira,nrmPlzB56EE,0,0,12,
+1337,Panningen,Panningen,dMYR9NDnkSc,0,12,607,
+1338,Antwerp,Antwerp,axVMvxJyO2U,0,0,391,
+1339,Eindhoven,Eindhoven,_88FXb3Rr6A,0,38,1213,
+1340,Coyah,Coyah,61ND78qCa7E,0,24,700,
+1341,Nouakchott,Nouakchott,4IaKhverJk8,0,0,1624,
+1345,Jerada,Jerada,rz7vMS8fERA,0,76,1386,
+1346,Oujda,Oujda,9pa7mXTwrp4,0,60,2357,
+1348,Skhirat,Skhirat,LOtYimIdf48,0,5,500,
+1350,Khemisset,Khemisset,XdPlReG6avk,0,0,1715,
+1354,Ronda,Ronda,MvN1yEuis00,0,50,615,
+1355,Melilla,Melilla,LgxvfBqSs18,0,35,1422,
+1358,Saidia,Saidia,c_poErpGYnI,0,0,908,
+1361,Annaba,Annaba,9la5b3lwXRU,0,4,528,
+1363,El Madania,El Madania,KlD6281um-U,0,27,485,
+1364,El Harrach,El Harrach,rtlbVbWKz6I,0,0,645,
+1369,Ariana,Ariana,0wsuONzLXp0,0,0,1618,
+1371,Sanaa,Sanaa,6jMP4fn59Ms,0,65,147,
+1372,Taiz,Taiz,KxNelAeELQ8,0,0,1111,
+1373,Sousse,Sousse,5ja3nZYvmBI,0,8,612,
+1374,Nabeul,Nabeul,V95A4aDxFi0,0,0,373,
+1375,Muscat,Muscat,62-e-rcxCgc,0,57,1576,
+1377,Utrecht,Utrecht,jj0lIgFInD0,0,0,2219,
+1379,Tiwi,Tiwi,MC4cvrDgcmA,0,1,645,
+1380,Sur,Sur,00oxaRUK7hk,0,2,515,
+1384,Haifa,Haifa,eNqef9pbHwQ,0,39,807,
+1386,Jerusalem,Jerusalem,b7wdJAawLqE,0,0,600,
+1387,Be'er Sheva,Be'er Sheva,MClZXRTWYY8,0,20,788,
+1389,Tehran,Tehran,2GLGl1QCwSo,0,7,1830,
+1422,Ho Chi Minh City,Ho Chi Minh City,4BB6l7wfNpM,0,22,2580,

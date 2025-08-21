@@ -36,7 +36,7 @@ def analyze_vehicle_during_crossing(
     video_path,
     crossing_csv_path=None,
     output_csv_path=None,
-    analyze_interval_sec=1.0  # 每多少秒分析一次
+    analyze_interval_sec=1.0
 ):
     model = YOLO("modules/count_vehicle/best.pt")
     video_name = os.path.splitext(os.path.basename(video_path))[0]

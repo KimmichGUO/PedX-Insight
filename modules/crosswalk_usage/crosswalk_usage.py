@@ -58,8 +58,12 @@ def determine_crosswalk_usage(video_path, crossing_csv_path=None, track_csv_path
             radius = (x2 - x1) * 2
             circle_center = (cx, cy)
 
-            for offset in range(-25, 26):
+            max_frame_id = tracked_df["frame_id"].max()
+
+            for offset in range(-250, 260):
                 check_frame = frame_id + offset
+                if check_frame < 0 or check_frame > max_frame_id:
+                    continue
                 if check_frame in crosswalk_dict:
                     if circle_overlaps_crosswalk(circle_center, radius, crosswalk_dict[check_frame]):
                         used_crosswalk = True

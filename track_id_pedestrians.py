@@ -12,16 +12,17 @@ def run_pedestrian_tracking(video_path, weights="yolo11n.pt", output_csv_path=No
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "[B0]tracked_pedestrians.csv")
+        output_csv_path = os.path.join(output_dir, "[B1]tracked_pedestrians.csv")
     else:
         os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
 
     model = YOLO(weights)
+    model.to("cuda")
     tracker_args = SimpleNamespace(
         track_thresh=0.3,
         match_thresh=0.8,
-        track_buffer=30,
-        frame_rate=30,
+        track_buffer=120,
+        frame_rate=60,
         mot20=False
     )
     tracker = BYTETracker(tracker_args)
@@ -38,13 +39,12 @@ def run_pedestrian_tracking(video_path, weights="yolo11n.pt", output_csv_path=No
             break
 
         frame_id += 1
+        if frame_id % 60 != 0:
+            continue
         timestamp = round(frame_id / fps, 2)
 
         dets = model(frame)[0]
         if dets.boxes.shape[0] == 0:
-            cv2.imshow("Tracking", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
             continue
 
         boxes = []
@@ -54,9 +54,6 @@ def run_pedestrian_tracking(video_path, weights="yolo11n.pt", output_csv_path=No
                 boxes.append([x1, y1, x2, y2, conf.item()])
 
         if not boxes:
-            cv2.imshow("Tracking", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
             continue
 
         dets_array = np.array(boxes, dtype=np.float32)
@@ -72,10 +69,6 @@ def run_pedestrian_tracking(video_path, weights="yolo11n.pt", output_csv_path=No
             x1, y1 = int(tlwh[0]), int(tlwh[1])
             x2, y2 = int(tlwh[0] + tlwh[2]), int(tlwh[1] + tlwh[3])
 
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(frame, f'ID: {track_id}', (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
             results.append({
                 "frame_id": frame_id,
                 "timestamp": timestamp,
@@ -86,12 +79,7 @@ def run_pedestrian_tracking(video_path, weights="yolo11n.pt", output_csv_path=No
                 "y2": y2
             })
 
-        cv2.imshow("Tracking", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
     cap.release()
-    cv2.destroyAllWindows()
 
     df = pd.DataFrame(results)
     df.to_csv(output_csv_path, index=False)

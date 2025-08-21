@@ -1,35 +1,35 @@
 import argparse
 # 0
-# from track_id_pedestrians import run_pedestrian_tracking
+from track_id_pedestrians import run_pedestrian_tracking
 from track_id_pedestrians_with_imgsave import run_pedestrian_tracking_with_imgsave
 # 1.1
-# from modules.count_pedestrians.count_pedestrians import pedestrian_count
+from modules.count_pedestrians.count_pedestrians import pedestrian_count
 # 1.2
-# from modules.speed_pedestrian.speed_pedestrian import run_pede_speed_estimation
+from modules.speed_pedestrian.speed_pedestrian import run_pede_speed_estimation
 # 1.3
 from modules.waiting_time_pede.waiting_time_pede import run_waiting_time_analysis
 # 1.4
-# from modules.tracking_pede.tracking_pede import run_pede_direction_analysis
+from modules.tracking_pede.tracking_pede import run_pede_direction_analysis
 # 1.5
 from modules.phone.phone import run_phone_and_belongings_detection
 # 1.6 ~ 1.8
-# from modules.face.face import run_face_analysis
+from modules.face.face import run_face_analysis
 # 1.6_new
-# from modules.gender.gender import gender_analysis
+from modules.gender.gender import gender_analysis
 # 1.9
 from modules.clothing.clothing import run_clothing_detection
 # 1.10
-# from modules.belongings.belongings import run_belongings_detection
+from modules.belongings.belongings import run_belongings_detection
 # 2.1
 from modules.type_vehicle.type_vehicle import run_vehicle_frame_analysis
 # 2.2
-# from modules.speed_estimate.track import run_speed_estimate
+from modules.speed_estimate.track import run_speed_estimate
 # 2.3
-# from modules.distance_vehicle.distance_vehicle import run_car_detection_with_distance
+from modules.distance_vehicle.distance_vehicle import run_car_detection_with_distance
 # 2.4
-# from modules.distance_pedestrian.distance_pedestrian import visualize_and_estimate_distance
+from modules.distance_pedestrian.distance_pedestrian import visualize_and_estimate_distance
 # 2.5
-# from modules.lane_detection.lane_detection import run_lane_detection
+from modules.lane_detection.lane_detection import run_lane_detection
 # 3.1
 from modules.weather.weather import run_weather_detection
 # 3.2
@@ -68,9 +68,7 @@ from modules.pede_around_count.pede_around import calculate_nearby_count
 
 import numpy as np
 np.float = float
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
-import pandas as pd
+
 
 def main():
     def run_mode(mode, video_path, extra_args=""):
@@ -88,7 +86,7 @@ def main():
                  "risky", "acc", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "personal_info", "on_lane", "env_info", "nearby",
                  "all", "pedestrian", "vehicle", "environment", "other",
                  "sum_video", "sum_pede",
-                 "analysis", "lab", "single"
+                 "analysis",
                  ],
         help="Choose the analysis mode",
     )
@@ -106,12 +104,12 @@ def main():
     )
     args = parser.parse_args()
 
-    # if args.mode == "count":
-    #     pedestrian_count(
-    #         video_path=args.source_video_path,
-    #     )
-    if args.mode == "id":
-        run_pedestrian_tracking_with_imgsave(
+    if args.mode == "count":
+        pedestrian_count(
+            video_path=args.source_video_path,
+        )
+    elif args.mode == "id":
+        run_pedestrian_tracking(
             video_path=args.source_video_path,
         )
     elif args.mode == "id_img":
@@ -122,18 +120,18 @@ def main():
         run_waiting_time_analysis(
             video_path=args.source_video_path,
         )
-    # elif args.mode == "tracking_pede":
-    #     run_pede_direction_analysis(
-    #         video_path=args.source_video_path,
-    #     )
-    # elif args.mode == "speed_pede":
-    #     run_pede_speed_estimation(
-    #         video_path=args.source_video_path,
-    #     )
-    # elif args.mode == "speed":
-    #     run_speed_estimate(
-    #         source=args.source_video_path,
-    #     )
+    elif args.mode == "tracking_pede":
+        run_pede_direction_analysis(
+            video_path=args.source_video_path,
+        )
+    elif args.mode == "speed_pede":
+        run_pede_speed_estimation(
+            video_path=args.source_video_path,
+        )
+    elif args.mode == "speed":
+        run_speed_estimate(
+            source=args.source_video_path,
+        )
     elif args.mode == "acc":
         analyze_acceleration(
             video_path=args.source_video_path,
@@ -154,18 +152,18 @@ def main():
         run_clothing_detection(
             video_path=args.source_video_path
         )
-    # elif args.mode == "face":
-    #     run_face_analysis(
-    #         video_path=args.source_video_path
-    #     )
+    elif args.mode == "face":
+        run_face_analysis(
+            video_path=args.source_video_path
+        )
     elif args.mode == "ag":
         run_age_gender(
             video_path=args.source_video_path
         )
-    # elif args.mode == "gender":
-    #     gender_analysis(
-    #         video_path=args.source_video_path
-    #     )
+    elif args.mode == "gender":
+        gender_analysis(
+            video_path=args.source_video_path
+        )
     elif args.mode == "light":
         run_traffic_light_detection(
             video_path=args.source_video_path
@@ -178,10 +176,10 @@ def main():
         run_road_width_analysis(
             video_path=args.source_video_path
         )
-    # elif args.mode == "car_distance":
-    #     run_car_detection_with_distance(
-    #         video_path=args.source_video_path
-    #     )
+    elif args.mode == "car_distance":
+        run_car_detection_with_distance(
+            video_path=args.source_video_path
+        )
     elif args.mode == "count_vehicle":
         vehicle_count(
             video_path=args.source_video_path
@@ -200,14 +198,14 @@ def main():
         detect_crossing(
             video_path=args.source_video_path
         )
-    # elif args.mode == "pede_distance":
-    #     visualize_and_estimate_distance(
-    #         video_path=args.source_video_path
-    #     )
-    # elif args.mode == "lane":
-    #     run_lane_detection(
-    #         video_path=args.source_video_path
-    #     )
+    elif args.mode == "pede_distance":
+        visualize_and_estimate_distance(
+            video_path=args.source_video_path
+        )
+    elif args.mode == "lane":
+        run_lane_detection(
+            video_path=args.source_video_path
+        )
     elif args.mode == "vehicle_type":
         run_vehicle_frame_analysis(
             video_path=args.source_video_path
@@ -217,11 +215,11 @@ def main():
             video_path=args.source_video_path,
             weights=args.weights_yolo
         )
-    # elif args.mode == "belongings":
-    #     run_belongings_detection(
-    #         video_path=args.source_video_path,
-    #         weights=args.weights_yolo
-    #     )
+    elif args.mode == "belongings":
+        run_belongings_detection(
+            video_path=args.source_video_path,
+            weights=args.weights_yolo
+        )
     elif args.mode == "daytime":
         run_daytime_detection(
             video_path=args.source_video_path
@@ -361,13 +359,13 @@ def main():
             run_mode("id_img", video_path)
             # run_mode("count", video_path)
             # run_mode("speed_pede", video_path)
-            # run_mode("waiting", video_path)
+            run_mode("waiting", video_path)
             # run_mode("tracking_pede", video_path)
             run_mode("phone", video_path)
             # run_mode("face", video_path)
-            # run_mode("ag", video_path)
+            run_mode("ag", video_path)
             run_mode("clothing", video_path)
-            # run_mode("belongings", video_path)
+            run_mode("belongings", video_path)
 
             # vehicle
             run_mode("vehicle_type", video_path)
@@ -403,141 +401,6 @@ def main():
             # final
             run_mode("sum_video", video_path)
             run_mode("sum_pede", video_path)
-
-    elif args.mode == "single":
-        video_path = args.source_video_path
-        run_pedestrian_tracking_with_imgsave(video_path)
-        detect_crossing(video_path)
-        run_age_gender(video_path)
-        run_phone_and_belongings_detection(video_path)
-        # run_mode("face", video_path)
-        run_clothing_detection(video_path)
-        # run_belongings_detection(video_path)
-
-        # vehicle
-        run_vehicle_frame_analysis(video_path)
-        # run_mode("speed", video_path)
-        # run_mode("car_distance", video_path)
-        # run_mode("pede_distance", video_path)
-        # run_lane_detection(video_path)
-        vehicle_count(video_path)
-
-        # environment
-        run_weather_detection(video_path)
-        run_traffic_light_detection(video_path)
-        run_traffic_sign(video_path)
-        run_road_defect_detection(video_path)
-        run_road_width_analysis(video_path)
-        run_daytime_detection(video_path)
-        run_crosswalk_detection(video_path)
-        run_accident_scene_detection(video_path)
-        run_mode("sidewalk", video_path)
-
-        # combination
-        detect_crossing_risk(video_path)
-        # analyze_acceleration(video_path)
-
-        determine_crosswalk_usage(video_path)
-        determine_red_light_violation(video_path)
-        analyze_vehicle_during_crossing(video_path)
-        calculate_nearby_count(video_path)
-        extract_pedestrian_info(video_path)
-        # pedestrian_on_lane(video_path)
-        merge_env_info(video_path)
-
-        # final
-        generate_video_env_stats(video_path)
-        summary_all_info(video_path)
-
-    elif args.mode == "lab":
-        video_dir = args.source_video_path
-        if not os.path.isdir(video_dir):
-            print(f"Error: {video_dir} is not a valid directory.")
-            return
-
-        video_files = [f for f in os.listdir(video_dir) if f.lower().endswith((".mp4", ".avi", ".mov", ".mkv"))]
-
-        for video_file in video_files:
-            video_path = os.path.join(video_dir, video_file)
-
-            print(f"Processing {video_path} ...")
-            # pedestrian
-
-            run_pedestrian_tracking_with_imgsave(video_path)
-            detect_crossing(video_path)
-
-            crossing_csv = os.path.join("analysis_results", os.path.splitext(video_file)[0], "[C3]crossing_judge.csv")
-
-            if not os.path.exists(crossing_csv):
-                print(f"{crossing_csv} not found, skipping further analysis for {video_file}")
-                continue
-
-            try:
-                df_crossing = pd.read_csv(crossing_csv)
-
-                if df_crossing.empty:
-                    print(f"{crossing_csv} is empty, skipping further analysis for {video_file}")
-                    continue
-
-                if 'crossed' not in df_crossing.columns:
-                    print(f"{crossing_csv} has no 'crossed' column, skipping further analysis for {video_file}")
-                    continue
-
-
-                if df_crossing['crossed'].isna().all():
-                    print(f"{crossing_csv} 'crossed' column has no data, skipping further analysis for {video_file}")
-                    continue
-
-                crossed_values = df_crossing['crossed'].dropna().astype(str).str.upper()
-                if not any(crossed_values == 'TRUE'):
-                    print(f"{crossing_csv} has no TRUE in 'crossed' column, skipping further analysis for {video_file}")
-                    continue
-
-            except Exception as e:
-                print(f"Error reading {crossing_csv}: {e}, skipping further analysis for {video_file}")
-                continue
-
-            run_age_gender(video_path)
-            run_phone_and_belongings_detection(video_path)
-            # run_mode("face", video_path)
-            run_clothing_detection(video_path)
-            # run_belongings_detection(video_path)
-
-            # vehicle
-            run_vehicle_frame_analysis(video_path)
-            # run_mode("speed", video_path)
-            # run_mode("car_distance", video_path)
-            # run_mode("pede_distance", video_path)
-            # run_lane_detection(video_path)
-            vehicle_count(video_path)
-
-            # environment
-            run_weather_detection(video_path)
-            run_traffic_light_detection(video_path)
-            run_traffic_sign(video_path)
-            run_road_defect_detection(video_path)
-            run_road_width_analysis(video_path)
-            run_daytime_detection(video_path)
-            run_crosswalk_detection(video_path)
-            run_accident_scene_detection(video_path)
-            run_mode("sidewalk", video_path)
-
-            # combination
-            detect_crossing_risk(video_path)
-            # analyze_acceleration(video_path)
-
-            determine_crosswalk_usage(video_path)
-            determine_red_light_violation(video_path)
-            analyze_vehicle_during_crossing(video_path)
-            calculate_nearby_count(video_path)
-            extract_pedestrian_info(video_path)
-            # pedestrian_on_lane(video_path)
-            merge_env_info(video_path)
-
-            # final
-            generate_video_env_stats(video_path)
-            summary_all_info(video_path)
-
 
     elif args.mode == "pedestrian":
         video_dir = args.source_video_path
@@ -601,6 +464,26 @@ def main():
             run_mode("accident", video_path)
             # run_mode("sidewalk", video_path)
 
+    # elif args.mode == "analysis":
+    #     video_dir = args.source_video_path
+    #     if not os.path.isdir(video_dir):
+    #         print(f"Error: {video_dir} is not a valid directory.")
+    #         return
+    #
+    #     video_files = [f for f in os.listdir(video_dir) if f.lower().endswith((".mp4", ".avi", ".mov", ".mkv"))]
+    #
+    #     for video_file in video_files:
+    #         video_path = os.path.join(video_dir, video_file)
+    #
+    #         run_mode("risky", video_path)
+    #         run_mode("acc", video_path)
+    #         run_mode("cross_pede", video_path)
+    #         run_mode("crosswalk_usage", video_path)
+    #         run_mode("crossing_vehicle_count", video_path)
+    #         run_mode("personal_info", video_path)
+    #         run_mode("run_red", video_path)
+    #         run_mode("on_lane", video_path)
+    #         run_mode("env_info", video_path)
 
     elif args.mode == "other":
         video_dir = args.source_video_path

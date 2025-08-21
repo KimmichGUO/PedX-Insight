@@ -12,7 +12,7 @@ def load_crosswalk_boxes(crosswalk_csv_path):
         if detected:
             try:
                 boxes = ast.literal_eval(row["crosswalk_boxes"])
-                crosswalk_dict[frame_id] = [tuple(box) for box in boxes]
+                crosswalk_dict[frame_id] = [tuple(b) for b in boxes]
             except:
                 continue
     return crosswalk_dict
@@ -72,5 +72,10 @@ def determine_crosswalk_usage(video_path, crossing_csv_path=None, track_csv_path
             "used_crosswalk": used_crosswalk
         })
 
-    pd.DataFrame(result_list).to_csv(output_csv_path, index=False)
+    if not result_list:
+        results_df = pd.DataFrame(columns=["track_id", "used_crosswalk"])
+    else:
+        results_df = pd.DataFrame(result_list)
+
+    results_df.to_csv(output_csv_path, index=False)
     print(f"Crosswalk Usage detection results saved to {output_csv_path}")

@@ -6,6 +6,7 @@ from yolox.tracker.byte_tracker import BYTETracker
 import numpy as np
 np.float = float
 from types import SimpleNamespace
+import math
 
 id2name = {
     0: 'ambulance',
@@ -31,18 +32,19 @@ id2name = {
     20: 'wheelbarrow'
 }
 
-def vehicle_count(video_path, output_csv_path=None):
+def vehicle_count(video_path, output_csv_path=None, analyze_interval_sec=1.0):
     model = YOLO("modules/count_vehicle/best.pt")
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[V6]vehicle_count.csv")
+
     tracker_args = SimpleNamespace(
         track_thresh=0.3,
         match_thresh=0.8,
-        track_buffer=30,
-        frame_rate=30,
+        track_buffer=120,
+        frame_rate=60,
         mot20=False
     )
     tracker = BYTETracker(tracker_args)
@@ -52,6 +54,12 @@ def vehicle_count(video_path, output_csv_path=None):
         print("Error opening video")
         return
 
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    if fps <= 0:
+        fps = 30.0
+    analyze_every_n_frames = max(1, math.ceil(fps * analyze_interval_sec))
+    print(f"Video FPS: {fps:.2f}, analyzing every {analyze_every_n_frames} frames (~{analyze_interval_sec}s)")
+
     tracked_vehicles = {}
     frame_idx = 0
 
@@ -60,6 +68,9 @@ def vehicle_count(video_path, output_csv_path=None):
         if not ret:
             break
         frame_idx += 1
+
+        if frame_idx % analyze_every_n_frames != 0:
+            continue
 
         results = model(frame)[0]
 
@@ -86,7 +97,6 @@ def vehicle_count(video_path, output_csv_path=None):
             tlwh = t.tlwh
             bbox = [tlwh[0], tlwh[1], tlwh[0] + tlwh[2], tlwh[1] + tlwh[3]]
 
-            # 通过bbox和dets距离找到最匹配的检测框
             dists = np.linalg.norm(dets[:, :4] - bbox, axis=1)
             min_idx = np.argmin(dists)
             cls_id = cls_ids[min_idx]
@@ -97,12 +107,10 @@ def vehicle_count(video_path, output_csv_path=None):
     cap.release()
 
     count_dict = {name: 0 for name in id2name.values()}
-
     for vtype in tracked_vehicles.values():
         count_dict[vtype] += 1
 
     df = pd.DataFrame(list(count_dict.items()), columns=['Vehicle_Type', 'Count'])
-
     total_count = df['Count'].sum()
     total_df = pd.DataFrame([{'Vehicle_Type': 'Total', 'Count': total_count}])
     df = pd.concat([df, total_df], ignore_index=True)

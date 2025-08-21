@@ -32,30 +32,31 @@ def run_age_gender(video_path):
 
     final_results = {}
 
-    for person_id in os.listdir(img_root):
-        person_folder = os.path.join(img_root, person_id)
-        if not os.path.isdir(person_folder):
-            continue
-
-        ages, genders = [], []
-        for img_file in os.listdir(person_folder):
-            if not img_file.lower().endswith('.png'):
+    if os.path.exists(img_root):
+        for person_id in os.listdir(img_root):
+            person_folder = os.path.join(img_root, person_id)
+            if not os.path.isdir(person_folder):
                 continue
-            img_path = os.path.join(person_folder, img_file)
-            age, gender = predict_age_gender(img_path, pipeline)
-            if age and gender:
-                ages.append(age)
-                genders.append(gender)
 
-        if ages and genders:
-            final_age = Counter(ages).most_common(1)[0][0]
-            final_gender = Counter(genders).most_common(1)[0][0]
-            # final_results[person_id] = {'age': final_age, 'gender': final_gender}
-        else:
-            final_age = None
-            final_gender = None
-        final_results[person_id] = {'age': final_age, 'gender': final_gender}
-        print(f"Finished analyzing {person_id}: Age={final_age}, Gender={final_gender}")
+            ages, genders = [], []
+            for img_file in os.listdir(person_folder):
+                if not img_file.lower().endswith('.png'):
+                    continue
+                img_path = os.path.join(person_folder, img_file)
+                age, gender = predict_age_gender(img_path, pipeline)
+                if age and gender:
+                    ages.append(age)
+                    genders.append(gender)
+
+            if ages and genders:
+                final_age = Counter(ages).most_common(1)[0][0]
+                final_gender = Counter(genders).most_common(1)[0][0]
+            else:
+                final_age = None
+                final_gender = None
+
+            final_results[person_id] = {'age': final_age, 'gender': final_gender}
+            print(f"Finished analyzing {person_id}: Age={final_age}, Gender={final_gender}")
 
     csv_path = os.path.join('./analysis_results', video_name, '[P6]age_gender.csv')
     os.makedirs(os.path.dirname(csv_path), exist_ok=True)

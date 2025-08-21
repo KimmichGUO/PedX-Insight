@@ -6,6 +6,7 @@ from yolox.tracker.byte_tracker import BYTETracker
 import numpy as np
 np.float = float
 from types import SimpleNamespace
+import math
 
 id2name = {
     0: 'ambulance',
@@ -30,7 +31,13 @@ id2name = {
     19: 'van',
     20: 'wheelbarrow'
 }
-def analyze_vehicle_during_crossing(video_path, crossing_csv_path=None, output_csv_path=None):
+
+def analyze_vehicle_during_crossing(
+    video_path,
+    crossing_csv_path=None,
+    output_csv_path=None,
+    analyze_interval_sec=1.0  # 每多少秒分析一次
+):
     model = YOLO("modules/count_vehicle/best.pt")
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
@@ -41,25 +48,30 @@ def analyze_vehicle_during_crossing(video_path, crossing_csv_path=None, output_c
     if crossing_csv_path is None:
         crossing_csv_path = os.path.join(output_dir, "[C3]crossing_judge.csv")
 
+    crossing_df = pd.read_csv(crossing_csv_path)
+    crossing_df = crossing_df[crossing_df['crossed'] == True]
+
     tracker_args = SimpleNamespace(
         track_thresh=0.3,
         match_thresh=0.8,
-        track_buffer=30,
-        frame_rate=30,
+        track_buffer=120,
+        frame_rate=60,
         mot20=False
     )
     tracker = BYTETracker(tracker_args)
-
-    crossing_df = pd.read_csv(crossing_csv_path)
-    crossing_df = crossing_df[crossing_df['crossed'] == True]
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print("Error opening video")
         return
 
-    frame_idx = 0
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    if fps <= 0:
+        fps = 30.0
+    analyze_every_n_frames = max(1, math.ceil(fps * analyze_interval_sec))
+    print(f"Video FPS: {fps:.2f}, analyzing every {analyze_every_n_frames} frames (~{analyze_interval_sec}s)")
 
+    frame_idx = 0
     frame_tracks = {}
 
     while True:
@@ -67,6 +79,9 @@ def analyze_vehicle_during_crossing(video_path, crossing_csv_path=None, output_c
         if not ret:
             break
         frame_idx += 1
+
+        if frame_idx % analyze_every_n_frames != 0:
+            continue
 
         results = model(frame)[0]
 
@@ -86,7 +101,6 @@ def analyze_vehicle_during_crossing(video_path, crossing_csv_path=None, output_c
             continue
 
         dets = np.array([np.append(bbox, score) for bbox, score in zip(bboxes, scores)])
-
         online_targets = tracker.update(dets, [frame.shape[0], frame.shape[1]], [frame.shape[0], frame.shape[1]])
 
         tracks_this_frame = []
@@ -110,7 +124,7 @@ def analyze_vehicle_during_crossing(video_path, crossing_csv_path=None, output_c
         start_frame = int(row['started_frame'])
         end_frame = int(row['ended_frame'])
 
-        unique_tracks = {}  # track_id -> vehicle_type
+        unique_tracks = {}
         for f in range(start_frame, end_frame + 1):
             if f in frame_tracks:
                 for track_id, vt in frame_tracks[f]:
@@ -121,12 +135,14 @@ def analyze_vehicle_during_crossing(video_path, crossing_csv_path=None, output_c
             cumulative_counts[vt] += 1
 
         total_vehicles = sum(cumulative_counts.values())
-
         row_data = [person_id, True, total_vehicles] + [cumulative_counts[vt] for vt in id2name.values()]
         output_data.append(row_data)
 
     columns = ['track_id', 'crossed', 'total_vehicle_count'] + list(id2name.values())
     output_df = pd.DataFrame(output_data, columns=columns)
+
+    if output_df.empty:
+        output_df = pd.DataFrame(columns=columns)
+
     output_df.to_csv(output_csv_path, index=False)
     print(f"Vehicle count when crossing completed. Results saved to {output_csv_path}")
-

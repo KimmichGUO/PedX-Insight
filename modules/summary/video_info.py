@@ -19,50 +19,28 @@ def generate_video_env_stats(video_path,
                              phone_csv_path=None,
                              age_csv_path=None,
                              crosswalk_usage_csv=None,
-                             on_lane_csv=None
                              ):
 
-    # 1 name
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
-        os.makedirs(output_dir, exist_ok=True)
-        output_csv_path = os.path.join(output_dir, "[A1]video_info.csv")
-    if tracked_pedestrian_csv is None:
-        tracked_pedestrian_csv = os.path.join(output_dir, "[B1]tracked_pedestrians.csv")
-    if vehicle_count_csv is None:
-        vehicle_count_csv = os.path.join(output_dir, "[V6]vehicle_count.csv")
-    if sidewalk_csv is None:
-        sidewalk_csv = os.path.join(output_dir, "[E9]sidewalk_detection.csv")
-    if crosswalk_csv is None:
-        crosswalk_csv = os.path.join(output_dir, "[E7]crosswalk_detection.csv")
-    if traffic_light_csv is None:
-        traffic_light_csv = os.path.join(output_dir, "[E2]traffic_light.csv")
-    if road_width_csv is None:
-        road_width_csv = os.path.join(output_dir, "[E5]road_width.csv")
-    if weather_csv_path is None:
-        weather_csv_path = os.path.join(output_dir, "[E1]weather.csv")
-    if road_condition_csv is None:
-        road_condition_csv = os.path.join(output_dir, "[E4]road_condition.csv")
-    if accident_csv_path is None:
-        accident_csv_path = os.path.join(output_dir, "[E8]accident_detection.csv")
-    if run_red_csv is None:
-        run_red_csv = os.path.join(output_dir, "[C5]red_light_runner.csv")
-    if risky_csv_path is None:
-        risky_csv_path = os.path.join(output_dir, "[C1]risky_crossing.csv")
-    if traffic_sign_path is None:
-        traffic_sign_path = os.path.join(output_dir, "[E3]traffic_sign.csv")
-    if phone_csv_path is None:
-        phone_csv_path = os.path.join(output_dir, "[P5]phone_usage.csv")
-    if age_csv_path is None:
-        age_csv_path = os.path.join(output_dir, "[P6]age_gender.csv")
-    if crosswalk_usage_csv is None:
-        crosswalk_usage_csv = os.path.join(output_dir, "[C4]crosswalk_usage.csv")
-    if on_lane_csv is None:
-        on_lane_csv = os.path.join(output_dir, "[C8]pedestrian_on_lane.csv")
+    output_dir = os.path.join("analysis_results", video_name)
+    os.makedirs(output_dir, exist_ok=True)
 
-
-
+    tracked_pedestrian_csv = tracked_pedestrian_csv or os.path.join(output_dir, "[B1]tracked_pedestrians.csv")
+    vehicle_count_csv = vehicle_count_csv or os.path.join(output_dir, "[V6]vehicle_count.csv")
+    weather_csv_path = weather_csv_path or os.path.join(output_dir, "[E1]weather.csv")
+    sidewalk_csv = sidewalk_csv or os.path.join(output_dir, "[E9]sidewalk_detection.csv")
+    crosswalk_csv = crosswalk_csv or os.path.join(output_dir, "[E7]crosswalk_detection.csv")
+    traffic_light_csv = traffic_light_csv or os.path.join(output_dir, "[E2]traffic_light.csv")
+    road_width_csv = road_width_csv or os.path.join(output_dir, "[E5]road_width.csv")
+    road_condition_csv = road_condition_csv or os.path.join(output_dir, "[E4]road_condition.csv")
+    accident_csv_path = accident_csv_path or os.path.join(output_dir, "[E8]accident_detection.csv")
+    run_red_csv = run_red_csv or os.path.join(output_dir, "[C5]red_light_runner.csv")
+    risky_csv_path = risky_csv_path or os.path.join(output_dir, "[C1]risky_crossing.csv")
+    traffic_sign_path = traffic_sign_path or os.path.join(output_dir, "[E3]traffic_sign.csv")
+    phone_csv_path = phone_csv_path or os.path.join(output_dir, "[P5]phone_usage.csv")
+    age_csv_path = age_csv_path or os.path.join(output_dir, "[P6]age_gender.csv")
+    crosswalk_usage_csv = crosswalk_usage_csv or os.path.join(output_dir, "[C4]crosswalk_usage.csv")
+    output_csv_path = output_csv_path or os.path.join(output_dir, "[A1]video_info.csv")
 
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -70,134 +48,111 @@ def generate_video_env_stats(video_path,
     duration = total_frames / fps if fps > 0 else None
     cap.release()
 
-    tracked_df = pd.read_csv(tracked_pedestrian_csv)
-    vehicle_df = pd.read_csv(vehicle_count_csv)
-    weather_df = pd.read_csv(weather_csv_path)
-    sidewalk_df = pd.read_csv(sidewalk_csv)
-    crosswalk_df = pd.read_csv(crosswalk_csv)
-    traffic_light_df = pd.read_csv(traffic_light_csv)
-    road_width_df = pd.read_csv(road_width_csv)
-    road_condition_df = pd.read_csv(road_condition_csv)
-    accident_df = pd.read_csv(accident_csv_path)
-    runred_df = pd.read_csv(run_red_csv)
-    risky_df = pd.read_csv(risky_csv_path)
-    traffic_sign_df = pd.read_csv(traffic_sign_path)
+    def safe_read_csv(path):
+        if os.path.exists(path):
+            df = pd.read_csv(path)
+            return df if not df.empty else None
+        return None
 
-    # 4 total pedestrians
-    min_frames_threshold = fps * 0.5
+    tracked_df = safe_read_csv(tracked_pedestrian_csv)
+    vehicle_df = safe_read_csv(vehicle_count_csv)
+    weather_df = safe_read_csv(weather_csv_path)
+    sidewalk_df = safe_read_csv(sidewalk_csv)
+    crosswalk_df = safe_read_csv(crosswalk_csv)
+    traffic_light_df = safe_read_csv(traffic_light_csv)
+    road_width_df = safe_read_csv(road_width_csv)
+    road_condition_df = safe_read_csv(road_condition_csv)
+    accident_df = safe_read_csv(accident_csv_path)
+    runred_df = safe_read_csv(run_red_csv)
+    risky_df = safe_read_csv(risky_csv_path)
+    traffic_sign_df = safe_read_csv(traffic_sign_path)
+    phone_df = safe_read_csv(phone_csv_path)
+    age_df = safe_read_csv(age_csv_path)
+    crosswalk_usage_df = safe_read_csv(crosswalk_usage_csv)
 
+    # 总行人
+    min_frames_threshold = fps * 0.5 if fps else 0
     valid_pedestrians = []
-    for tid, group in tracked_df.groupby('track_id'):
-        if len(group) >= min_frames_threshold:
-            valid_pedestrians.append(tid)
-    # total_pedestrians = tracked_df['track_id'].nunique()
-    total_pedestrians = len(valid_pedestrians)
+    if tracked_df is not None:
+        for tid, group in tracked_df.groupby('track_id'):
+            if len(group) >= min_frames_threshold:
+                valid_pedestrians.append(tid)
+    total_pedestrians = len(valid_pedestrians) if tracked_df is not None else None
 
-    if 'track_id' in risky_df.columns and 'risk' in risky_df.columns:
+    risky_crossing_ratio = None
+    if risky_df is not None and 'track_id' in risky_df.columns and 'risk' in risky_df.columns:
         crossed_ids = risky_df['track_id'].unique()
-        total_crossers = len(crossed_ids)
-
         risky_count = 0
         for tid in crossed_ids:
             person_df = risky_df[risky_df['track_id'] == tid]
             risky_ratio = (person_df['risk'].str.lower() == 'risky').sum() / len(person_df)
             if risky_ratio > 0.3:
                 risky_count += 1
+        risky_crossing_ratio = risky_count / len(crossed_ids) if len(crossed_ids) > 0 else None
 
-        risky_crossing_ratio = risky_count / total_crossers if total_crossers > 0 else 0
-    else:
-        risky_crossing_ratio = None
-
-        # 4+2 runred
-    if 'track_id' in runred_df.columns and 'ran_red_light' in runred_df.columns:
+    runred_ratio = None
+    if runred_df is not None and 'track_id' in runred_df.columns and 'ran_red_light' in runred_df.columns:
         total_crossers_runred = runred_df['track_id'].nunique()
         runred_ids = runred_df.loc[runred_df['ran_red_light'] == True, 'track_id'].unique()
-        runred_ratio = len(runred_ids) / total_crossers_runred if total_crossers_runred > 0 else 0
-    else:
-        runred_ratio = None
+        runred_ratio = len(runred_ids) / total_crossers_runred if total_crossers_runred > 0 else None
 
+    total_vehicles = int(vehicle_df['Count'].sum()) if vehicle_df is not None else None
+    top3_vehicles = vehicle_df.sort_values(by='Count', ascending=False).head(3)['Vehicle_Type'].tolist() if vehicle_df is not None else None
 
-    # 5-6 vehicle total + top3
-    vehicle_df = vehicle_df[vehicle_df['Vehicle_Type'].str.lower() != 'total']
-    total_vehicles = int(vehicle_df['Count'].sum())
-    top3_vehicles = vehicle_df.sort_values(by='Count', ascending=False).head(3)['Vehicle_Type'].tolist()
+    main_weather = weather_df['weather_label'].mode().iloc[0] if weather_df is not None and 'weather_label' in weather_df.columns else None
 
-    # 7 weather
-    main_weather = weather_df['weather_label'].mode().iloc[0]
+    sidewalk_prob = (sidewalk_df['polygons'].astype(str).str.strip() != "").sum() / total_frames if sidewalk_df is not None else None
 
-    # 8 sidewalk prob
-    sidewalk_prob = (sidewalk_df['polygons'].astype(str).str.strip() != "").sum() / total_frames
+    crosswalk_prob = (crosswalk_df['crosswalk_detected'].str.lower() == "yes").sum() / total_frames if crosswalk_df is not None else None
 
-    # 9 crosswalk prob
-    crosswalk_prob = (crosswalk_df['crosswalk_detected'].str.lower() == "yes").sum() / total_frames
+    traffic_light_prob = None
+    if traffic_light_df is not None and 'main_light_color' in traffic_light_df.columns:
+        colors = ['yellow', 'red', 'green']
+        traffic_light_frames = traffic_light_df['main_light_color'].isin(colors).sum()
+        traffic_light_prob = traffic_light_frames / total_frames if total_frames > 0 else None
 
-    # 10 traffic light prob
-    colors = ['yellow', 'red', 'green']
-    traffic_light_frames = traffic_light_df['main_light_color'].isin(colors).sum()
-    traffic_light_prob = traffic_light_frames / total_frames if total_frames > 0 else 0
+    avg_road_width = road_width_df['Road Width (m)'].mean() if road_width_df is not None and 'Road Width (m)' in road_width_df.columns else None
 
-    # 11 avg road width
-    avg_road_width = road_width_df['Road Width (m)'].mean() if 'Road Width (m)' in road_width_df.columns else None
+    crack_prob = None
+    pothole_prob = None
+    if road_condition_df is not None:
+        if all(col in road_condition_df.columns for col in ['Longitudinal Crack', 'Transverse Crack', 'Alligator Crack']):
+            crack_prob = (road_condition_df[['Longitudinal Crack', 'Transverse Crack', 'Alligator Crack']].sum(axis=1) > 0).sum() / total_frames
+        if 'Potholes' in road_condition_df.columns:
+            pothole_prob = road_condition_df['Potholes'].sum() / total_frames
 
-    # 12-13 condition: Crack + Potholes
-    crack_prob = (
-        road_condition_df[['Longitudinal Crack', 'Transverse Crack', 'Alligator Crack']].sum(axis=1) > 0
-    ).sum() / total_frames if all(col in road_condition_df.columns for col in ['Longitudinal Crack', 'Transverse Crack', 'Alligator Crack']) else None
-
-    pothole_prob = road_condition_df['Potholes'].sum() / total_frames if 'Potholes' in road_condition_df.columns else None
-
-    # 14-17 accident
     accident_probs = {}
     for cls in ['police_car', 'Arrow Board', 'cones', 'accident']:
-        if cls in accident_df.columns:
+        if accident_df is not None and cls in accident_df.columns:
             accident_probs[cls] = accident_df[cls].sum() / total_frames
         else:
             accident_probs[cls] = None
 
-    # 18 traffic sign total count
-    total_traffic_signs = 0
-    if 'sign_classes_1' in traffic_sign_df.columns and 'sign_classes_2' in traffic_sign_df.columns:
+    total_traffic_signs = None
+    signs_rate = None
+    if traffic_sign_df is not None and 'sign_classes_1' in traffic_sign_df.columns and 'sign_classes_2' in traffic_sign_df.columns:
         count_1 = traffic_sign_df['sign_classes_1'].fillna('').apply(lambda x: len([s for s in str(x).split(';') if s.strip() != ''])).sum()
         count_2 = traffic_sign_df['sign_classes_2'].fillna('').apply(lambda x: len([s for s in str(x).split(';') if s.strip() != ''])).sum()
         total_traffic_signs = int(count_1 + count_2)
+        signs_rate = total_traffic_signs / total_frames if total_frames > 0 else None
 
-    else:
-        total_traffic_signs = None
-    signs_rate = total_traffic_signs / total_frames
+    total_crossed_pedestrians = runred_df['track_id'].nunique() if runred_df is not None and 'track_id' in runred_df.columns else None
 
-    # 19 total crossed pedestrians
-    total_crossed_pedestrians = runred_df['track_id'].nunique() if 'track_id' in runred_df.columns else 0
-
-    # 20 phone usage ratio
-    phone_df = pd.read_csv(phone_csv_path)
-    phone_usage_ratio = 0
-    if not phone_df.empty:
+    phone_usage_ratio = None
+    if phone_df is not None and 'phone_using' in phone_df.columns:
         phone_summary = phone_df.groupby('track_id')['phone_using'].mean()
         phone_using_true_count = (phone_summary > 0.1).sum()
         total_track_ids = phone_summary.shape[0]
-        phone_usage_ratio = phone_using_true_count / total_track_ids if total_track_ids > 0 else 0
+        phone_usage_ratio = phone_using_true_count / total_track_ids if total_track_ids > 0 else None
 
-    # 21 crosswalk usage ratio
-    crosswalk_usage_df = pd.read_csv(crosswalk_usage_csv)
-    crosswalk_ratio = 0
-    if 'used_crosswalk' in crosswalk_usage_df.columns:
-        crosswalk_ratio = (crosswalk_usage_df['used_crosswalk'] == True).sum() / len(crosswalk_usage_df) if len(
-            crosswalk_usage_df) > 0 else 0
+    crosswalk_ratio = None
+    if crosswalk_usage_df is not None and 'used_crosswalk' in crosswalk_usage_df.columns:
+        crosswalk_ratio = (crosswalk_usage_df['used_crosswalk'] == True).sum() / len(crosswalk_usage_df) if len(crosswalk_usage_df) > 0 else None
 
-    # 22 age mode
-    age_df = pd.read_csv(age_csv_path)
     age_mode = None
-    if 'age' in age_df.columns:
+    if age_df is not None and 'age' in age_df.columns:
         age_mode = age_df['age'].mode().iloc[0] if not age_df['age'].mode().empty else None
 
-    # 23 on_lane ratio
-    on_lane_df = pd.read_csv(on_lane_csv)
-    on_lane_ratio = 0
-    # if 'entered_lane' in on_lane_df.columns:
-    #     on_lane_ratio = (on_lane_df['entered_lane'] == True).sum() / len(on_lane_df) if len(on_lane_df) > 0 else 0
-    if 'entered_lane' in on_lane_df.columns and len(on_lane_df) > 0:
-        track_entered = on_lane_df.groupby('track_id')['entered_lane'].any()
-        on_lane_ratio = track_entered.sum() / len(track_entered)
 
     data = [
         ["video_name", video_name],
@@ -210,7 +165,6 @@ def generate_video_env_stats(video_path,
         ["risky_crossing_ratio", risky_crossing_ratio],
         ["run_red_light_ratio", runred_ratio],
         ["crosswalk_usage_ratio", crosswalk_ratio],
-        ["walk_on_lane_ratio", on_lane_ratio],
         ["traffic_signs_ratio", signs_rate],
         ["total_vehicles", total_vehicles],
         ["top3_vehicles", top3_vehicles],
@@ -227,6 +181,5 @@ def generate_video_env_stats(video_path,
         data.append([f"{cls}_prob", prob])
 
     output_df = pd.DataFrame(data, columns=["metric", "value"])
-    os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
     output_df.to_csv(output_csv_path, index=False)
     print(f"Video environment stats saved to: {output_csv_path}")

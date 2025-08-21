@@ -13,9 +13,23 @@ def calculate_nearby_count(video_path, crossing_csv=None, tracked_pede_csv=None,
         tracked_pede_csv = os.path.join(output_dir, "[B1]tracked_pedestrians.csv")
     if crossing_csv is None:
         crossing_csv = os.path.join(output_dir, "[C3]crossing_judge.csv")
+
+    if not os.path.exists(tracked_pede_csv) or os.path.getsize(tracked_pede_csv) == 0 or \
+       not os.path.exists(crossing_csv) or os.path.getsize(crossing_csv) == 0:
+        empty_df = pd.DataFrame(columns=['track_id', 'nearby_first_1_5', 'nearby_all'])
+        empty_df.to_csv(output_csv_path, index=False)
+        print(f"No input data. Empty results saved to {output_csv_path}")
+        return
+
     crossing_df = pd.read_csv(crossing_csv)
     crossing_df = crossing_df[(crossing_df['crossed'] == True)]
     tracked_df = pd.read_csv(tracked_pede_csv)
+
+    if crossing_df.empty or tracked_df.empty:
+        empty_df = pd.DataFrame(columns=['track_id', 'nearby_first_1_5', 'nearby_all'])
+        empty_df.to_csv(output_csv_path, index=False)
+        print(f"No data after filtering. Empty results saved to {output_csv_path}")
+        return
 
     results = []
 
@@ -52,7 +66,7 @@ def calculate_nearby_count(video_path, crossing_csv=None, tracked_pede_csv=None,
                 nearby_counts_first_5th.append(nearby_count)
 
         avg_first_5th = math.ceil(np.mean(nearby_counts_first_5th)) if nearby_counts_first_5th else 0
-        avg_all = math.ceil(np.mean(nearby_counts_all)) if nearby_counts_all else 0 if nearby_counts_all else 0
+        avg_all = math.ceil(np.mean(nearby_counts_all)) if nearby_counts_all else 0
 
         results.append([track_id, avg_first_5th, avg_all])
 

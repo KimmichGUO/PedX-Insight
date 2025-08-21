@@ -41,7 +41,7 @@ def analyze_acceleration(video_path, input_csv=None, output_csv=None, window_siz
                 "trend": trend
             })
 
-    result_df = pd.DataFrame(results)
+    result_df = pd.DataFrame(results, columns=["track_id", "start_frame", "end_frame", "slope", "trend"])
 
     if output_csv is None:
         output_csv = os.path.join(os.path.dirname(input_csv), "[C2]pedestrian_acc.csv")

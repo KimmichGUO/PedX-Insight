@@ -21,12 +21,11 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", outpu
     os.makedirs(pedestrian_img_dir, exist_ok=True)
 
     model = YOLO(weights)
-    model.to("cuda")
     tracker_args = SimpleNamespace(
         track_thresh=0.3,
         match_thresh=0.8,
-        track_buffer=300,
-        frame_rate=60,
+        track_buffer=30,
+        frame_rate=30,
         mot20=False
     )
     tracker = BYTETracker(tracker_args)
@@ -45,10 +44,6 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", outpu
             break
 
         frame_id += 1
-
-        if frame_id % 60 != 0:
-            continue
-
         timestamp = round(frame_id / fps, 2)
 
         dets = model(frame)[0]
@@ -90,16 +85,16 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", outpu
             if track_id not in saved_frames:
                 saved_frames[track_id] = []
 
-            if len(saved_frames[track_id]) < 2:
+            if len(saved_frames[track_id]) < 3:
                 if not saved_frames[track_id] or (frame_id - saved_frames[track_id][-1]) >= 100:
-                    expand_left = int((x2 - x1) * 0.2)
-                    expand_right = int((x2 - x1) * 0.2)
-                    expand_top = int((y2 - y1) * 0.5)
+                    expand_left = int((x2 - x1) * 0.1)
+                    expand_right = int((x2 - x1) * 0.1)
+                    expand_top = int((y2 - y1) * 0.05)
 
                     x1_exp = max(0, x1 - expand_left)
                     x2_exp = min(frame.shape[1], x2 + expand_right)
                     y1_exp = max(0, y1 - expand_top)
-                    y2_exp = y2 + expand_top
+                    y2_exp = y2
 
                     crop = frame[y1_exp:y2_exp, x1_exp:x2_exp]
                     if crop.size == 0:
@@ -119,4 +114,3 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", outpu
     df.to_csv(output_csv_path, index=False)
     print(f"Tracking results saved to: {output_csv_path}")
     print(f"Pedestrian images saved in: {pedestrian_img_dir}")
-    print(f"YOLO is running on: {model.device}")

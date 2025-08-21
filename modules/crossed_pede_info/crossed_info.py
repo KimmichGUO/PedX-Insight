@@ -1,12 +1,19 @@
 import os
 import pandas as pd
 
-def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=None, belongings_csv_path=None,
-                            crossing_csv_path=None, phone_usage_csv_path=None, output_csv_path=None,
-                            risky_crossing_csv=None, run_redlight_csv=None, crosswalk_usage_csv=None,
-                            waiting_csv_path=None, nearby_count_path=None
-                            ):
-
+def extract_pedestrian_info(
+    video_path,
+    gender_csv_path=None,
+    clothing_csv_path=None,
+    belongings_csv_path=None,
+    crossing_csv_path=None,
+    phone_usage_csv_path=None,
+    output_csv_path=None,
+    risky_crossing_csv=None,
+    run_redlight_csv=None,
+    crosswalk_usage_csv=None,
+    nearby_count_path=None
+):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
@@ -28,21 +35,38 @@ def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=
         run_redlight_csv = os.path.join(output_dir, "[C5]red_light_runner.csv")
     if crosswalk_usage_csv is None:
         crosswalk_usage_csv = os.path.join(output_dir, "[C4]crosswalk_usage.csv")
-    if waiting_csv_path is None:
-        waiting_csv_path = os.path.join(output_dir, "[P3]waiting_time.csv")
     if nearby_count_path is None:
         nearby_count_path = os.path.join(output_dir, "[C10]nearby_count.csv")
 
-    gender_df = pd.read_csv(gender_csv_path)
-    belongings_df = pd.read_csv(belongings_csv_path)
-    clothing_df = pd.read_csv(clothing_csv_path)
-    crossing_df = pd.read_csv(crossing_csv_path)
-    phone_usage_df = pd.read_csv(phone_usage_csv_path)
-    risky_crossing_df = pd.read_csv(risky_crossing_csv)
-    run_redlight_df = pd.read_csv(run_redlight_csv)
-    crosswalk_usage_df = pd.read_csv(crosswalk_usage_csv)
-    nearby_count_df = pd.read_csv(nearby_count_path)
-    waiting_df = pd.read_csv(waiting_csv_path)
+    def safe_read_csv(path):
+        if os.path.exists(path):
+            df = pd.read_csv(path)
+            return df if not df.empty else pd.DataFrame()
+        return pd.DataFrame()
+
+    gender_df = safe_read_csv(gender_csv_path)
+    belongings_df = safe_read_csv(belongings_csv_path)
+    clothing_df = safe_read_csv(clothing_csv_path)
+    crossing_df = safe_read_csv(crossing_csv_path)
+    phone_usage_df = safe_read_csv(phone_usage_csv_path)
+    risky_crossing_df = safe_read_csv(risky_crossing_csv)
+    run_redlight_df = safe_read_csv(run_redlight_csv)
+    crosswalk_usage_df = safe_read_csv(crosswalk_usage_csv)
+    nearby_count_df = safe_read_csv(nearby_count_path)
+
+    if crossing_df.empty:
+        columns = [
+            'track_id', 'crossed', 'nearby_count_beginning', 'nearby_count_whole',
+            'risky_crossing', 'run_red_light', 'crosswalk_use_or_not',
+            'gender', 'age', 'phone_using',
+            'backpack', 'umbrella', 'handbag', 'suitcase',
+            'short_sleeved_shirt', 'long_sleeved_shirt', 'short_sleeved_outwear',
+            'long_sleeved_outwear', 'vest', 'sling', 'shorts', 'trousers',
+            'skirt', 'short_sleeved_dress', 'long_sleeved_dress', 'vest_dress', 'sling_dress'
+        ]
+        pd.DataFrame(columns=columns).to_csv(output_csv_path, index=False)
+        print(f"Crossing CSV empty or missing. Created empty CSV at: {output_csv_path}")
+        return
 
     crossing_df = crossing_df[crossing_df['crossed'] == True]
 
@@ -56,85 +80,62 @@ def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=
         pid = row['track_id']
         crossed = True
 
-        gender_row = gender_df[gender_df['id'] == pid]
-        gender = gender_row['gender'].values[0] if not gender_row.empty else 'Unknown'
-        age = gender_row['age'].values[0] if not gender_row.empty else 'Unknown'
+        gender_row = gender_df[gender_df['id'] == pid] if not gender_df.empty else pd.DataFrame()
+        gender = gender_row['gender'].values[0] if not gender_row.empty else 'None'
+        age = gender_row['age'].values[0] if not gender_row.empty else 'None'
 
-        nearby_row = nearby_count_df[nearby_count_df['track_id'] == pid]
-        nearby_begin = nearby_row['nearby_first_1_5'].values[0] if not nearby_row.empty else 0
-        nearby_all = nearby_row['nearby_all'].values[0] if not nearby_row.empty else 0
+        nearby_row = nearby_count_df[nearby_count_df['track_id'] == pid] if not nearby_count_df.empty else pd.DataFrame()
+        nearby_begin = nearby_row['nearby_first_1_5'].values[0] if not nearby_row.empty else 'None'
+        nearby_all = nearby_row['nearby_all'].values[0] if not nearby_row.empty else 'None'
 
-        belongings_person = belongings_df[belongings_df['track_id'] == pid]
-        belongings_result = {}
+        belongings_person = belongings_df[belongings_df['track_id'] == pid] if not belongings_df.empty else pd.DataFrame()
+        belongings_result = {item: 0 for item in belongings_cols} if belongings_person.empty else {}
         if not belongings_person.empty:
             for item in belongings_cols:
                 proportion = belongings_person[item].sum() / len(belongings_person)
                 belongings_result[item] = 1 if proportion >= 0.2 else 0
-        else:
-            for item in belongings_cols:
-                belongings_result[item] = 0
 
-        clothing_person = clothing_df[clothing_df['track_id'] == pid]
-        clothing_result = {}
+        clothing_person = clothing_df[clothing_df['track_id'] == pid] if not clothing_df.empty else pd.DataFrame()
+        clothing_result = {item: 0 for item in clothing_cols} if clothing_person.empty else {}
         if not clothing_person.empty:
             for item in clothing_cols:
                 proportion = clothing_person[item].sum() / len(clothing_person)
                 clothing_result[item] = 1 if proportion >= 0.2 else 0
-        else:
-            for item in clothing_cols:
-                clothing_result[item] = 0
 
-        phone_person = phone_usage_df[phone_usage_df['track_id'] == pid]
+        phone_person = phone_usage_df[phone_usage_df['track_id'] == pid] if not phone_usage_df.empty else pd.DataFrame()
         if not phone_person.empty:
             phone_ratio = phone_person['phone_using'].astype(str).str.lower().eq("true").sum() / len(phone_person)
             phone_using = 1 if phone_ratio >= 0.1 else 0
         else:
-            phone_using = 0
+            phone_using = 'None'
 
-        risky = risky_crossing_df[risky_crossing_df['track_id'] == pid]
+        risky = risky_crossing_df[risky_crossing_df['track_id'] == pid] if not risky_crossing_df.empty else pd.DataFrame()
         if not risky.empty:
             risky_ratio = risky['risk'].astype(str).str.lower().eq("risky").sum() / len(risky)
             risky_or_not = 1 if risky_ratio >= 0.2 else 0
         else:
-            risky_or_not = 0
+            risky_or_not = 'None'
 
-        # runred = run_redlight_df[run_redlight_df['track_id'] == pid]
-        # if not runred.empty:
-        #     runred_or_not = 1 if runred['ran_red_light']=="TRUE" else 0
-        # else:
-        #     runred_or_not = 0
-        # cwuse = crosswalk_usage_df[crosswalk_usage_df['track_id'] == pid]
-        # if not cwuse.empty:
-        #     cwuse_or_not = 1 if cwuse['used_crosswalk']=="TRUE" else 0
-        # else:
-        #     cwuse_or_not = 0
-
-        runred_row = run_redlight_df[run_redlight_df['track_id'] == pid]
+        runred_row = run_redlight_df[run_redlight_df['track_id'] == pid] if not run_redlight_df.empty else pd.DataFrame()
         if not runred_row.empty:
             runred = 1 if runred_row['ran_red_light'].values[0] == "TRUE" else 0
         else:
-            runred = 'Unknown'
+            runred = 'None'
 
-        cwuse_row = crosswalk_usage_df[crosswalk_usage_df['track_id'] == pid]
+        cwuse_row = crosswalk_usage_df[crosswalk_usage_df['track_id'] == pid] if not crosswalk_usage_df.empty else pd.DataFrame()
         if not cwuse_row.empty:
             cwuse = 1 if cwuse_row['used_crosswalk'].values[0] == "TRUE" else 0
         else:
-            cwuse = 'Unknown'
-
-        waiting_time = waiting_df[waiting_df['track_id'] == pid]
-        wt = waiting_time['waiting_time'].values[0] if not waiting_time.empty else 0
-
-
+            cwuse = 'None'
 
         final_row = {
             'track_id': pid,
             'crossed': crossed,
-            'nearby_count_beginning':nearby_begin,
-            'nearby_count_whole':nearby_all,
+            'nearby_count_beginning': nearby_begin,
+            'nearby_count_whole': nearby_all,
             'risky_crossing': risky_or_not,
             'run_red_light': runred,
             'crosswalk_use_or_not': cwuse,
-            'waiting_time': wt,
             'gender': gender,
             'age': age,
             'phone_using': phone_using,
@@ -145,4 +146,4 @@ def extract_pedestrian_info(video_path, gender_csv_path=None, clothing_csv_path=
 
     output_df = pd.DataFrame(output_rows)
     output_df.to_csv(output_csv_path, index=False)
-    print(f"\nPedestrians info results saved to：{output_csv_path}")
+    print(f"\nPedestrians info results saved to: {output_csv_path}")

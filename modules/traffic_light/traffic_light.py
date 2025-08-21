@@ -2,8 +2,9 @@ import os
 import cv2
 import pandas as pd
 from ultralytics import YOLO
+import math
 
-def run_traffic_light_detection(video_path, output_csv_path=None):
+def run_traffic_light_detection(video_path, output_csv_path=None, analyze_interval_sec=1.0):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if output_csv_path is None:
@@ -13,6 +14,10 @@ def run_traffic_light_detection(video_path, output_csv_path=None):
 
     model = YOLO("modules/traffic_light/v9 - 48 epochs.pt")
     cap = cv2.VideoCapture(video_path)
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    fps = math.ceil(fps) if fps > 0 else 30
+    analyze_every_n_frames = max(1, int(fps * analyze_interval_sec))
 
     results_list = []
     frame_id = -1
@@ -35,6 +40,9 @@ def run_traffic_light_detection(video_path, output_csv_path=None):
             break
         frame_id += 1
 
+        if frame_id % analyze_every_n_frames != 0:
+            continue
+
         result = model(frame, verbose=False)[0]
         lights = []
 
@@ -52,10 +60,6 @@ def run_traffic_light_detection(video_path, output_csv_path=None):
                 "area": area,
                 "box": (x1, y1, x2, y2)
             })
-
-            cv2.rectangle(frame, (x1, y1), (x2, y2), color_map[cls_name], 2)
-            cv2.putText(frame, cls_name, (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color_map[cls_name], 2)
 
         if not lights:
             results_list.append({
@@ -75,11 +79,6 @@ def run_traffic_light_detection(video_path, output_csv_path=None):
                 "other_lights": other_str
             })
 
-        cv2.imshow("Traffic Light Detection", frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
     cap.release()
-    cv2.destroyAllWindows()
     pd.DataFrame(results_list).to_csv(output_csv_path, index=False)
     print(f"Traffic light detection completed. Results saved to {output_csv_path}")

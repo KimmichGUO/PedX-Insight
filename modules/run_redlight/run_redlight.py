@@ -68,6 +68,15 @@ def determine_red_light_violation(
             "red_end_frame": red_end if red_end is not None else np.nan
         })
 
-    result_df = pd.DataFrame(result_list)
+    columns = [
+        "track_id",
+        "start_frame",
+        "end_frame",
+        "ran_red_light",
+        "red_start_frame",
+        "red_end_frame"
+    ]
+
+    result_df = pd.DataFrame(result_list, columns=columns)
     result_df.to_csv(output_csv_path, index=False)
     print(f"Red light violation detection results saved to {output_csv_path}")

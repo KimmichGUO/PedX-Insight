@@ -54,26 +54,25 @@ def extract_pedestrian_info(
     crosswalk_usage_df = safe_read_csv(crosswalk_usage_csv)
     nearby_count_df = safe_read_csv(nearby_count_path)
 
-    if crossing_df.empty:
-        columns = [
-            'track_id', 'crossed', 'nearby_count_beginning', 'nearby_count_whole',
-            'risky_crossing', 'run_red_light', 'crosswalk_use_or_not',
-            'gender', 'age', 'phone_using',
-            'backpack', 'umbrella', 'handbag', 'suitcase',
-            'short_sleeved_shirt', 'long_sleeved_shirt', 'short_sleeved_outwear',
-            'long_sleeved_outwear', 'vest', 'sling', 'shorts', 'trousers',
-            'skirt', 'short_sleeved_dress', 'long_sleeved_dress', 'vest_dress', 'sling_dress'
-        ]
-        pd.DataFrame(columns=columns).to_csv(output_csv_path, index=False)
-        print(f"Crossing CSV empty or missing. Created empty CSV at: {output_csv_path}")
-        return
-
-    crossing_df = crossing_df[crossing_df['crossed'] == True]
-
     belongings_cols = ['backpack', 'umbrella', 'handbag', 'suitcase']
     clothing_cols = ['short_sleeved_shirt', 'long_sleeved_shirt', 'short_sleeved_outwear',
                      'long_sleeved_outwear', 'vest', 'sling', 'shorts', 'trousers',
                      'skirt', 'short_sleeved_dress', 'long_sleeved_dress', 'vest_dress', 'sling_dress']
+
+    output_columns = [
+        'track_id', 'crossed', 'nearby_count_beginning', 'nearby_count_whole',
+        'risky_crossing', 'run_red_light', 'crosswalk_use_or_not',
+        'gender', 'age', 'phone_using',
+        *belongings_cols,
+        *clothing_cols
+    ]
+
+    if crossing_df.empty:
+        pd.DataFrame(columns=output_columns).to_csv(output_csv_path, index=False)
+        print(f"Crossing CSV empty or missing. Created empty CSV at: {output_csv_path}")
+        return
+
+    crossing_df = crossing_df[crossing_df['crossed'] == True]
 
     output_rows = []
     for _, row in crossing_df.iterrows():
@@ -118,13 +117,13 @@ def extract_pedestrian_info(
 
         runred_row = run_redlight_df[run_redlight_df['track_id'] == pid] if not run_redlight_df.empty else pd.DataFrame()
         if not runred_row.empty:
-            runred = 1 if runred_row['ran_red_light'].values[0] == "TRUE" else 0
+            runred = 1 if str(runred_row['ran_red_light'].values[0]).lower() in ["true", "1"] else 0
         else:
             runred = 'None'
 
         cwuse_row = crosswalk_usage_df[crosswalk_usage_df['track_id'] == pid] if not crosswalk_usage_df.empty else pd.DataFrame()
         if not cwuse_row.empty:
-            cwuse = 1 if cwuse_row['used_crosswalk'].values[0] == "TRUE" else 0
+            cwuse = 1 if str(cwuse_row['used_crosswalk'].values[0]).lower() in ["true", "1"] else 0
         else:
             cwuse = 'None'
 
@@ -144,6 +143,6 @@ def extract_pedestrian_info(
         }
         output_rows.append(final_row)
 
-    output_df = pd.DataFrame(output_rows)
+    output_df = pd.DataFrame(output_rows, columns=output_columns)
     output_df.to_csv(output_csv_path, index=False)
     print(f"\nPedestrians info results saved to: {output_csv_path}")

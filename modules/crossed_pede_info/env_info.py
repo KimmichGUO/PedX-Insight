@@ -158,5 +158,13 @@ def merge_env_info(video_path,
         merged_rows.append(merged_row)
 
     df_result = pd.DataFrame(merged_rows)
+
+    if df_result.empty:
+        df_result = pd.DataFrame(columns=[
+                                             'track_id', 'crossed', 'weather', 'daytime', 'police_car', 'arrow_board',
+                                             'cones', 'accident', 'crack', 'potholes', 'avg_vehicle_total',
+                                             'crossing_sign', 'avg_road_width', 'crosswalk', 'sidewalk'
+                                         ])
+
     df_result.to_csv(output_csv_path, index=False)
     print(f"Crossed Pedestrian Environment analysis Result saved to {output_csv_path}")

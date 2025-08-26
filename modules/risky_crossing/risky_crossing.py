@@ -101,7 +101,6 @@ def detect_crossing_risk(
         risky_ratio = risky_frame_count / total_frame_count if total_frame_count > 0 else 0.0
         final_risk = "risky" if risky_ratio > 0.1 else "not risky"
 
-        # 记录结果
         results.append({
             "track_id": track_id,
             "crossed": True,

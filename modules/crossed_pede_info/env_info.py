@@ -56,9 +56,8 @@ def merge_env_info(video_path,
 
     merged_rows = []
 
-    for _, row in df_crossing.iterrows():
+    for _, row in df_crossing[df_crossing['crossed'] == True].iterrows():
         track_id = row['track_id']
-        crossed = row['crossed']
         start_frame = int(row.get('started_frame', 0))
         end_frame = int(row.get('ended_frame', start_frame))
 
@@ -140,7 +139,7 @@ def merge_env_info(video_path,
 
         merged_row = {
             'track_id': track_id,
-            'crossed': crossed,  # 使用原始的crossed值
+            'crossed': True,
             'weather': weather,
             'daytime': daytime,
             'police_car': police_car,
@@ -160,6 +159,4 @@ def merge_env_info(video_path,
 
     df_result = pd.DataFrame(merged_rows)
     df_result.to_csv(output_csv_path, index=False)
-    print(f"All Pedestrian Environment analysis Result saved to {output_csv_path}")
-    print(f"Total pedestrians processed: {len(df_result)}")
-    print(f"Crossed: {sum(df_result['crossed'])}, Not crossed: {sum(~df_result['crossed'])}")
+    print(f"Crossed Pedestrian Environment analysis Result saved to {output_csv_path}")

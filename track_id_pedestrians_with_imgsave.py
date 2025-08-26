@@ -5,10 +5,13 @@ from ultralytics import YOLO
 from yolox.tracker.byte_tracker import BYTETracker
 from types import SimpleNamespace
 import numpy as np
+import math
 
 np.float = float
 
-def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", output_csv_path=None):
+
+def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", output_csv_path=None,
+                                         analyze_interval_sec=1.0):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
@@ -33,6 +36,11 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", outpu
 
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
+    if fps <= 0:
+        fps = 30
+
+    analyze_every_n_frames = max(1, math.ceil(fps * analyze_interval_sec))
+
     frame_id = 0
     results = []
     target_cls = 0
@@ -46,7 +54,7 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", outpu
 
         frame_id += 1
 
-        if frame_id % 60 != 0:
+        if frame_id % analyze_every_n_frames != 0:
             continue
 
         timestamp = round(frame_id / fps, 2)
@@ -91,7 +99,8 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", outpu
                 saved_frames[track_id] = []
 
             if len(saved_frames[track_id]) < 2:
-                if not saved_frames[track_id] or (frame_id - saved_frames[track_id][-1]) >= 100:
+                min_frame_interval = max(analyze_every_n_frames * 2, 60)
+                if not saved_frames[track_id] or (frame_id - saved_frames[track_id][-1]) >= min_frame_interval:
                     expand_left = int((x2 - x1) * 0.2)
                     expand_right = int((x2 - x1) * 0.2)
                     expand_top = int((y2 - y1) * 0.5)
@@ -120,3 +129,5 @@ def run_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", outpu
     print(f"Tracking results saved to: {output_csv_path}")
     print(f"Pedestrian images saved in: {pedestrian_img_dir}")
     print(f"YOLO is running on: {model.device}")
+    print(f"Total frames processed: {len(df)}")
+    print(f"Total pedestrians tracked: {len(df['track_id'].unique()) if not df.empty else 0}")

@@ -68,7 +68,6 @@ def extract_pedestrian_info(
         print(f"Crossing CSV empty or missing. Created empty CSV at: {output_csv_path}")
         return
 
-    crossing_df = crossing_df[crossing_df['crossed'] == True]
 
     belongings_cols = ['backpack', 'umbrella', 'handbag', 'suitcase']
     clothing_cols = ['short_sleeved_shirt', 'long_sleeved_shirt', 'short_sleeved_outwear',
@@ -78,7 +77,7 @@ def extract_pedestrian_info(
     output_rows = []
     for _, row in crossing_df.iterrows():
         pid = row['track_id']
-        crossed = True
+        crossed = row['crossed']
 
         gender_row = gender_df[gender_df['id'] == pid] if not gender_df.empty else pd.DataFrame()
         gender = gender_row['gender'].values[0] if not gender_row.empty else 'None'
@@ -147,3 +146,5 @@ def extract_pedestrian_info(
     output_df = pd.DataFrame(output_rows)
     output_df.to_csv(output_csv_path, index=False)
     print(f"\nPedestrians info results saved to: {output_csv_path}")
+    print(f"Total pedestrians processed: {len(output_df)}")
+    print(f"Crossed: {sum(output_df['crossed'])}, Not crossed: {sum(~output_df['crossed'])}")

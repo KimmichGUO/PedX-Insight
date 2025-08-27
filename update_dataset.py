@@ -8,6 +8,7 @@ def update_video_status(input_csv, output_csv):
         video_name = f"{row['city']}_{row['video']}"
         folder_path = os.path.join("analysis_results", video_name)
         target_file = os.path.join(folder_path, "[C10]nearby_count.csv")
+        video_file = os.path.join("videos", f"{video_name}.mp4")
 
         if os.path.isdir(folder_path) and os.path.exists(target_file):
             df.at[idx, "downloaded"] = True
@@ -15,6 +16,18 @@ def update_video_status(input_csv, output_csv):
         else:
             df.at[idx, "downloaded"] = None
             df.at[idx, "finished"] = None
+
+        if os.path.exists(video_file):
+            df.at[idx, "downloaded"] = True
+        else:
+            df.at[idx, "downloaded"] = None
+
+    videos_dir = "videos"
+    for file in os.listdir(videos_dir):
+        if file.endswith(".mp4.part"):
+            file_path = os.path.join(videos_dir, file)
+            os.remove(file_path)
+            print(f"Deleted unfinished download: {file_path}")
 
     df.to_csv(output_csv, index=False)
     print(f"Result saved to {output_csv}")

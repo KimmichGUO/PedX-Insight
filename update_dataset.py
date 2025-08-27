@@ -29,5 +29,13 @@ def update_video_status(input_csv, output_csv):
             os.remove(file_path)
             print(f"Deleted unfinished download: {file_path}")
 
+    for idx, row in df.iterrows():
+        if str(row.get("finished")).lower() == "true":
+            video_name = f"{row['city']}_{row['video']}"
+            video_file = os.path.join("videos", f"{video_name}.mp4")
+            if os.path.exists(video_file):
+                os.remove(video_file)
+                print(f"Deleted analyzed video: {video_file}")
+
     df.to_csv(output_csv, index=False)
     print(f"Result saved to {output_csv}")

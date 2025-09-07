@@ -3,8 +3,9 @@ import cv2
 import pandas as pd
 from ultralytics import YOLO
 import math
+import torch
 
-def run_traffic_sign(video_path, output_csv_path=None, conf=0.25, analyze_interval_sec=1.0):
+def run_traffic_sign(video_path, analyze_interval_sec=1.0, output_csv_path=None, conf=0.25):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
@@ -12,7 +13,11 @@ def run_traffic_sign(video_path, output_csv_path=None, conf=0.25, analyze_interv
         output_csv_path = os.path.join(output_dir, "[E3]traffic_sign.csv")
 
     model_asia = YOLO("modules/traffic_sign/best_asia.pt")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model_asia.to(device)
     model_new = YOLO("modules/traffic_sign/best_new.pt")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model_new.to(device)
 
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -31,7 +36,6 @@ def run_traffic_sign(video_path, output_csv_path=None, conf=0.25, analyze_interv
         if frame_id % analyze_every_n_frames != 0:
             continue
 
-        # Asia traffic sign detection
         result_asia = model_asia(frame, imgsz=640, conf=conf, verbose=False)[0]
         detected_asia = 0
         class_str_asia = ""
@@ -42,7 +46,6 @@ def run_traffic_sign(video_path, output_csv_path=None, conf=0.25, analyze_interv
                 label = model_asia.names[cls_id]
                 class_str_asia += label + ";"
 
-        # New traffic sign detection
         result_new = model_new(frame, imgsz=640, conf=conf, verbose=False)[0]
         detected_new = 0
         class_str_new = ""

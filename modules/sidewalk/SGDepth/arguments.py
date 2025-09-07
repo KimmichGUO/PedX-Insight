@@ -22,7 +22,7 @@ class ArgumentsBase(object):
         self.ap.add_argument('--output-name', type = str ,default = 'output.mov' , help =  'Outputput video address')
         self.ap.add_argument('--mode', type = str, default = 'day', help = 'Choose theprocessing model (day, night)')
         self.ap.add_argument('--save-frames', action = 'store_true' , help =  'Saves individual Frames')
-
+        self.ap.add_argument('--analyze_interval_sec', type=float, default=1.0, help='Analysis interval in seconds')
 
     def SGDepth_harness_init_system(self):
         self.ap.add_argument(

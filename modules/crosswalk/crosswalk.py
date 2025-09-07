@@ -3,9 +3,10 @@ import cv2
 import pandas as pd
 from ultralytics import YOLO
 import math
+import torch
 
 
-def run_crosswalk_detection(video_path, output_csv_path=None, conf=0.1, show=True, analyze_interval_sec=1):
+def run_crosswalk_detection(video_path, analyze_interval_sec=1.0, output_csv_path=None, conf=0.1, show=True):
 
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
@@ -14,6 +15,8 @@ def run_crosswalk_detection(video_path, output_csv_path=None, conf=0.1, show=Tru
         output_csv_path = os.path.join(output_dir, "[E7]crosswalk_detection.csv")
 
     model = YOLO("modules/crosswalk/best.pt")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():

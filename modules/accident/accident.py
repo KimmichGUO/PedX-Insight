@@ -3,14 +3,15 @@ import cv2
 import pandas as pd
 import math
 from ultralytics import YOLO
+import torch
 
 CLASS_NAMES = {0: 'police_car', 1: 'Arrow Board', 2: 'cones', 3: 'accident'}
 
 def run_accident_scene_detection(
     video_path,
+    analyze_interval_sec=1.0,
     output_csv_path=None,
-    conf=0.25,
-    analyze_interval_sec=1.0
+    conf=0.25
 ):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
@@ -19,6 +20,8 @@ def run_accident_scene_detection(
         output_csv_path = os.path.join(output_dir, "[E8]accident_detection.csv")
 
     model = YOLO("modules/accident/best.pt")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
     cap = cv2.VideoCapture(video_path)
 
     fps = cap.get(cv2.CAP_PROP_FPS)

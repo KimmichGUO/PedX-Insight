@@ -3,12 +3,14 @@ import pandas as pd
 import os
 from ultralytics import YOLO
 import math
+import torch
 
 def run_clothing_detection(
     video_path,
+    analyze_interval_sec=1.0,
     tracking_csv_path=None,
-    output_csv_path=None,
-    analyze_interval_sec=1.0
+    output_csv_path=None
+
 ):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
@@ -50,9 +52,10 @@ def run_clothing_detection(
         fps = 30
 
     analyze_every_n_frames = max(1, math.ceil(fps * analyze_interval_sec))
-    print(f"Video FPS: {fps:.2f}, analyzing every {analyze_every_n_frames} frames (~{analyze_interval_sec}s)")
 
     model = YOLO("modules/clothing/deepfashion2_yolov8s-seg.pt")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
     class_names = {
         0: 'short_sleeved_shirt', 1: 'long_sleeved_shirt', 2: 'short_sleeved_outwear',
         3: 'long_sleeved_outwear', 4: 'vest', 5: 'sling', 6: 'shorts',

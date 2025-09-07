@@ -4,6 +4,7 @@ import numpy as np
 import math
 import csv
 from ultralytics import YOLO
+import torch
 
 def region_of_interest(img, vertices):
     mask = np.zeros_like(img)
@@ -62,8 +63,10 @@ def estimate_distance(bbox_width, bbox_height):
     known_width = 2.0
     return (known_width * focal_length) / bbox_width if bbox_width > 0 else 0
 
-def run_lane_detection(video_path, weights="yolo11n.pt", interval_sec=1, output_csv_path=None):
+def run_lane_detection(video_path, weights="yolo11n.pt", analyze_interval_sec=1.0, output_csv_path=None):
     model = YOLO(weights)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
     cap = cv2.VideoCapture(video_path)
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
@@ -78,7 +81,7 @@ def run_lane_detection(video_path, weights="yolo11n.pt", interval_sec=1, output_
 
     fps = math.ceil(cap.get(cv2.CAP_PROP_FPS))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    interval_frames = interval_sec * fps
+    interval_frames = analyze_interval_sec * fps
 
     results = []
     last_left_line, last_right_line, last_nearest_distance = None, None, None
@@ -108,7 +111,8 @@ def run_lane_detection(video_path, weights="yolo11n.pt", interval_sec=1, output_
 
             last_left_line, last_right_line, last_nearest_distance = left_line, right_line, nearest_distance
 
-        for f in range(frame_idx, min(frame_idx + interval_frames, total_frames)):
+        # for f in range(frame_idx, min(frame_idx + interval_frames, total_frames)):
+        for f in range(int(frame_idx), min(int(frame_idx + interval_frames), int(total_frames))):
             results.append({
                 'frame': f,
                 'left_x1': left_line[0] if left_line else 0,

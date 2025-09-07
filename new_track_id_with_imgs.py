@@ -6,8 +6,7 @@ import math
 import torch
 
 
-def ultralytics_pedestrian_tracking_with_imgsave(video_path, weights="yolo11n.pt", output_csv_path=None,
-                                         analyze_interval_sec=0.5):
+def ultralytics_pedestrian_tracking_with_imgsave(video_path, analyze_interval_sec=1.0, weights="yolo11n.pt", output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)

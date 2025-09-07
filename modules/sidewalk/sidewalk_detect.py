@@ -10,10 +10,10 @@ from elements.asset import apply_mask
 from SGDepth.arguments import InferenceEvaluationArguments
 import math
 
-# ---------------------------
-# 参数
-# ---------------------------
+# Parse original arguments (now includes analyze_interval_sec)
 opt = InferenceEvaluationArguments().parse()
+
+analyze_interval_sec = opt.analyze_interval_sec
 
 depth_seg_estimator = SGDepth_Model(opt.disp_detector)
 
@@ -22,12 +22,13 @@ frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 fps = cap.get(cv2.CAP_PROP_FPS)
 fps = math.ceil(fps) if fps > 0 else 30
 
+# Calculate frame interval based on analyze_interval_sec
+analyze_every_n_frames = max(1, math.ceil(fps * analyze_interval_sec))
+print(f"Video FPS: {fps}, analyzing every {analyze_every_n_frames} frames (~{analyze_interval_sec}s)")
+
 w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-# ---------------------------
-# 输出设置
-# ---------------------------
 video_name = os.path.splitext(os.path.basename(opt.video))[0]
 sidewalk_csv_path = os.path.join('./analysis_results', video_name, '[E9]sidewalk_detection.csv')
 os.makedirs(os.path.dirname(sidewalk_csv_path), exist_ok=True)
@@ -60,7 +61,7 @@ while cap.isOpened():
 
     frame_num += 1
 
-    if frame_num % 60 != 0:
+    if frame_num % analyze_every_n_frames != 0:
         continue
 
     tc = t()
@@ -123,7 +124,7 @@ while cap.isOpened():
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    sys.stdout.write(f"\r[Input Video: {opt.video}] [{frame_num}/{frame_count} Analyzed Frames] [FPS: {fps_real:.2f}] [ET: {estimated_time}]")
+    sys.stdout.write(f"\r[Input Video: {opt.video}] [{frame_num}/{frame_count} Analyzed Frames] [FPS: {fps_real:.2f}] [ET: {estimated_time}] [Interval: {analyze_interval_sec}s]")
     sys.stdout.flush()
 
 cap.release()
@@ -134,3 +135,4 @@ if not opt.noshow:
     cv2.destroyAllWindows()
 
 print(f"\nSidewalk detection results saved to {sidewalk_csv_path}")
+print(f"Analysis completed with {analyze_interval_sec}s interval ({analyze_every_n_frames} frames)")

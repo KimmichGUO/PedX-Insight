@@ -2,11 +2,8 @@ import os
 import cv2
 import pandas as pd
 from ultralytics import YOLO
-from yolox.tracker.byte_tracker import BYTETracker
-import numpy as np
-np.float = float
-from types import SimpleNamespace
 import math
+import torch
 
 id2name = {
     0: 'ambulance',
@@ -32,33 +29,33 @@ id2name = {
     20: 'wheelbarrow'
 }
 
+
 def analyze_vehicle_during_crossing(
-    video_path,
-    crossing_csv_path=None,
-    output_csv_path=None,
-    analyze_interval_sec=1.0
+        video_path,
+        crossing_csv_path=None,
+        output_csv_path=None,
+        analyze_interval_sec=1.0
 ):
     model = YOLO("modules/count_vehicle/best.pt")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
+
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[C6]crossing_ve_count.csv")
+    else:
+        os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
+
     if crossing_csv_path is None:
+        output_dir = os.path.join("analysis_results", video_name)
         crossing_csv_path = os.path.join(output_dir, "[C3]crossing_judge.csv")
 
+    # Read crossing data
     crossing_df = pd.read_csv(crossing_csv_path)
     crossing_df = crossing_df[crossing_df['crossed'] == True]
-
-    tracker_args = SimpleNamespace(
-        track_thresh=0.3,
-        match_thresh=0.8,
-        track_buffer=120,
-        frame_rate=60,
-        mot20=False
-    )
-    tracker = BYTETracker(tracker_args)
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -68,68 +65,93 @@ def analyze_vehicle_during_crossing(
     fps = cap.get(cv2.CAP_PROP_FPS)
     if fps <= 0:
         fps = 30.0
+
     analyze_every_n_frames = max(1, math.ceil(fps * analyze_interval_sec))
-    print(f"Video FPS: {fps:.2f}, analyzing every {analyze_every_n_frames} frames (~{analyze_interval_sec}s)")
 
     frame_idx = 0
     frame_tracks = {}
 
-    while True:
+    while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
+
         frame_idx += 1
 
+        # Skip frames based on analysis interval
         if frame_idx % analyze_every_n_frames != 0:
             continue
 
-        results = model(frame)[0]
+        # Choose appropriate tracker config based on FPS
+        if fps < 30:
+            track_results = model.track(
+                frame,
+                persist=True,
+                tracker="bytetrack.yaml",
+                conf=0.3,
+                verbose=False
+            )
+        elif fps > 45:
+            track_results = model.track(
+                frame,
+                persist=True,
+                tracker="bytetrack.yaml",
+                conf=0.3,
+                verbose=False
+            )
+        else:
+            track_results = model.track(
+                frame,
+                persist=True,
+                tracker="bytetrack.yaml",
+                conf=0.3,
+                verbose=False
+            )
 
-        bboxes = []
-        scores = []
-        cls_ids = []
-
-        for box, score, cls_id in zip(results.boxes.xyxy, results.boxes.conf, results.boxes.cls):
-            cls_id = int(cls_id)
-            if cls_id in id2name and score > 0.3:
-                bboxes.append(box.cpu().numpy())
-                scores.append(score.cpu().numpy())
-                cls_ids.append(cls_id)
-
-        if len(bboxes) == 0:
+        # Check if any detections exist
+        if track_results[0].boxes is None or len(track_results[0].boxes) == 0:
             frame_tracks[frame_idx] = []
             continue
 
-        dets = np.array([np.append(bbox, score) for bbox, score in zip(bboxes, scores)])
-        online_targets = tracker.update(dets, [frame.shape[0], frame.shape[1]], [frame.shape[0], frame.shape[1]])
+        boxes = track_results[0].boxes
 
+        # Check if tracking IDs exist
+        if boxes.id is None:
+            frame_tracks[frame_idx] = []
+            continue
+
+        # Process each tracked vehicle
         tracks_this_frame = []
-        for t in online_targets:
-            tlwh = t.tlwh
-            bbox = [tlwh[0], tlwh[1], tlwh[0] + tlwh[2], tlwh[1] + tlwh[3]]
+        for i, (box, track_id, cls_id, conf) in enumerate(zip(
+                boxes.xyxy, boxes.id, boxes.cls, boxes.conf
+        )):
+            track_id = int(track_id.cpu().numpy())
+            cls_id = int(cls_id.cpu().numpy())
+            conf = float(conf.cpu().numpy())
 
-            dists = np.linalg.norm(dets[:, :4] - bbox, axis=1)
-            min_idx = np.argmin(dists)
-            cls_id = cls_ids[min_idx]
-
-            tracks_this_frame.append((t.track_id, id2name[cls_id]))
+            # Check if the class is in our vehicle categories and confidence is above threshold
+            if cls_id in id2name and conf > 0.3:
+                tracks_this_frame.append((track_id, id2name[cls_id]))
 
         frame_tracks[frame_idx] = tracks_this_frame
 
     cap.release()
 
+    # Process crossing data and count vehicles
     output_data = []
     for _, row in crossing_df.iterrows():
         person_id = row['track_id']
         start_frame = int(row['started_frame'])
         end_frame = int(row['ended_frame'])
 
+        # Collect unique vehicle tracks during crossing period
         unique_tracks = {}
         for f in range(start_frame, end_frame + 1):
             if f in frame_tracks:
                 for track_id, vt in frame_tracks[f]:
                     unique_tracks[track_id] = vt
 
+        # Count vehicles by type
         cumulative_counts = {name: 0 for name in id2name.values()}
         for vt in unique_tracks.values():
             cumulative_counts[vt] += 1
@@ -138,6 +160,7 @@ def analyze_vehicle_during_crossing(
         row_data = [person_id, True, total_vehicles] + [cumulative_counts[vt] for vt in id2name.values()]
         output_data.append(row_data)
 
+    # Create output DataFrame
     columns = ['track_id', 'crossed', 'total_vehicle_count'] + list(id2name.values())
     output_df = pd.DataFrame(output_data, columns=columns)
 
@@ -146,3 +169,7 @@ def analyze_vehicle_during_crossing(
 
     output_df.to_csv(output_csv_path, index=False)
     print(f"Vehicle count when crossing completed. Results saved to {output_csv_path}")
+    print(f"YOLO is running on: {model.device}")
+    print(f"Total crossing events analyzed: {len(crossing_df)}")
+
+    return output_df

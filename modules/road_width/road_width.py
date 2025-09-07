@@ -3,14 +3,17 @@ import numpy as np
 from collections import deque
 import csv
 import os
+import math
 
-def run_road_width_analysis(video_path, output_csv_path=None):
+def run_road_width_analysis(video_path, analyze_interval_sec=1.0, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if output_csv_path is None:
         output_dir = os.path.join(".", "analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[E5]road_width.csv")
+    else:
+        os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -19,13 +22,18 @@ def run_road_width_analysis(video_path, output_csv_path=None):
 
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    if fps <= 0:
+        fps = 30.0
+
+    # Calculate frame interval based on analyze_interval_sec
+    analyze_every_n_frames = max(1, math.ceil(fps * analyze_interval_sec))
 
     src_points = np.float32([
-        [frame_width * 0.45, frame_height * 0.6], 
-        [frame_width * 0.55, frame_height * 0.6],  
-        [frame_width * 0.1, frame_height * 0.95], 
-        [frame_width * 0.9, frame_height * 0.95]  
+        [frame_width * 0.45, frame_height * 0.6],
+        [frame_width * 0.55, frame_height * 0.6],
+        [frame_width * 0.1, frame_height * 0.95],
+        [frame_width * 0.9, frame_height * 0.95]
     ])
     dest_points = np.float32([
         [frame_width * 0.25, 0],
@@ -76,13 +84,16 @@ def run_road_width_analysis(video_path, output_csv_path=None):
         writer = csv.writer(csv_file)
         writer.writerow(['Frame Index', 'Time (s)', 'Road Width (m)'])
 
+        frame_idx = 0
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
 
-            frame_idx = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
-            if frame_idx % 60 != 0:
+            frame_idx += 1
+
+            # Skip frames based on analysis interval
+            if frame_idx % analyze_every_n_frames != 0:
                 continue
 
             blurred = cv2.GaussianBlur(frame, (5, 5), 0)
@@ -92,7 +103,6 @@ def run_road_width_analysis(video_path, output_csv_path=None):
             birdseye = perspective_transform(enhanced, src_points, dest_points)
 
             road_width_m = detect_road_width(birdseye)
-            frame_idx = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
             time_sec = frame_idx / fps
 
             if road_width_m is not None:
@@ -102,3 +112,5 @@ def run_road_width_analysis(video_path, output_csv_path=None):
 
     cap.release()
     print(f"Road width analysis saved to: {output_csv_path}")
+    print(f"Total frames processed: {frame_idx}")
+    print(f"Analysis interval: {analyze_interval_sec} seconds ({analyze_every_n_frames} frames)")

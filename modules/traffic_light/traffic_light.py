@@ -3,8 +3,9 @@ import cv2
 import pandas as pd
 from ultralytics import YOLO
 import math
+import torch
 
-def run_traffic_light_detection(video_path, output_csv_path=None, analyze_interval_sec=1.0):
+def run_traffic_light_detection(video_path, analyze_interval_sec=1.0, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if output_csv_path is None:
@@ -13,6 +14,8 @@ def run_traffic_light_detection(video_path, output_csv_path=None, analyze_interv
         output_csv_path = os.path.join(output_dir, "[E2]traffic_light.csv")
 
     model = YOLO("modules/traffic_light/v9 - 48 epochs.pt")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
     cap = cv2.VideoCapture(video_path)
 
     fps = cap.get(cv2.CAP_PROP_FPS)

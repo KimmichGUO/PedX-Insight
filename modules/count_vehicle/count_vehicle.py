@@ -2,11 +2,8 @@ import os
 import cv2
 import pandas as pd
 from ultralytics import YOLO
-from yolox.tracker.byte_tracker import BYTETracker
-import numpy as np
-np.float = float
-from types import SimpleNamespace
 import math
+import torch
 
 id2name = {
     0: 'ambulance',
@@ -32,22 +29,19 @@ id2name = {
     20: 'wheelbarrow'
 }
 
+
 def vehicle_count(video_path, output_csv_path=None, analyze_interval_sec=1.0):
     model = YOLO("modules/count_vehicle/best.pt")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
+
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[V6]vehicle_count.csv")
-
-    tracker_args = SimpleNamespace(
-        track_thresh=0.3,
-        match_thresh=0.8,
-        track_buffer=120,
-        frame_rate=60,
-        mot20=False
-    )
-    tracker = BYTETracker(tracker_args)
+    else:
+        os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -57,63 +51,90 @@ def vehicle_count(video_path, output_csv_path=None, analyze_interval_sec=1.0):
     fps = cap.get(cv2.CAP_PROP_FPS)
     if fps <= 0:
         fps = 30.0
+
     analyze_every_n_frames = max(1, math.ceil(fps * analyze_interval_sec))
-    print(f"Video FPS: {fps:.2f}, analyzing every {analyze_every_n_frames} frames (~{analyze_interval_sec}s)")
 
     tracked_vehicles = {}
     frame_idx = 0
 
-    while True:
+    while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
+
         frame_idx += 1
 
+        # Skip frames based on analysis interval
         if frame_idx % analyze_every_n_frames != 0:
             continue
 
-        results = model(frame)[0]
+        # Choose appropriate tracker config based on FPS (similar to pedestrian code)
+        if fps < 30:
+            track_results = model.track(
+                frame,
+                persist=True,
+                tracker="bytetrack.yaml",  # or use custom config if needed
+                conf=0.3,
+                verbose=False
+            )
+        elif fps > 45:
+            track_results = model.track(
+                frame,
+                persist=True,
+                tracker="bytetrack.yaml",  # or use custom config if needed
+                conf=0.3,
+                verbose=False
+            )
+        else:
+            track_results = model.track(
+                frame,
+                persist=True,
+                tracker="bytetrack.yaml",  # or use custom config if needed
+                conf=0.3,
+                verbose=False
+            )
 
-        bboxes = []
-        scores = []
-        cls_ids = []
-
-        for box, score, cls_id in zip(results.boxes.xyxy, results.boxes.conf, results.boxes.cls):
-            cls_id = int(cls_id)
-            if cls_id in id2name and score > 0.3:
-                bboxes.append(box.cpu().numpy())
-                scores.append(score.cpu().numpy())
-                cls_ids.append(cls_id)
-
-        if len(bboxes) == 0:
+        # Check if any detections exist
+        if track_results[0].boxes is None or len(track_results[0].boxes) == 0:
             continue
 
-        dets = np.array([np.append(bbox, score) for bbox, score in zip(bboxes, scores)])
+        boxes = track_results[0].boxes
 
-        online_targets = tracker.update(dets, [frame.shape[0], frame.shape[1]], [frame.shape[0], frame.shape[1]])
+        # Check if tracking IDs exist
+        if boxes.id is None:
+            continue
 
-        for t in online_targets:
-            track_id = t.track_id
-            tlwh = t.tlwh
-            bbox = [tlwh[0], tlwh[1], tlwh[0] + tlwh[2], tlwh[1] + tlwh[3]]
+        # Process each tracked vehicle
+        for i, (box, track_id, cls_id, conf) in enumerate(zip(
+                boxes.xyxy, boxes.id, boxes.cls, boxes.conf
+        )):
+            track_id = int(track_id.cpu().numpy())
+            cls_id = int(cls_id.cpu().numpy())
+            conf = float(conf.cpu().numpy())
 
-            dists = np.linalg.norm(dets[:, :4] - bbox, axis=1)
-            min_idx = np.argmin(dists)
-            cls_id = cls_ids[min_idx]
-
-            if track_id not in tracked_vehicles:
-                tracked_vehicles[track_id] = id2name[cls_id]
+            # Check if the class is in our vehicle categories and confidence is above threshold
+            if cls_id in id2name and conf > 0.3:
+                # Store the vehicle type for this track_id
+                if track_id not in tracked_vehicles:
+                    tracked_vehicles[track_id] = id2name[cls_id]
 
     cap.release()
 
+    # Count vehicles by type
     count_dict = {name: 0 for name in id2name.values()}
     for vtype in tracked_vehicles.values():
         count_dict[vtype] += 1
 
+    # Create DataFrame with results
     df = pd.DataFrame(list(count_dict.items()), columns=['Vehicle_Type', 'Count'])
     total_count = df['Count'].sum()
     total_df = pd.DataFrame([{'Vehicle_Type': 'Total', 'Count': total_count}])
     df = pd.concat([df, total_df], ignore_index=True)
 
+    # Save results
     df.to_csv(output_csv_path, index=False)
     print(f"Vehicle count completed. Results saved to {output_csv_path}")
+    print(f"YOLO is running on: {model.device}")
+    print(f"Total vehicles tracked: {len(tracked_vehicles)}")
+
+    return df

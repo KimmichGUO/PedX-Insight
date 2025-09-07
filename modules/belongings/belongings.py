@@ -3,13 +3,15 @@ import cv2
 import pandas as pd
 from ultralytics import YOLO
 import math
+import torch
 
 def run_belongings_detection(
     video_path,
+    analyze_interval_sec=1.0,
     weights="yolo11n.pt",
     tracking_csv_path=None,
     output_csv_path=None,
-    analyze_interval_sec=1.0
+
 ):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if tracking_csv_path is None:
@@ -49,6 +51,8 @@ def run_belongings_detection(
     print(f"Video FPS: {fps:.2f}, analyzing every {analyze_every_n_frames} frames (~{analyze_interval_sec}s)")
 
     model = YOLO(weights)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
 
     results_list = []
     frame_cache = dict()

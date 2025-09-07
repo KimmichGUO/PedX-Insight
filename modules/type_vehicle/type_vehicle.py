@@ -5,9 +5,10 @@ from collections import Counter, defaultdict
 from ultralytics import YOLO
 import supervision as sv
 import math
+import torch
 
-def run_vehicle_frame_analysis(video_path, weights="modules/type_vehicle/best.pt",
-                               output_csv_path=None, analyze_interval_sec=1.0):
+def run_vehicle_frame_analysis(video_path, analyze_interval_sec=1.0, weights="modules/type_vehicle/best.pt",
+                               output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
         output_dir = os.path.join("analysis_results", video_name)
@@ -15,6 +16,8 @@ def run_vehicle_frame_analysis(video_path, weights="modules/type_vehicle/best.pt
         output_csv_path = os.path.join(output_dir, "[V1]vehicle_type.csv")
 
     model = YOLO(weights)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
 
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -33,7 +36,6 @@ def run_vehicle_frame_analysis(video_path, weights="modules/type_vehicle/best.pt
             break
         frame_id += 1
 
-        # 按 analyze_interval_sec 跳过帧
         if frame_id % analyze_every_n_frames != 0:
             continue
 

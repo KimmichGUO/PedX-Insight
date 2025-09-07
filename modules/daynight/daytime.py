@@ -40,7 +40,7 @@ def run_daytime_detection(video_path, brightness_threshold=100, analyze_interval
             last_avg_brightness = avg_brightness
             last_label = label
 
-        for f in range(frame_id, min(frame_id + interval_frames, total_frames)):
+        for f in range(int(frame_id), min(int(frame_id) + int(interval_frames), int(total_frames))):
             results.append({
                 "frame_id": f,
                 "avg_brightness": avg_brightness,

@@ -1,0 +1,908 @@
+city,time
+Sainte-Rose,25
+Łódź,23.5
+Berlin,8.44
+Utrecht,12.77
+Sao Paulo,6.35
+Nendeln,12.36
+St Martin,12.33
+Lisbon,11.67
+Alexandria,5.65
+Mururi,10.67
+Riga,5.25
+Phnom Penh,5.19
+Ena,10
+Seoul,4.97
+Wang'uru,9.75
+Vientiane,4.82
+La Oroya,9.46
+San Juan,4.7
+Managua,9.27
+"Santa Barbara, CA",4.63
+Sydney,4.57
+Madrid,4.49
+Tokyo,4.44
+Lima,4.27
+"Thiruvananthapuram, KL",4.19
+Tel Aviv,4.13
+Providenciales,4.07
+Encamp,8
+Settat,8
+Tulcán,8
+Ho Chi Minh City,7.95
+"Mumbai, MH",3.94
+L'Islet,7.84
+Caracas,3.88
+Bandar Seri Begawan,7.67
+"Chicago, IL",3.83
+Ilulissat,7.64
+Karachi,3.7
+Sihanoukville,3.68
+Metz,7.25
+"Toronto, ON",3.61
+Buenos Aires,3.54
+Mġarr,7.05
+Denpasar,3.48
+"Las Vegas, NV",3.44
+"New Delhi, DL",3.44
+Ta Khmau,6.86
+Guatemala City,3.4
+Rabat,3.36
+Krasnoyarsk,3.36
+Bucoli,6.67
+Kharkiv,3.31
+Juba,6.6
+Abomey Calavi,3.3
+Ziguinchor,3.29
+Cherkessk,6.56
+"Los Angeles, CA",3.19
+Apia,3.19
+Mauren,6.33
+Auckland,6.22
+Moscow,3.08
+Kazan,3.07
+"New York, NY",3.05
+Gaborone,6.04
+Arusha,3.01
+Triesen,6
+Makhachkala,3
+Laxey,5.83
+Nibok,5.83
+Chunya,5.83
+Odesa,2.89
+Kampala,2.88
+München,5.72
+Francistown,5.67
+Moynaq,5.67
+Bishkek,5.65
+"Atlanta, GA",5.65
+Freetown,2.82
+Yerevan,2.82
+Turin,5.64
+Annaba,2.82
+Lomé,2.81
+Takeo,5.62
+Porto-Novo,2.8
+Gustavia,5.6
+Asmara,2.77
+Sofia,5.54
+Rostov-on-Don,5.52
+"Pittsburgh, PA",5.5
+Murmansk,2.75
+Campo Grande,5.46
+Kathmandu,2.7
+Addis Ababa,2.69
+Cairo,2.68
+Baku,2.66
+Oranjestad,5.25
+Conakry,2.62
+Kaolack,2.62
+Road Town,2.59
+Kampot,5.14
+"Columbus, OH",5.1
+Kampong Chhnang,5.09
+Kafuta,5.07
+Almaty,5.04
+"Seattle, WA",5.03
+Nairobi,2.52
+"Thane, MH",2.51
+Masvingo,5
+Manila,4.99
+Serrekunda,2.46
+Accra,2.44
+Ulaanbaatar,2.43
+Enugu,2.4
+Vaduz,4.8
+Dréan,2.4
+Milan,4.79
+Nizhny Tagil,4.78
+Tangier,2.39
+Montego Bay,2.38
+Lucea,4.76
+Toshkent,2.38
+Yakutsk,2.38
+Garapan,4.75
+Kurgan,4.73
+Maputo,2.35
+San Salvador,4.68
+Gros Islet,4.67
+Nouméa,4.67
+Petropavlovsk-Kamchatsky,4.66
+Victoria,2.32
+Abidjan,2.31
+Lagos,2.31
+"Miami, FL",4.58
+Cusco,4.56
+Banjul,2.28
+Abuja,2.27
+Molepolole,4.54
+Linden,2.26
+Ouarzazate,2.26
+Białystok,4.52
+Tbilisi,2.25
+Bangkok,4.47
+Babruysk,4.47
+Mariupol,4.47
+Antananarivo,2.23
+"Houston, TX",4.44
+Asunción,4.37
+Karurumo,4.33
+Zhodzina,4.33
+Oji River,4.33
+Lviv,2.16
+Spanish Town,2.15
+Kuala Lumpur,4.29
+Papeete,4.29
+Parika,4.26
+Mykolaiv,4.26
+Podolsk,4.26
+Lurigancho-Chosica,4.23
+Casablanca,2.1
+Mogadishu,2.1
+Bafoussam,4.19
+Cotonou,4.19
+Paramaribo,4.18
+Zheleznogorsk,4.17
+"Portland, OR",4.16
+Jakarta,4.12
+Paris,4.11
+Minsk,2.05
+Nkubu,4.09
+Irkutsk,4.08
+"Philadelphia, PA",4.03
+Lusaka,2.01
+Grand Baie,4.01
+Zabbar,4
+Rotterdam,4
+Bouillante,4
+Orient Bay,4
+Kirovsk,4
+Melbourne,3.99
+Awka,3.99
+Cayenne,3.96
+Brisbane,3.96
+Thessaloniki,3.95
+Pinsk,3.94
+Barcelona,3.92
+Yangon,3.92
+"Pothencode, KL",3.92
+Khabarovsk,3.91
+Birżebbuġa,3.9
+Bilbao,3.89
+Marrakesh,3.87
+Speightstown,3.87
+Dakar,1.92
+Baie Saint Anne,3.83
+Magadan,1.92
+Tórshavn,3.82
+Nuuk,3.81
+Ouagadougou,3.81
+Helsinki,3.8
+Batumi,1.9
+Phuket Town,3.78
+Vacoas-Phoenix,1.89
+Volgograd,3.78
+Tomsk,3.75
+Damascus,3.74
+Kryvyi Rih,3.74
+St Julian's,3.73
+Muscat,1.87
+Qormi,1.86
+Kalagi,3.72
+Estepona,3.72
+Sant Julià de Lòria,3.71
+Lubumbashi,1.85
+Konotop,3.69
+Bujumbura,1.85
+La Paz,3.68
+Ouélessébougou,3.68
+San Pedro Sula,1.83
+Sègbo,3.67
+Vinnytsia,3.67
+St. John's,3.66
+Athens,3.66
+Donetsk,1.83
+Valencia,3.65
+Tallinn,3.64
+Haifa,3.64
+"Austin, TX",3.64
+Puerto Suárez,3.64
+Aquidauana,3.62
+Tirana,3.62
+Simferopol,3.62
+La Ceiba,3.61
+Comayagua,3.59
+Ravenna,3.58
+Kursk,3.58
+Gweru,3.54
+"San Francisco, CA",3.53
+Yuzhno-Sakhalinsk,3.5
+Bissau,3.48
+Dubai,3.48
+Bishoftu,3.47
+Les Capelles,3.47
+"Mysore, KA",3.45
+Paola,3.42
+Santa Cruz de la Sierra,3.41
+Georgetown,3.4
+Kigali,3.4
+Quito,3.39
+Janjanbureh,3.38
+Qostanai,3.37
+Jalal-Abad,3.36
+Gelendzhik,3.35
+Krasnodar,3.35
+"Kolhapur, MH",3.35
+Ijevan,3.33
+Aguadilla,3.33
+Tegucigalpa,3.33
+Lutsk,3.3
+Mbabane,3.29
+Goodlands,3.28
+Douglas,3.28
+St Paul's Bay,3.28
+Kisangani,3.28
+Windhoek,3.27
+Port Gentil,3.26
+Gomel,3.25
+Porto,3.25
+Manzini,3.23
+"Pune, MH",3.22
+Montevideo,3.22
+Moyamba Junction,3.21
+Hamilton,3.21
+Livingstone,3.2
+St Helier,3.19
+Bsharri,3.19
+Malé,3.18
+Swakopmund,3.17
+Bulok,3.17
+Christiansted,3.17
+San José de Chiquitos,3.15
+Minas,3.15
+Moen,3.15
+Amsterdam,3.15
+Vladivostok,3.14
+Bridgetown,3.14
+Khartoum,3.13
+Banha,3.12
+Ba,3.12
+Agadir,3.11
+"Dibrugarh, AS",3.11
+Princes Town,3.1
+Hosanna,3.1
+Tehran,3.1
+Novopolotsk,3.09
+Frankfurt,3.09
+Ipiales,3.08
+Holetown,3.07
+London,3.07
+"San Diego, CA",3.07
+Punta del Este,3.07
+Mandeville,3.07
+Barranquilla,3.06
+Macapá,3.06
+Kumba,3.05
+Ocho Rios,3.04
+Essaouira,3.04
+"Montreal, QC",3.04
+Jerusalem,3.04
+Sochi,3.04
+Balneário Camboriú,3.04
+Sarajevo,3.04
+Kremenchuk,3.04
+Luhansk,3.04
+Chuy,3.04
+Fergana,3.03
+Labinsk,3.03
+Huancayo,3.03
+Stavropol,3.03
+Zanzibar,3.03
+"Kochi, KL",3.01
+Tumon,3
+Jamestown,3
+Zelenchukskaya,3
+El Madania,3
+Chaaria,3
+Tarfaya,3
+Belgrade,3
+"Kottayam, KL",3
+Salangwe,3
+"Cincinnati, OH",3
+Havana,3
+Skopje,2.99
+Rome,2.99
+Andorra la Vella,2.98
+Faro,2.98
+"Bengaluru, KA",2.97
+Astana,2.97
+Astrakhan,2.95
+Fes,2.95
+Kingston,2.95
+Vreed en Hoop,2.94
+Saint Petersburg,2.94
+Eldoret,2.93
+Prague,2.93
+Bila Tserkva,2.92
+Johannesburg,2.92
+Zhytomyr,2.92
+Lankaran,2.91
+"Savannah, GA",2.88
+St Peter Port,2.88
+Ariana,2.88
+Lucena,2.88
+Novosibirsk,2.88
+Jerada,2.87
+Dar es Salaam,2.86
+Kyiv,2.85
+Hargeisa,2.85
+Ronda,2.85
+Santo Domingo,2.84
+George Town,2.84
+Samarkand,2.84
+Panningen,2.83
+Chita,2.83
+Quetzaltenango,2.83
+Linstead,2.83
+Philipsburg,2.82
+Arkhangelsk,2.81
+Laayoune,2.81
+Poltava,2.8
+Oiapoque,2.79
+Quatre Bornes,2.79
+St Sampson,2.79
+Bamako,2.78
+Rivne,2.78
+"Coimbatore, TN",2.78
+Ugweri,2.78
+Eindhoven,2.78
+Balzers,2.78
+"Zurich, ZH",2.77
+Zaporizhzhia,2.76
+Santiago,2.76
+Kinshasa,2.75
+Kalamata,2.75
+Copenhagen,2.75
+Meru,2.75
+Ouidah,2.75
+Chernihiv,2.74
+Port Louis,2.74
+Monze,2.73
+Antalya,2.73
+Omdurman,2.73
+Salekhard,2.72
+Lipetsk,2.7
+Siena,2.69
+Huacho,2.68
+St. David's,2.67
+Tétouan,2.67
+Owia,1.33
+Tiwi,2.67
+Sur,2.67
+Tiksi,2.67
+"Stockton, CA",2.67
+Damara,2.67
+Bo,2.66
+Kovel,2.66
+Dubreka,2.66
+Vienna,2.66
+Harare,2.66
+Badagry,2.65
+Charlotte Amalie,2.64
+"Pathanamthitta, KL",2.64
+Pereiaslav,2.64
+Shaki,2.64
+Cherkasy,2.63
+Abeokuta,2.63
+Bulawayo,2.62
+Coimbra,2.62
+Nadi,2.62
+Sonsonate,2.6
+Kingstown,2.59
+Basseterre,2.58
+Oruro,2.58
+Prizren,2.58
+Yekaterinburg,2.58
+Istanbul,2.58
+Gan,2.58
+Ajman,2.56
+Caranavi,2.56
+Aleppo,2.55
+Brazzaville,2.55
+Dhaka,2.55
+Palenque,2.54
+Corfu,2.54
+Limbe,2.54
+Tartus,2.54
+N'Djamena,2.52
+Port Harcourt,2.52
+Omsk,2.52
+Nazaré,2.51
+San José,2.51
+Brikama,2.51
+Ta Khmao,2.51
+Oran,2.5
+Asaba,2.5
+Tubmanburg,2.5
+Mitunguu,2.5
+Sanaa,2.5
+Babonneau,2.49
+Gyumri,2.49
+Castries,2.49
+Lilongwe,2.48
+Tyumen,2.48
+Makeni,2.47
+Alasia,2.47
+Toamasina,2.46
+Ibadan,2.46
+Korosten,2.44
+Kathwana,2.44
+Perm,2.44
+Grenville,2.43
+Sarny,2.43
+Cochabamba,2.42
+Maseru,2.42
+Petit Valley,2.42
+Kabul,2.42
+Farafenni,2.42
+Sea view Farm,2.42
+Bangui,2.41
+Granada,2.41
+Ivano-Frankivsk,2.41
+Kirov,2.41
+Olmaliq,2.41
+Tanjeh,2.4
+Fez,2.4
+Kherson,2.4
+Skeldon,2.4
+Guaranda,2.4
+Tunis,2.4
+Melilla,2.4
+Khmelnytskyi,2.4
+Chișinău,2.4
+Port-au-Prince,2.4
+Muramvya,2.39
+Shymkent,2.39
+Dingli,2.39
+José Pedro Varela,2.39
+Saint-François,2.38
+Rustavi,2.38
+Libreville,2.37
+Ternopil,2.37
+Pristina,2.37
+Nyeri,2.37
+Lugbe,2.36
+Paro,2.36
+Giza,2.35
+Tamale,2.34
+Playa del Carmen,2.34
+Embu,2.33
+East End,2.33
+Sumy,2.33
+Zahaflam,2.33
+Brighton,2.33
+Antwerp,2.33
+Mutengene,2.33
+Liepaja,2.33
+Maty,2.33
+Saint-Claude,2.33
+Mangilao,2.33
+Sinkunia,2.33
+Lakhdenpokhya,2.33
+Grodno,2.33
+Saratov,2.32
+Abakaliki,2.32
+Khemisset,2.32
+Aarhus,2.31
+Valletta,2.31
+Pärnu,2.3
+Sesimbra,2.3
+Funchal,2.3
+Kramatorsk,2.3
+Kaduna,2.3
+Dnipro,2.29
+Keren,2.29
+Warsaw,2.29
+Douala,2.27
+Vagharshapat,2.27
+Saint-Denis,2.27
+Kalangba,2.27
+Roseau,2.25
+Lokossa,2.25
+Punaʻauia,2.25
+Port-Gentil,2.25
+Luzern,2.25
+Kaliningrad,2.24
+Khorira,2.24
+Yalta,2.23
+Oujda,2.23
+Kenema,2.23
+Niamey,2.22
+Dushanbe,2.22
+Guenfouda,2.22
+Thimphu,2.21
+Malabo,2.21
+Coyah,2.21
+Tartu,2.21
+Chuka,2.2
+Armavir,2.2
+Aveiro,2.2
+Panama City,2.2
+Afgoye,2.19
+Monrovia,2.18
+Yaoundé,2.17
+Gżira,2.17
+Lodrino,2.17
+Cascais,2.17
+Lobamba,2.17
+Pyatigorsk,2.17
+Fray Bentos,2.17
+Choloma,2.17
+Birgu,2.17
+Novy Urengoy,2.17
+Benin City,2.16
+Bizerte,2.16
+Port Vila,2.16
+Ilovaisk,2.15
+Kabala,2.15
+Peja,2.15
+San Marino,2.15
+Irbit,2.14
+Notsé,2.14
+Laura,2.13
+Voronezh,2.12
+Ambato,2.12
+Canillo,2.11
+"Huntington Beach, CA",2.11
+Bryansk,2.1
+Kano,2.1
+Kutaisi,2.1
+Gelan,2.08
+Combani,2.08
+"Burbank, CA",2.08
+Bo Waterside,2.08
+"Calangute, GA",2.08
+Baranavichy,2.07
+Sanyang,2.07
+Al Hoceima,2.06
+Polotsk,2.06
+Lekki,2.05
+Zomba,2.05
+Tobruk,2.05
+Brussels,2.05
+La Massana,2.05
+Taiz,2.04
+St Brelade,2.04
+Nouakchott,2.04
+Brest,2.04
+Djibouti,2.04
+El Harrach,2.04
+Luanda,2.02
+Uzhhorod,2.02
+Sare,2.01
+"Shillong, ML",2.01
+Uman,2
+Chernivtsi,2
+Willemstad,2
+Vanadzor,2
+Kamensk-Uralsky,2
+Ndola,2
+Robertsport,2
+Korçë,2
+Agrément,2
+Dakhla,2
+Amouli,2
+Githongo,2
+Old Road Town,2
+Franceville,2
+Nairutia,2
+Makutano,2
+Sisimiut,2
+Pelican Key,2
+Żebbuġ,2
+Arta,2
+Yavne,2
+Baucau,2
+Kitengela,2
+Malajira,1.99
+Teyateyaneng,1.99
+Koidu,1.99
+Kumasi,1.98
+Batkanu,1.98
+Kyzyl-Kyya,1.98
+Nefza,1.97
+Sussex,1.96
+Poti,1.96
+Pujehun,1.96
+Soma,1.96
+Pleebo,1.96
+Mounana,1.96
+Mogilev,1.95
+Bolans,1.95
+Salé,1.95
+Algiers,1.95
+Boryspil,1.94
+Chogoria,1.93
+Aghbalou,1.93
+Kropyvnytskyi,1.92
+Zhezkazgan,1.92
+Marigot,1.9
+Ufa,1.9
+Surgut,1.89
+St Andrew,1.89
+Buchanan,1.89
+Kaunas,1.89
+Moroni,1.89
+Biabou,1.88
+Ourika,1.88
+Narva,1.88
+Kayanza,1.87
+Namanga,1.87
+Aral,1.85
+Kambia,1.85
+Elmina,1.84
+Beira,1.84
+Cape Coast,1.84
+Bender,1.83
+Sliema,1.83
+Makwasa,1.83
+Temara,1.83
+Ahfir,1.83
+Samara,1.83
+Leiria,1.83
+Żurrieq,1.83
+Blantyre,1.83
+Szczecin,1.83
+Pavlodar,1.83
+Taraz,1.82
+Morne Fortune,1.81
+Isabela,1.8
+Karakol,1.8
+Monaco,1.8
+Vladikavkaz,1.79
+Masingbi,1.79
+Taranto,1.79
+Inyi,1.78
+Toliara,1.78
+Naxxar,1.78
+Schaan,1.78
+Betio,1.78
+Deshaies,1.78
+Pyongyang,1.78
+Mariehamn,1.78
+Mont Vernon,1.78
+Mtwara,1.78
+Bamenda,1.77
+Tuapse,1.77
+Guerengou,1.75
+Barnesville,1.73
+Piriápolis,1.73
+Minna,1.73
+Mbeya,1.73
+Pointe-Noire,1.73
+Port Loko,1.72
+Gondar,1.72
+Sumgait,1.7
+Red Hook,1.7
+Tintafor,1.7
+Ponta do Ouro,1.69
+Berkane,1.69
+Kralendijk,1.69
+Sevastopol,1.69
+Falabe,1.67
+Lunsar,1.67
+Nyahururu,1.67
+Saïdia,1.67
+Vermont,1.67
+Vitebsk,1.67
+Rechytsa,1.67
+Karagandy,1.67
+Port Moresby,1.67
+Maryina Horka,1.67
+Labuan,1.67
+Enhams,1.67
+Akhfennir,1.67
+Binkolo,1.67
+Kionyo,1.67
+Mendefera,1.67
+Ntoum,1.67
+Serowe,1.67
+Eiði,1.67
+Onitsha,1.67
+Gorongosa,1.67
+Anua,1.67
+Thyolo,1.67
+Trinidad,1.67
+Belize City,1.67
+Goris,1.67
+Petifu Junction,1.67
+Xlendi,1.67
+Walvis Bay,1.67
+Mambolo,1.67
+Sukhumi,1.67
+Caguas,1.67
+Kansk,1.67
+Gouyave,1.67
+Chefchaouen,1.64
+Fatick,1.63
+Shadrinsk,1.62
+Ekpoma,1.6
+Pago Pago,1.6
+Durban,1.6
+Naberezhnye Chelny,1.6
+São Tomé,1.58
+Waterloo,1.57
+Magburaka,1.56
+Makiivka,1.56
+Luqa,1.56
+N'Dofan,1.56
+St. George's,1.56
+Pos Chiquito,1.56
+Ntsaouéni,1.55
+Masoila,1.54
+Forecariah,1.53
+Zugdidi,1.53
+Kalodzishchy,1.53
+Ramsey,1.53
+Căușeni,1.53
+Moyamba,1.52
+Umuahia,1.51
+Makhalanyane,1.5
+Saidia,1.5
+Sørvágur,1.5
+Yoshkar-Ola,1.5
+Belmopan,1.5
+Adama,1.5
+Rîbnița,1.5
+Tiko,1.5
+Nassau,1.48
+Moria,1.47
+Makunduchi,1.47
+Haarlem,1.46
+Aba,1.46
+Hama,1.46
+Pendembu,1.46
+Buea,1.45
+Voznesensk,1.44
+Les Anses-d'Arlet,1.44
+Iconi,1.44
+Mpehe,1.44
+Kakata,1.43
+Funafuti,1.42
+Tokmok,1.42
+Triesenberg,1.42
+Taiama,1.4
+Rokupr,1.38
+Mamana,1.36
+Ngozi,1.36
+New Cairo,1.33
+Oskemen,1.33
+Sakhnin,1.33
+Nukuʻalofa,1.33
+Kabuga,1.33
+Adi Goda'iti,1.33
+Norilsk,1.33
+San Juan del Sur,1.33
+Kokand,1.33
+Siġġiewi,1.33
+Merzouga,1.33
+Avarua,1.33
+Devonshire,1.33
+Angren,1.33
+Ruggell,1.33
+Engels,1.33
+Bodden Town,1.33
+Nieuw Amsterdam,1.33
+Mwanza,1.33
+Suez,1.33
+Nabeul,1.33
+Shirvan,1.33
+Nizhnevartovsk,1.33
+Sandy Ground,1.33
+Les Abymes,1.33
+Sainte-Suzanne,1.33
+Kiawara,1.33
+Atyrau,1.33
+Boujdour,1.33
+Tobolsk,1.33
+Bajana,1.33
+Boudouaou,1.33
+Skhirat,1.33
+Maufant,1.33
+Mqabba,1.33
+Navrongo,1.33
+Chelyabinsk,1.33
+Ekıbastuz,1.33
+Mikhaylovsk,1.28
+Fadugu,1.28
+Borama,1.27
+Matru,1.26
+Honiara,1.26
+Masiaka,1.25
+Kailahun,1.25
+Afikpo,1.22
+Bălți,1.22
+Saba,1.22
+Owerri,1.21
+Kassirie,1.21
+Rufisque,1.2
+Gbinti,1.19
+Melitopol,1.19
+Segbwema,1.18
+Xırdalan,1.18
+Pointe-à-Pitre,1.17
+Jendema,1.17
+Monchegorsk,1.17
+Vasylkiv,1.17
+Makuyu,1.17
+Mitsiwa,1.17
+Ngobit,1.17
+Qacha's Nek,1.17
+Sousse,1.17
+Bakhchysarai,1.17
+Yacuma,1.17
+Mange,1.13
+Kamakwie,1.13
+Daru,1.12
+Makolo,1.11
+Dilijan,1.11
+Gorno-Altaysk,1.11
+Kagbantama,1.11
+Bandajuma,1.1
+Ashgabat,1.09
+Lubny,1
+Luawa,1
+Kiangua,1
+St Peter,1
+Klaksvík,1
+Gikuuri,1
+Kerch,1
+Lourinhã,1
+Ivatsevichy,1
+Apatity,1
+Isinya,1
+Baħar iċ-Ċagħaq,1
+Negril,1
+Sainte-Anne,1
+Petropavl,1
+Carolina,1
+Yevpatoria,1
+Tohoun,1
+Silves,1
+Charlestown,1
+Tui,1
+Moengo,1
+Aïn Benian,1
+Kolonia,1
+Vilnius,1
+Orenburg,1
+Khartsyzk,1
+Anse Volbert,1
+Nicosia,1
+Kango,1
+Be'er Sheva,1
+Barre Denis,1
+Zeerust,1
+Żejtun,1
+Jorem Nema Kunku,1
+Orsha,1

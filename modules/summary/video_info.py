@@ -97,7 +97,11 @@ def generate_video_env_stats(video_path,
         runred_ratio = len(runred_ids) / total_crossers_runred if total_crossers_runred > 0 else None
 
     total_vehicles = int(vehicle_df['Count'].sum()) if vehicle_df is not None else None
-    top3_vehicles = vehicle_df.sort_values(by='Count', ascending=False).head(3)['Vehicle_Type'].tolist() if vehicle_df is not None else None
+    if vehicle_df is not None:
+        filtered_df = vehicle_df[vehicle_df['Vehicle_Type'] != 'total']
+        top3_vehicles = filtered_df.sort_values(by='Count', ascending=False).head(3)['Vehicle_Type'].tolist()
+    else:
+        top3_vehicles = None
 
     main_weather = weather_df['weather_label'].mode().iloc[0] if weather_df is not None and 'weather_label' in weather_df.columns else None
 

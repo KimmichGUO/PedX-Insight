@@ -70,8 +70,8 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
         analysis_cmd = [
             sys.executable,
             "main.py",
-            "--mode", "single",
-            "--source_video_path", f"./videos/{video_name                                                                                                                                                                            }"
+            "--mode", "single_all",
+            "--source_video_path", f"./videos/{video_name}"
         ]
         print(f"Analyzing video {video_name} ...")
         try:

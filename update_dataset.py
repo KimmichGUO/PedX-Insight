@@ -19,8 +19,7 @@ def update_video_status(input_csv, output_csv):
 
         if os.path.exists(video_file):
             df.at[idx, "downloaded"] = True
-        else:
-            df.at[idx, "downloaded"] = None
+
 
     videos_dir = "videos"
     for file in os.listdir(videos_dir):

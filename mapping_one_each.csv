@@ -1,23 +1,23 @@
 id,name,city,video,time_of_day,start_time,end_time,downloaded,finished
-1,Toronto,Toronto,3ai7SUaPoHM,0,27,3250,True,True
-2,Jakarta,Jakarta,gmDBzijaIAA,0,29,2968,True,True
-3,Manila,Manila,JY-Xyiept88,0,43,4844,True,True
-4,Sydney,Sydney,wMu6Va5PhGY,0,41,3040,True,True
-5,Melbourne,Melbourne,81n46krHrQA,0,42,2964,True,True
-6,Cincinnati,Cincinnati,G1I_PlmL_YA,0,78,2729,True,
-7,Brisbane,Brisbane,9pPBmcKvFOc,0,23,2922,True,True
-8,Monaco,Monaco,ij6xccYYIuE,1,22,1875,True,
-9,Milan,Milan,ZByZSqoqzaI,0,18,3333,True,
-10,Kuala Lumpur,Kuala Lumpur,AxQcSoA9vGQ,0,23,3140,True,
-11,Chicago,Chicago,XzwI2rGmf04,0,22,3730,True,True
-12,Las Vegas,Las Vegas,KWciBlhQjRA,0,20,4569,True,
-13,Los Angeles,Los Angeles,4uhMg5na888,0,13,2687,True,
-14,New York,New York,_Wyg213IZDI,0,18,3133,True,
-15,Dhaka,Dhaka,ZruaEnhtYLA,0,58,1531,TRUE,
-16,Luanda,Luanda,z3Gx2hp3Vo8,0,0,1836,TRUE,
-17,Moscow,Moscow,wCKLtcGQnWc,0,0,2253,TRUE,
-18,Mumbai,Mumbai,MAj6y23vNuU,0,23,4132,TRUE,
-19,Tokyo,Tokyo,oDejyTLYUTE,0,23,2310,TRUE,
+1,Toronto,Toronto,3ai7SUaPoHM,0,27,3250,,
+2,Jakarta,Jakarta,gmDBzijaIAA,0,29,2968,,
+3,Manila,Manila,JY-Xyiept88,0,43,4844,,
+4,Sydney,Sydney,wMu6Va5PhGY,0,41,3040,,
+5,Melbourne,Melbourne,81n46krHrQA,0,42,2964,,
+6,Cincinnati,Cincinnati,G1I_PlmL_YA,0,78,2729,,
+7,Brisbane,Brisbane,9pPBmcKvFOc,0,23,2922,,
+8,Monaco,Monaco,ij6xccYYIuE,1,22,1875,,
+9,Milan,Milan,ZByZSqoqzaI,0,18,3333,,
+10,Kuala Lumpur,Kuala Lumpur,AxQcSoA9vGQ,0,23,3140,,
+11,Chicago,Chicago,XzwI2rGmf04,0,22,3730,,
+12,Las Vegas,Las Vegas,KWciBlhQjRA,0,20,4569,,
+13,Los Angeles,Los Angeles,4uhMg5na888,0,13,2687,,
+14,New York,New York,_Wyg213IZDI,0,18,3133,,
+15,Dhaka,Dhaka,ZruaEnhtYLA,0,58,1531,,
+16,Luanda,Luanda,z3Gx2hp3Vo8,0,0,1836,,
+17,Moscow,Moscow,wCKLtcGQnWc,0,0,2253,,
+18,Mumbai,Mumbai,MAj6y23vNuU,0,23,4132,,
+19,Tokyo,Tokyo,oDejyTLYUTE,0,23,2310,,
 20,Damascus,Damascus,qzimFzMh6lA,0,0,1339,,
 21,Seoul,Seoul,qOx5CwCrN9k,0,14,1417,,
 22,Buenos Aires,Buenos Aires,#NAME?,0,33,2948,,

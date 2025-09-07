@@ -218,7 +218,7 @@ Follow these steps:
 
 ### Step 1: Create the module
 Build your function and save it in `./modules/NAME_OF_FUNCTION/`.  
-For example, if you want to add a `emotion_estimation` function, you might create: ./modules/emotion/emotion_estimation.py  
+For example, if you want to add a `emotion_estimation` function, you might create: `./modules/emotion/emotion_estimation.py`  
 
 ### Step 2: Import the function in `main.py`
 Open `main.py` and add your function to the import section, e.g.:

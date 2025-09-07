@@ -1,4 +1,4 @@
-# MSc-Project
+# PedX-Insight: A Toolkit for Automated Analysis of Global Pedestrian Crossing Behavior
 
 ## Toolkit:
 | Argument              | Description                                       | Required     | Default        |

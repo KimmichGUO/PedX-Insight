@@ -118,7 +118,7 @@ Result: [E8]accident_detection.csv
 ```bash
 python main.py --mode sidewalk --source_video_path PATH/TO/VIDEO --analysis_interval 1.0
 ```
-Result: [E9]sidewalk_detection.csv
+Result: [E9]sidewalk_detection.csv  
 Weights should be downloaded from https://drive.usercontent.google.com/download?id=1X1uKaGENEBZamF6tOfx9eKLTIQLsBN5h&export=download&authuser=0
 
 ### 4. Advanced Funtions

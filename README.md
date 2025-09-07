@@ -188,7 +188,7 @@ This function is used to extract and summary the information of whole video.
 ```bash
 python main.py --mode sum_pede --source_video_path PATH/TO/VIDEO
 ```
-Result: [A2]pedestrian_info.csv 
+Result: [A2]pedestrian_info.csv   
 This function is used to extract and summary the information of all crossed pedestrians from whole video.
 
 ## Dataset

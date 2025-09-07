@@ -198,10 +198,56 @@ https://github.com/Shaadalam9/pedestrians-in-youtube
 ```bash
 python run.py --start_row 1 --start_step 1
 ```
--start_row: Specifies the row number to start processing from, default=1.  
--start_step: Specifies the processing step to start from (useful for resuming interrupted runs), default=1.  
-Possible values:
+| Argument       | Description                                                                 | Required     | Default |
+|----------------|-----------------------------------------------------------------------------|--------------|---------|
+| `--start_row`  | Specifies the row number to start processing from                           | No (Optional) | `1`     |
+| `--start_step` | Specifies the processing step to start from (useful for resuming runs)      | No (Optional)         | `1`     |
 
-    1 : Download the video  
-    2 : Analyze the video and save the results  
-    3 : Delete the video  
+**Possible values for `--start_step`:**
+
+| Value | Meaning                        |
+|-------|--------------------------------|
+| `1`   | Download the video             |
+| `2`   | Analyze the video and save results |
+| `3`   | Delete the video               |
+
+## Method for Adding New Modules
+
+You can extend the toolbox by adding your own analysis module.  
+Follow these steps:
+
+### Step 1: Create the module
+Build your function and save it in `./modules/NAME_OF_FUNCTION/`.  
+For example, if you want to add a `emotion_estimation` function, you might create: ./modules/emotion/emotion_estimation.py  
+
+### Step 2: Import the function in `main.py`
+Open `main.py` and add your function to the import section, e.g.:
+```python
+from modules.emotion.emotion_estimation import run_emotion_estimation
+```
+### Step 3: Add the mode to argparse
+
+Find the parser.add_argument("--mode", ...) section in main.py.
+
+Add your new mode to the choices list, for example:
+```python
+choices=["id_img", "waiting", ..., "emotion"]
+```
+
+### Step 4: Add the execution logic
+
+In the if args.mode == ... block of main.py, add a new condition for your function:
+```python
+elif args.mode == "emotion":
+    run_emotion_detection(
+        video_path=args.source_video_path,
+        analyze_interval_sec=args.analysis_interval
+    )
+```
+
+### Step 5: Run your new module
+
+You can now call your new function from the command line:
+```bash
+python main.py --mode emotion --source_video_path PATH/TO/VIDEO --analysis_interval 1.0
+```

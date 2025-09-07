@@ -19,7 +19,9 @@ python main.py --mode single_all --source_video_path PATH/TO/VIDEO --analysis_in
 
 ### 1. Basic Funtions (Pedestrian Analysis)
 #### (1) Detect and Track Pedestrians
+```bash
 python main.py --mode id_img --source_video_path PATH/TO/VIDEO --analysis_interval 1.0 --weights_yolo "yolo11n.pt" 
+```
 Result: [B1]tracked_pedestrians.csv
 #### (2) Phone usage detection
 ```bash

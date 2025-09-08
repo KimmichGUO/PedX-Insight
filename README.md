@@ -251,3 +251,11 @@ You can now call your new function from the command line:
 ```bash
 python main.py --mode emotion --source_video_path PATH/TO/VIDEO --analysis_interval 1.0
 ```
+
+## Method for Analyzing the Final Results
+
+``` bash
+python get_all_pede_info.py
+python get_all_video_info.py
+python statistics_with_pdf_save.py
+```

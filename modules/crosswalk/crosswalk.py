@@ -6,7 +6,7 @@ import math
 import torch
 
 
-def run_crosswalk_detection(video_path, analyze_interval_sec=1.0, output_csv_path=None, conf=0.1, show=True):
+def run_crosswalk_detection(video_path, analyze_interval_sec=1.0, output_csv_path=None, conf=0.1, show=False):
 
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:

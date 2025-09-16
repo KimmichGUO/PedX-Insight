@@ -8,11 +8,11 @@
 | `--analysis_interval` | Analysis interval in seconds (sampling frequency) | No (Optinal) | `1.0`          |
 | `--weights_yolo`      | Path to YOLO weights file                         | No (Optinal) | `"yolo11n.pt"` |
 
-###(1) Analyze multiple videos in a single folder using all the functions in the Toolkit.
+### (1) Analyze multiple videos in a single folder using all the functions in the Toolkit.
 ```bash
 python main.py --mode mul_all --source_video_path PATH/TO/DIR --analysis_interval 1.0 --weights_yolo "yolo11n.pt" 
 ```
-###(2) Analyze one video using all the functions in the Toolkit.
+### (2) Analyze one video using all the functions in the Toolkit.
 ```bash
 python main.py --mode single_all --source_video_path PATH/TO/VIDEO --analysis_interval 1.0 --weights_yolo "yolo11n.pt" 
 ```

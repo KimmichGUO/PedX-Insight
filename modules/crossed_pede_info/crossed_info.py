@@ -15,9 +15,11 @@ def extract_pedestrian_info(
     nearby_count_path=None
 ):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
+    # Compute output_dir unconditionally so passing output_csv_path while leaving the other
+    # csv paths as None does not raise NameError on the default-path derivations below.
+    output_dir = os.path.join("analysis_results", video_name)
+    os.makedirs(output_dir, exist_ok=True)
     if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
-        os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[C7]crossing_pe_info.csv")
     if gender_csv_path is None:
         gender_csv_path = os.path.join(output_dir, "[P6]age_gender.csv")

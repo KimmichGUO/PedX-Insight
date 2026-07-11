@@ -24,6 +24,12 @@ def run_accident_scene_detection(
     model.to(device)
     cap = cv2.VideoCapture(video_path)
 
+    if not cap.isOpened():
+        print(f"Error: Could not open video: {video_path}")
+        pd.DataFrame(columns=["frame_id"] + list(CLASS_NAMES.values())).to_csv(output_csv_path, index=False)
+        cap.release()
+        return
+
     fps = cap.get(cv2.CAP_PROP_FPS)
     if fps <= 0:
         fps = 30.0

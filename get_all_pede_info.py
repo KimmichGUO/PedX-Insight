@@ -181,6 +181,8 @@ def main():
         columns_order = ['city', 'link', 'city_link'] + pedestrian_columns + mapping_columns
         result_df = result_df.reindex(columns=columns_order)
 
+        # Ensure the output directory exists (./summary_data is not tracked in the repo).
+        output_csv_path.parent.mkdir(parents=True, exist_ok=True)
         # Save to CSV
         result_df.to_csv(output_csv_path, index=False, encoding='utf-8')
         print(f"\nSuccessfully processed {len(set([row['city_link'] for row in all_pedestrian_data]))} folders")

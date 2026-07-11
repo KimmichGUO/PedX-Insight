@@ -5,7 +5,9 @@ def update_video_status(input_csv, output_csv):
     df = pd.read_csv(input_csv)
 
     for idx, row in df.iterrows():
-        video_name = f"{row['city']}_{row['video']}"
+        # Use 'name' (not 'city') to match run.py's f"{name}_{video_id}" folder/file naming;
+        # otherwise status detection silently fails whenever name != city.
+        video_name = f"{row['name']}_{row['video']}"
         folder_path = os.path.join("analysis_results", video_name)
         target_file = os.path.join(folder_path, "[C10]nearby_count.csv")
         video_file = os.path.join("videos", f"{video_name}.mp4")
@@ -22,15 +24,16 @@ def update_video_status(input_csv, output_csv):
 
 
     videos_dir = "videos"
-    for file in os.listdir(videos_dir):
-        if file.endswith(".mp4.part"):
-            file_path = os.path.join(videos_dir, file)
-            os.remove(file_path)
-            print(f"Deleted unfinished download: {file_path}")
+    if os.path.isdir(videos_dir):
+        for file in os.listdir(videos_dir):
+            if file.endswith(".mp4.part"):
+                file_path = os.path.join(videos_dir, file)
+                os.remove(file_path)
+                print(f"Deleted unfinished download: {file_path}")
 
     for idx, row in df.iterrows():
         if str(row.get("finished")).lower() == "true":
-            video_name = f"{row['city']}_{row['video']}"
+            video_name = f"{row['name']}_{row['video']}"
             video_file = os.path.join("videos", f"{video_name}.mp4")
             if os.path.exists(video_file):
                 os.remove(video_file)
@@ -38,3 +41,18 @@ def update_video_status(input_csv, output_csv):
 
     df.to_csv(output_csv, index=False)
     print(f"Result saved to {output_csv}")
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Refresh downloaded/finished flags in the mapping CSV from analysis_results/ and videos/."
+    )
+    parser.add_argument("--input_csv", type=str, default="mapping_one_each.csv",
+                        help="Path to the mapping CSV to read.")
+    parser.add_argument("--output_csv", type=str, default=None,
+                        help="Where to write the updated CSV (defaults to overwriting input_csv).")
+    args = parser.parse_args()
+
+    update_video_status(args.input_csv, args.output_csv or args.input_csv)

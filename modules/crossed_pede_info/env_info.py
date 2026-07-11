@@ -7,9 +7,11 @@ def merge_env_info(video_path,
                    vehicle_type_csv=None, traffic_sign_csv=None, road_width_csv=None,
                    crosswalk_csv=None, sidewalk_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
+    # Compute output_dir unconditionally so passing output_csv_path while leaving the other
+    # csv paths as None does not raise NameError on the default-path derivations below.
+    output_dir = os.path.join("analysis_results", video_name)
+    os.makedirs(output_dir, exist_ok=True)
     if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
-        os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[C9]crossing_env_info.csv")
 
     crossing_csv_path = crossing_csv_path or os.path.join(output_dir, "[C3]crossing_judge.csv")
@@ -28,6 +30,14 @@ def merge_env_info(video_path,
             df = pd.read_csv(path)
             return df if not df.empty else pd.DataFrame()
         return pd.DataFrame()
+
+    def rows_in_range(df, col, start, end):
+        # Guard against a missing column: df.get(col, -1) would return the scalar -1, whose
+        # comparison yields a scalar bool and df[bool] then raises KeyError. Return an empty
+        # frame instead so a missing/misshaped environment CSV degrades to 'Unknown'/-1 flags.
+        if df is None or df.empty or col not in df.columns:
+            return df.iloc[0:0] if df is not None and hasattr(df, "iloc") else pd.DataFrame()
+        return df[(df[col] >= start) & (df[col] <= end)]
 
     df_crossing = safe_read_csv(crossing_csv_path)
 
@@ -61,16 +71,13 @@ def merge_env_info(video_path,
         start_frame = int(row.get('started_frame', 0))
         end_frame = int(row.get('ended_frame', start_frame))
 
-        weather_labels = df_weather[(df_weather.get('frame_id', -1) >= start_frame) &
-                                    (df_weather.get('frame_id', -1) <= end_frame)]
-        weather = weather_labels['weather_label'].mode()[0] if not weather_labels.empty else 'Unknown'
+        weather_labels = rows_in_range(df_weather, 'frame_id', start_frame, end_frame)
+        weather = weather_labels['weather_label'].mode()[0] if not weather_labels.empty and 'weather_label' in weather_labels.columns else 'Unknown'
 
-        daytime_labels = df_daytime[(df_daytime.get('frame_id', -1) >= start_frame) &
-                                    (df_daytime.get('frame_id', -1) <= end_frame)]
-        daytime = daytime_labels['daytime_label'].mode()[0] if not daytime_labels.empty else 'Unknown'
+        daytime_labels = rows_in_range(df_daytime, 'frame_id', start_frame, end_frame)
+        daytime = daytime_labels['daytime_label'].mode()[0] if not daytime_labels.empty and 'daytime_label' in daytime_labels.columns else 'Unknown'
 
-        accident_labels = df_accident[(df_accident.get('frame_id', -1) >= start_frame) &
-                                      (df_accident.get('frame_id', -1) <= end_frame)]
+        accident_labels = rows_in_range(df_accident, 'frame_id', start_frame, end_frame)
         if not accident_labels.empty:
             police_car = accident_labels.get('police_car', pd.Series([-1])).mode()[0]
             arrow_board = accident_labels.get('Arrow Board', pd.Series([-1])).mode()[0]
@@ -79,8 +86,7 @@ def merge_env_info(video_path,
         else:
             police_car = arrow_board = cones = accident = -1
 
-        road_labels = df_road[(df_road.get('frame_id', -1) >= start_frame) &
-                              (df_road.get('frame_id', -1) <= end_frame)]
+        road_labels = rows_in_range(df_road, 'frame_id', start_frame, end_frame)
         if not road_labels.empty:
             long_crack = road_labels.get('Longitudinal Crack', pd.Series([-1])).mode()[0]
             trans_crack = road_labels.get('Transverse Crack', pd.Series([-1])).mode()[0]
@@ -91,8 +97,7 @@ def merge_env_info(video_path,
             long_crack = trans_crack = alligator = potholes = -1
             crack = -1
 
-        ve_type_labels = df_ve_type[(df_ve_type.get('frame_id', -1) >= start_frame) &
-                                    (df_ve_type.get('frame_id', -1) <= end_frame)]
+        ve_type_labels = rows_in_range(df_ve_type, 'frame_id', start_frame, end_frame)
         if not ve_type_labels.empty:
             avg_vehicle_total = ve_type_labels.get('total', pd.Series([0])).mean()
             total_frames = len(ve_type_labels)
@@ -106,8 +111,7 @@ def merge_env_info(video_path,
             vehicle_presence = {col: -1 for col in df_ve_type.columns if col not in ['frame_id', 'total']} if not df_ve_type.empty else {}
 
         special_not_risky_signs = {"w57", "pg", "i1"}
-        signs_in_range = df_sign[(df_sign.get('frame_id', -1) >= start_frame) &
-                                 (df_sign.get('frame_id', -1) <= end_frame)]
+        signs_in_range = rows_in_range(df_sign, 'frame_id', start_frame, end_frame)
         special_not_risky_flag = 0
         if not signs_in_range.empty:
             for _, srow in signs_in_range.iterrows():
@@ -116,20 +120,17 @@ def merge_env_info(video_path,
                     special_not_risky_flag = 1
                     break
 
-        roadwidth_in_range = df_road_width[(df_road_width.get('Frame Index', -1) >= start_frame) &
-                                           (df_road_width.get('Frame Index', -1) <= end_frame)]
+        roadwidth_in_range = rows_in_range(df_road_width, 'Frame Index', start_frame, end_frame)
         avg_road_width = roadwidth_in_range.get('Road Width (m)', pd.Series([-1])).mean() if not roadwidth_in_range.empty else -1
 
-        crosswalk_in_range = df_crosswalk[(df_crosswalk.get('frame_id', -1) >= start_frame) &
-                                          (df_crosswalk.get('frame_id', -1) <= end_frame)]
+        crosswalk_in_range = rows_in_range(df_crosswalk, 'frame_id', start_frame, end_frame)
         if not crosswalk_in_range.empty:
             ratio = (crosswalk_in_range.get('crosswalk_detected', pd.Series([])) == "Yes").sum() / len(crosswalk_in_range)
             crosswalk_flag = 1 if ratio > 0.2 else 0
         else:
             crosswalk_flag = -1
 
-        sidewalk_in_range = df_sidewalk[(df_sidewalk.get('frame_id', -1) >= start_frame) &
-                                        (df_sidewalk.get('frame_id', -1) <= end_frame)]
+        sidewalk_in_range = rows_in_range(df_sidewalk, 'frame_id', start_frame, end_frame)
         if not sidewalk_in_range.empty:
             ratio = (sidewalk_in_range.get('polygons', pd.Series([])).notna() &
                      (sidewalk_in_range['polygons'] != "")).sum() / len(sidewalk_in_range)

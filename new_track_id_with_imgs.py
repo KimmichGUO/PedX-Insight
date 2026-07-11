@@ -23,6 +23,9 @@ def ultralytics_pedestrian_tracking_with_imgsave(video_path, analyze_interval_se
     model.to(device)
 
     cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        cap.release()
+        raise FileNotFoundError(f"Cannot open video: {video_path}")
     fps = cap.get(cv2.CAP_PROP_FPS)
     if fps <= 0:
         fps = 30
@@ -46,7 +49,7 @@ def ultralytics_pedestrian_tracking_with_imgsave(video_path, analyze_interval_se
             continue
 
         timestamp = round(frame_id / fps, 2)
-        if fps < 30:
+        if fps <= 30:
             track_results = model.track(
                 frame,
                 persist=True,
@@ -120,7 +123,9 @@ def ultralytics_pedestrian_tracking_with_imgsave(video_path, analyze_interval_se
 
     cap.release()
 
-    df = pd.DataFrame(results)
+    # Build with explicit columns so a pedestrian-free video still writes a valid header
+    # row instead of a 0-byte file that makes every downstream pd.read_csv raise EmptyDataError.
+    df = pd.DataFrame(results, columns=["frame_id", "timestamp", "track_id", "x1", "y1", "x2", "y2"])
     df.to_csv(output_csv_path, index=False)
     print(f"Tracking results saved to: {output_csv_path}")
     print(f"Pedestrian images saved in: {pedestrian_img_dir}")

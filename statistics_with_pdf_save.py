@@ -9,21 +9,27 @@ def save_csv(df, filename):
     print(f"CSV saved: {filename}")
 
 def save_bar_chart_pdf(df, x_col, y_cols, filename, title="Bar Chart"):
-    plt.figure(figsize=(10, 6))
-    ax = df.set_index(x_col)[y_cols].plot(kind="bar")
+    # Guard against empty/degenerate sections: set_index(x_col) would otherwise raise KeyError
+    # and abort the whole report when a category had no matching rows.
+    if df is None or df.empty or x_col not in df.columns:
+        print(f"PDF skipped (no data): {filename}")
+        return
 
-    plt.title(title)
-    plt.ylabel("Probability")
+    # Pass figsize to plot() directly; a bare plt.figure() before df.plot() was ignored because
+    # df.plot() creates its own figure/axes.
+    ax = df.set_index(x_col)[y_cols].plot(kind="bar", figsize=(10, 6))
+
+    ax.set_title(title)
+    ax.set_ylabel("Probability")
     plt.xticks(rotation=45, ha="right")
     plt.tight_layout()
 
     for container in ax.containers:
         ax.bar_label(container, fmt="%.2f", label_type="edge", fontsize=8, padding=2)
 
-    from matplotlib.backends.backend_pdf import PdfPages
     with PdfPages(filename) as pdf:
-        pdf.savefig()
-    plt.close()
+        pdf.savefig(ax.figure)
+    plt.close(ax.figure)
     print(f"PDF saved: {filename}")
 
 
@@ -176,7 +182,7 @@ save_bar_chart_pdf(results_df.reset_index(), "index", ["risky_crossing", "run_re
 
 
 # ========== 10. time of day and weather ==========
-df = pd.read_csv("./summary_data/all_pedestrian_info.csv", encoding='latin1')
+df = pd.read_csv("./summary_data/all_pedestrian_info.csv", encoding='utf-8')
 df_filtered = df.dropna(subset=["weather", "daytime", "run_red_light", "risky_crossing"])
 weathers = df_filtered["weather"].unique()
 daytimes = df_filtered["daytime"].unique()
@@ -216,7 +222,7 @@ save_bar_chart_pdf(results_df, "continent", ["risky_crossing_rate(%)", "run_red_
 
 
 # ========== 12. continent crosswalk coeff ==========
-df = pd.read_csv("./summary_data/all_video_info.csv", encoding='latin1')
+df = pd.read_csv("./summary_data/all_video_info.csv", encoding='utf-8')
 df_filtered = df.dropna(subset=["crosswalk_usage_ratio", "crosswalk_prob"])
 df_filtered = df_filtered[(df_filtered["crosswalk_usage_ratio"] != 0) & (df_filtered["crosswalk_prob"] != 0)]
 continent_stats = df_filtered.groupby("continent")[["crosswalk_usage_ratio", "crosswalk_prob"]].mean()

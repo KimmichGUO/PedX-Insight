@@ -27,7 +27,10 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
     video_folder = './videos'
     os.makedirs(video_folder, exist_ok=True)
 
-    for idx, row in df.iloc[start_row - 1:].iterrows():
+    for i, (idx, row) in enumerate(df.iloc[start_row - 1:].iterrows()):
+        # start_step applies to the first processed row only (the resume point): 1=download,
+        # 2=analysis, 3=deletion. Subsequent rows always run the full pipeline.
+        effective_start_step = start_step if i == 0 else 1
         video_id = row['video']
         name = row['name']
         is_finished = pd.notna(row['finished']) and str(row['finished']).upper() == 'TRUE'
@@ -45,7 +48,7 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
         is_downloaded = pd.notna(row['downloaded']) and str(row['downloaded']).upper() == 'TRUE'
 
         # Step 1: Download if not downloaded
-        if not is_downloaded:
+        if effective_start_step <= 1 and not is_downloaded:
             download_cmd = [
                 "yt-dlp",
                 "--cookies", "www.youtube.com_cookies.txt",
@@ -67,26 +70,27 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
                 continue
 
         # Step 2: Run analysis
-        analysis_cmd = [
-            sys.executable,
-            "main.py",
-            "--mode", "single_all",
-            "--source_video_path", f"./videos/{video_name}"
-        ]
-        print(f"Analyzing video {video_name} ...")
-        try:
-            subprocess.run(analysis_cmd, check=True)
-            print(f"✓ Analysis completed for {video_name}")
-            df.loc[idx, 'finished'] = 'TRUE'
-            df.to_csv(csv_file, index=False)
-        except subprocess.CalledProcessError:
-            print(f"✗ Analysis failed for {video_name}")
-            continue
+        if effective_start_step <= 2:
+            analysis_cmd = [
+                sys.executable,
+                "main.py",
+                "--mode", "single_all",
+                "--source_video_path", f"./videos/{video_name}"
+            ]
+            print(f"Analyzing video {video_name} ...")
+            try:
+                subprocess.run(analysis_cmd, check=True)
+                print(f"[OK] Analysis completed for {video_name}")
+                df.loc[idx, 'finished'] = 'TRUE'
+                df.to_csv(csv_file, index=False)
+            except subprocess.CalledProcessError:
+                print(f"[FAIL] Analysis failed for {video_name}")
+                continue
 
         # Step 3: Delete video
-        if os.path.exists(video_path):
+        if effective_start_step <= 3 and os.path.exists(video_path):
             os.remove(video_path)
-            print(f"✓ Deleted video {video_name}")
+            print(f"[OK] Deleted video {video_name}")
 
     print("All videos processed!")
 

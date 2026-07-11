@@ -32,7 +32,7 @@ for idx, row in df.iloc[start_index:].iterrows():
     for vid in video_ids:
         existing_files = glob.glob(os.path.join(city_dir, f"{city}{video_count}.*"))
         if existing_files:
-            print(f"⏩ Skipping {vid} (already exists)")
+            print(f"[skip] Skipping {vid} (already exists)")
             video_count += 1
             continue
 
@@ -45,7 +45,7 @@ for idx, row in df.iloc[start_index:].iterrows():
                 "-f", "bestvideo[height=2160]/bestvideo",
                 "-o", os.path.join(city_dir, f"{new_video_name}.%(ext)s"),
                 url
-            ], capture_output=True, text=True, check=True)
+            ], capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
 
             original_title = result.stdout.strip()
 

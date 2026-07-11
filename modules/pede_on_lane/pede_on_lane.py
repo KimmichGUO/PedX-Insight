@@ -14,9 +14,11 @@ def build_lane_polygon(lane_row):
 
 def pedestrian_on_lane(video_path, tracking_csv_path=None, lane_csv_path=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
+    # Compute output_dir unconditionally so passing output_csv_path while leaving the other
+    # csv paths as None does not raise NameError on the default-path derivations below.
+    output_dir = os.path.join("analysis_results", video_name)
+    os.makedirs(output_dir, exist_ok=True)
     if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
-        os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[C8]pedestrian_on_lane.csv")
     if tracking_csv_path is None:
         tracking_csv_path = os.path.join(output_dir, "[B1]tracked_pedestrians.csv")

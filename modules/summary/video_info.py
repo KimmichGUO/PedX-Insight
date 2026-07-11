@@ -96,24 +96,33 @@ def generate_video_env_stats(video_path,
         runred_ids = runred_df.loc[runred_df['ran_red_light'] == True, 'track_id'].unique()
         runred_ratio = len(runred_ids) / total_crossers_runred if total_crossers_runred > 0 else None
 
-    total_vehicles = int(vehicle_df['Count'].sum()) if vehicle_df is not None else None
     if vehicle_df is not None:
-        filtered_df = vehicle_df[vehicle_df['Vehicle_Type'] != 'total']
-        top3_vehicles = filtered_df.sort_values(by='Count', ascending=False).head(3)['Vehicle_Type'].tolist()
+        # Exclude the producer's 'Total' summary row (written with a capital 'T' by
+        # count_vehicle.py); a case-sensitive '!= "total"' filter would leave it in and
+        # both double-count total_vehicles and let 'Total' lead top3_vehicles.
+        non_total_df = vehicle_df[vehicle_df['Vehicle_Type'].str.lower() != 'total']
+        total_vehicles = int(non_total_df['Count'].sum())
+        top3_vehicles = non_total_df.sort_values(by='Count', ascending=False).head(3)['Vehicle_Type'].tolist()
     else:
+        total_vehicles = None
         top3_vehicles = None
 
     main_weather = weather_df['weather_label'].mode().iloc[0] if weather_df is not None and 'weather_label' in weather_df.columns else None
 
-    sidewalk_prob = (sidewalk_df['polygons'].astype(str).str.strip() != "").sum() / total_frames if sidewalk_df is not None else None
+    # Each source CSV is divided by its own row count, not total_frames: some producers
+    # write one row per analyzed (every-Nth) frame (traffic_light, traffic_sign, accident,
+    # sidewalk) while others write one row per frame. Using len(df) yields the correct
+    # fraction in both cases and avoids a divide-by-zero when the video is unreadable
+    # (safe_read_csv already returns None for empty inputs, so len(df) >= 1 here).
+    sidewalk_prob = (sidewalk_df['polygons'].astype(str).str.strip() != "").sum() / len(sidewalk_df) if sidewalk_df is not None else None
 
-    crosswalk_prob = (crosswalk_df['crosswalk_detected'].str.lower() == "yes").sum() / total_frames if crosswalk_df is not None else None
+    crosswalk_prob = (crosswalk_df['crosswalk_detected'].str.lower() == "yes").sum() / len(crosswalk_df) if crosswalk_df is not None else None
 
     traffic_light_prob = None
     if traffic_light_df is not None and 'main_light_color' in traffic_light_df.columns:
         colors = ['yellow', 'red', 'green']
         traffic_light_frames = traffic_light_df['main_light_color'].isin(colors).sum()
-        traffic_light_prob = traffic_light_frames / total_frames if total_frames > 0 else None
+        traffic_light_prob = traffic_light_frames / len(traffic_light_df)
 
     avg_road_width = road_width_df['Road Width (m)'].mean() if road_width_df is not None and 'Road Width (m)' in road_width_df.columns else None
 
@@ -121,14 +130,14 @@ def generate_video_env_stats(video_path,
     pothole_prob = None
     if road_condition_df is not None:
         if all(col in road_condition_df.columns for col in ['Longitudinal Crack', 'Transverse Crack', 'Alligator Crack']):
-            crack_prob = (road_condition_df[['Longitudinal Crack', 'Transverse Crack', 'Alligator Crack']].sum(axis=1) > 0).sum() / total_frames
+            crack_prob = (road_condition_df[['Longitudinal Crack', 'Transverse Crack', 'Alligator Crack']].sum(axis=1) > 0).sum() / len(road_condition_df)
         if 'Potholes' in road_condition_df.columns:
-            pothole_prob = road_condition_df['Potholes'].sum() / total_frames
+            pothole_prob = road_condition_df['Potholes'].sum() / len(road_condition_df)
 
     accident_probs = {}
     for cls in ['police_car', 'Arrow Board', 'cones', 'accident']:
         if accident_df is not None and cls in accident_df.columns:
-            accident_probs[cls] = accident_df[cls].sum() / total_frames
+            accident_probs[cls] = accident_df[cls].sum() / len(accident_df)
         else:
             accident_probs[cls] = None
 
@@ -138,7 +147,7 @@ def generate_video_env_stats(video_path,
         count_1 = traffic_sign_df['sign_classes_1'].fillna('').apply(lambda x: len([s for s in str(x).split(';') if s.strip() != ''])).sum()
         count_2 = traffic_sign_df['sign_classes_2'].fillna('').apply(lambda x: len([s for s in str(x).split(';') if s.strip() != ''])).sum()
         total_traffic_signs = int(count_1 + count_2)
-        signs_rate = total_traffic_signs / total_frames if total_frames > 0 else None
+        signs_rate = total_traffic_signs / len(traffic_sign_df)
 
     total_crossed_pedestrians = runred_df['track_id'].nunique() if runred_df is not None and 'track_id' in runred_df.columns else None
 

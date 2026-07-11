@@ -40,6 +40,9 @@ def determine_crosswalk_usage(video_path, crossing_csv_path=None, track_csv_path
     tracked_df = pd.read_csv(track_csv_path)
     crosswalk_dict = load_crosswalk_boxes(crosswalk_csv_path)
 
+    # Loop-invariant: compute once instead of on every tracked row of every pedestrian.
+    max_frame_id = tracked_df["frame_id"].max()
+
     result_list = []
 
     for _, row in crossing_df.iterrows():
@@ -58,9 +61,7 @@ def determine_crosswalk_usage(video_path, crossing_csv_path=None, track_csv_path
             radius = (x2 - x1) * 2
             circle_center = (cx, cy)
 
-            max_frame_id = tracked_df["frame_id"].max()
-
-            for offset in range(-250, 260):
+            for offset in range(-250, 251):
                 check_frame = frame_id + offset
                 if check_frame < 0 or check_frame > max_frame_id:
                     continue

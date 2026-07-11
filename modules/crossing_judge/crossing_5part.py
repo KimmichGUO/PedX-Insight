@@ -20,6 +20,10 @@ def point_in_sidewalk(circle_center, radius, polygons):
 
 def parse_sidewalk_polygons(sidewalk_str):
     polygons = []
+    # Frames with no detected sidewalk are written as an empty cell, which pandas reads back
+    # as NaN (a float); calling .split on it would raise AttributeError.
+    if not isinstance(sidewalk_str, str) or not sidewalk_str:
+        return polygons
     for poly_str in sidewalk_str.split('|'):
         points = []
         for coord in poly_str.split(';'):
@@ -34,7 +38,7 @@ def detect_crossing(video_path, tracked_csv_path=None, sidewalk_csv_path=None, o
     if tracked_csv_path is None:
         tracked_csv_path = os.path.join(".", "analysis_results", video_name, "[B1]tracked_pedestrians.csv")
     if sidewalk_csv_path is None:
-        sidewalk_csv_path = os.path.join(".", "analysis_results", video_name, "[E9]sidewalk_detection_5parts.csv")
+        sidewalk_csv_path = os.path.join(".", "analysis_results", video_name, "[E9]sidewalk_detection.csv")
 
     df_tracks = pd.read_csv(tracked_csv_path)
     df_polygons = pd.read_csv(sidewalk_csv_path)

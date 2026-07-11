@@ -56,7 +56,9 @@ def run_belongings_detection(
 
     results_list = []
     frame_cache = dict()
-    frame_id = -1
+    # Start at 0 so the pre-increment below makes frame_cache keys 1-indexed, matching the
+    # tracking CSV's 1-indexed frame_id (starting at -1 shifted every crop by one frame).
+    frame_id = 0
     success, frame = cap.read()
 
     while success:
@@ -97,6 +99,8 @@ def run_belongings_detection(
                 **item_flags
             }
             results_list.append(row_data)
+
+    cap.release()
 
     df_out = pd.DataFrame(results_list, columns=["frame_id", "track_id"] + list(TARGET_CLASSES.values()))
     df_out.to_csv(output_csv_path, index=False)

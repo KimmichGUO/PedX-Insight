@@ -223,7 +223,11 @@ def main():
         ] + mapping_columns
         result_df = result_df.reindex(columns=columns_order)
 
-        result_df.to_csv(output_csv_path, index=False, encoding='latin-1')
+        # Ensure the output directory exists (./summary_data is not tracked in the repo).
+        output_csv_path.parent.mkdir(parents=True, exist_ok=True)
+        # Write UTF-8 (matching get_all_pede_info.py): latin-1 raises UnicodeEncodeError on
+        # non-Latin city/country names and produces files the stats script then mis-decodes.
+        result_df.to_csv(output_csv_path, index=False, encoding='utf-8')
         print(f"\nSuccessfully processed {len(aggregated_data)} folders")
         print(f"Results saved to {output_csv_path}")
         print(f"Output file contains {len(result_df)} rows and {len(result_df.columns)} columns")

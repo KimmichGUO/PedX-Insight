@@ -18,9 +18,12 @@ def run_daytime_detection(video_path, brightness_threshold=100, analyze_interval
         pd.DataFrame(columns=["frame_id", "avg_brightness", "daytime_label"]).to_csv(output_csv_path, index=False)
         return
 
-    fps = math.ceil(cap.get(cv2.CAP_PROP_FPS))
+    raw_fps = cap.get(cv2.CAP_PROP_FPS)
+    fps = math.ceil(raw_fps) if raw_fps > 0 else 30
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    interval_frames = analyze_interval_sec * fps
+    # max(1, ...) is essential: without it a 0 fps report makes interval_frames == 0 and the
+    # `frame_id += interval_frames` loop below never advances, hanging the process forever.
+    interval_frames = max(1, int(analyze_interval_sec * fps))
 
     results = []
     last_avg_brightness = None

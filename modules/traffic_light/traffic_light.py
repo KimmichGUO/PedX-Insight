@@ -18,6 +18,12 @@ def run_traffic_light_detection(video_path, analyze_interval_sec=1.0, output_csv
     model.to(device)
     cap = cv2.VideoCapture(video_path)
 
+    if not cap.isOpened():
+        print(f"Error: Could not open video: {video_path}")
+        pd.DataFrame(columns=["frame_id", "main_light_color", "other_lights"]).to_csv(output_csv_path, index=False)
+        cap.release()
+        return
+
     fps = cap.get(cv2.CAP_PROP_FPS)
     fps = math.ceil(fps) if fps > 0 else 30
     analyze_every_n_frames = max(1, int(fps * analyze_interval_sec))
@@ -83,5 +89,5 @@ def run_traffic_light_detection(video_path, analyze_interval_sec=1.0, output_csv
             })
 
     cap.release()
-    pd.DataFrame(results_list).to_csv(output_csv_path, index=False)
+    pd.DataFrame(results_list, columns=["frame_id", "main_light_color", "other_lights"]).to_csv(output_csv_path, index=False)
     print(f"Traffic light detection completed. Results saved to {output_csv_path}")

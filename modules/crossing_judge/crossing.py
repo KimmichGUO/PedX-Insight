@@ -42,14 +42,22 @@ def detect_crossing(video_path, tracked_csv_path=None, output_csv_path=None):
         end_cross_frame = None
 
         if crossed_mid:
+            # Find the actual mid-line transition. The previous condition was tautological:
+            # crossed_mid already implies min_x < mid < max_x, so the old test matched every
+            # frame and always returned the first/last frame of the whole track rather than
+            # the crossing window. Here we detect the first frame on the side opposite to the
+            # starting side, and the last frame on that opposite side.
+            start_side_left = x_center_history[0] < video_mid_x
+            start_cross_frame = frames[0]   # fallbacks guarantee non-null when crossed_mid
+            end_cross_frame = frames[-1]
             for i, x_center in enumerate(x_center_history):
-                if (x_center < video_mid_x and max_x > video_mid_x) or (x_center > video_mid_x and min_x < video_mid_x):
-                    start_cross_frame = frames[i]
-                    break
-            for i in range(len(x_center_history)-1, -1, -1):
-                x_center = x_center_history[i]
-                if (x_center < video_mid_x and max_x > video_mid_x) or (x_center > video_mid_x and min_x < video_mid_x):
+                if (x_center < video_mid_x) != start_side_left:
+                    start_cross_frame = frames[i - 1] if i > 0 else frames[i]
                     end_cross_frame = frames[i]
+                    break
+            for j in range(len(x_center_history) - 1, -1, -1):
+                if (x_center_history[j] < video_mid_x) != start_side_left:
+                    end_cross_frame = frames[j]
                     break
 
         results.append({
@@ -67,5 +75,8 @@ def detect_crossing(video_path, tracked_csv_path=None, output_csv_path=None):
     else:
         results_df = pd.DataFrame(results)
 
+    output_dir = os.path.dirname(output_csv_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
     results_df.to_csv(output_csv_path, index=False)
     print(f"Crossing detection results saved to: {output_csv_path}")

@@ -1,5 +1,6 @@
 import cv2
 import os
+import bisect
 import pandas as pd
 
 
@@ -55,6 +56,21 @@ def detect_crossing_risk(
             "sign_classes_2": str(row["sign_classes_2"]).split(";") if pd.notna(row["sign_classes_2"]) else []
         }
 
+    # The traffic-light and traffic-sign CSVs are sampled only ~once per second, so directly
+    # looking up every integer crossing frame would leave almost all frames as 'None'/no-sign
+    # and dilute risky_ratio (flipping the risk classification). Forward-fill from the nearest
+    # sampled frame at or before each frame, matching how the state persists between samples.
+    light_frames_sorted = sorted(light_state_map.keys())
+    sign_frames_sorted = sorted(sign_map.keys())
+
+    def light_at(frame_id):
+        idx = bisect.bisect_right(light_frames_sorted, frame_id) - 1
+        return light_state_map[light_frames_sorted[idx]] if idx >= 0 else "None"
+
+    def signs_at(frame_id):
+        idx = bisect.bisect_right(sign_frames_sorted, frame_id) - 1
+        return sign_map[sign_frames_sorted[idx]] if idx >= 0 else {"sign_classes_1": [], "sign_classes_2": []}
+
     results = []
 
     for _, pedestrian in crossed_pedestrians.iterrows():
@@ -66,11 +82,12 @@ def detect_crossing_risk(
         total_frame_count = ended_frame - started_frame + 1
 
         for frame_id in range(started_frame, ended_frame + 1):
-            light_state = light_state_map.get(frame_id, "None")
+            light_state = light_at(frame_id)
             crosswalk_present = crosswalk_map.get(frame_id, False)
 
-            sign_classes_1 = sign_map.get(frame_id, {}).get("sign_classes_1", [])
-            sign_classes_2 = sign_map.get(frame_id, {}).get("sign_classes_2", [])
+            signs = signs_at(frame_id)
+            sign_classes_1 = signs["sign_classes_1"]
+            sign_classes_2 = signs["sign_classes_2"]
 
             special_not_risky_signs = {"w57", "pg", "i1"}
             special_not_risky_flag = (

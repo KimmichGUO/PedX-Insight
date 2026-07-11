@@ -18,9 +18,18 @@ def run_road_defect_detection(video_path, analyze_interval_sec=1.0, output_csv_p
     model.to(device)
     cap = cv2.VideoCapture(video_path)
 
+    if not cap.isOpened():
+        print(f"Error: Could not open video: {video_path}")
+        pd.DataFrame(columns=["frame_id", "Longitudinal Crack", "Transverse Crack",
+                              "Alligator Crack", "Potholes"]).to_csv(output_csv_path, index=False)
+        cap.release()
+        return
+
     fps = cap.get(cv2.CAP_PROP_FPS)
     fps = math.ceil(fps) if fps > 0 else 30
-    analyze_every_n_frames = int(fps * analyze_interval_sec)
+    # max(1, ...) guards against a 0 stride (small interval / low fps), which would make the
+    # `frame_id % analyze_every_n_frames` and `// analyze_every_n_frames` below divide by zero.
+    analyze_every_n_frames = max(1, math.ceil(fps * analyze_interval_sec))
 
     class_map = {
         0: 'Longitudinal Crack',
@@ -71,6 +80,7 @@ def run_road_defect_detection(video_path, analyze_interval_sec=1.0, output_csv_p
 
     cap.release()
 
-    df = pd.DataFrame(results_list)
+    df = pd.DataFrame(results_list, columns=["frame_id", "Longitudinal Crack",
+                                             "Transverse Crack", "Alligator Crack", "Potholes"])
     df.to_csv(output_csv_path, index=False)
     print(f"Road defect detection completed. Results saved to {output_csv_path}")

@@ -21,7 +21,7 @@ def draw_lane_lines(img, left_line, right_line, color=[0, 255, 0], thickness=10)
 def pipeline(image):
     height, width = image.shape[:2]
     roi_vertices = [(0, height), (width / 2, height / 2), (width, height)]
-    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 100, 200)
     cropped = region_of_interest(edges, np.array([roi_vertices], np.int32))
 
@@ -93,8 +93,19 @@ def run_lane_detection(video_path, weights="yolo11n.pt", analyze_interval_sec=1.
         if not ret:
             left_line, right_line, nearest_distance = last_left_line, last_right_line, last_nearest_distance
         else:
+            # Lane geometry is computed on a 1280x720 frame, but the consumer (pede_on_lane.py)
+            # intersects the stored lane polygon with pedestrian boxes in the video's native
+            # resolution. Scale the detected endpoints back to native space so the two align.
+            orig_h, orig_w = frame.shape[:2]
             frame = cv2.resize(frame, (1280, 720))
             lane_frame, left_line, right_line = pipeline(frame.copy())
+            sx, sy = orig_w / 1280.0, orig_h / 720.0
+            if left_line is not None:
+                left_line = [int(left_line[0] * sx), int(left_line[1] * sy),
+                             int(left_line[2] * sx), int(left_line[3] * sy)]
+            if right_line is not None:
+                right_line = [int(right_line[0] * sx), int(right_line[1] * sy),
+                              int(right_line[2] * sx), int(right_line[3] * sy)]
             nearest_distance = float('inf')
 
             results_yolo = model(frame)

@@ -20,6 +20,11 @@ def run_vehicle_frame_analysis(video_path, analyze_interval_sec=1.0, weights="mo
     model.to(device)
 
     cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        print(f"Error: Could not open video: {video_path}")
+        cap.release()
+        return
+
     fps = cap.get(cv2.CAP_PROP_FPS)
     fps = math.ceil(fps) if fps > 0 else 30
     analyze_every_n_frames = max(1, int(fps * analyze_interval_sec))
@@ -61,6 +66,8 @@ def run_vehicle_frame_analysis(video_path, analyze_interval_sec=1.0, weights="mo
 
     df = pd.DataFrame(results_list)
     columns = ["frame_id"] + sorted(class_name_list) + ["total"]
-    df = df[columns]
+    # reindex (not df[columns]) so an empty results_list — a video with no analyzed frames —
+    # still yields the expected header instead of raising KeyError on absent columns.
+    df = df.reindex(columns=columns)
     df.to_csv(output_csv_path, index=False)
     print(f"Vehicle frame-level statistics saved to {output_csv_path}")

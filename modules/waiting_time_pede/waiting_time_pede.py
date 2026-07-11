@@ -14,17 +14,37 @@ def run_waiting_time_analysis(video_path, csv_path=None, output_csv=None,
         output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv = os.path.join(output_dir, "[P3]waiting_time.csv")
+    else:
+        os.makedirs(os.path.dirname(output_csv), exist_ok=True)
+
+    if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0:
+        pd.DataFrame(columns=["track_id", "waiting_time"]).to_csv(output_csv, index=False)
+        print(f"Tracking CSV not found or empty. Empty results saved to {output_csv}")
+        return
+
     df = pd.read_csv(csv_path)
+    if df.empty:
+        pd.DataFrame(columns=["track_id", "waiting_time"]).to_csv(output_csv, index=False)
+        print(f"Tracking CSV is empty. Empty results saved to {output_csv}")
+        return
+
     cap = cv2.VideoCapture(video_path)
     frame_cache = {}
 
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
+    if fps <= 0:
+        fps = 30
+
+    # Only cache the (sparsely sampled) frames the tracking CSV actually references, instead
+    # of decoding the whole video into memory, which risks OOM on long / HD clips.
+    needed_frames = set(df["frame_id"].astype(int))
     for i in range(1, total_frames + 1):
         ret, frame = cap.read()
         if not ret:
             break
-        frame_cache[i] = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        if i in needed_frames:
+            frame_cache[i] = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     cap.release()
 
@@ -61,7 +81,11 @@ def run_waiting_time_analysis(video_path, csv_path=None, output_csv=None,
             median_dist = np.median(dists)
 
             if median_dist < move_thresh:
-                waiting_counter += 1
+                # Accumulate the physical frame span between the two sampled frames, not a bare
+                # count of intervals. The tracking CSV is sampled every N frames, so counting
+                # intervals and later dividing by the physical fps underestimated waiting time
+                # by roughly the sampling factor N.
+                waiting_counter += int(f1 - f0)
             else:
                 if waiting_counter >= frame_thresh:
                     total_waiting_frames += waiting_counter

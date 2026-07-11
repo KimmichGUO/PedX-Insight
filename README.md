@@ -1,5 +1,25 @@
 # PedX-Insight: A Toolkit for Automated Analysis of Global Pedestrian Crossing Behavior
 
+## Installation & Environment
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate    |    Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Dependencies are pinned to their **newest** releases (July 2026), including the numpy 2.5.x and
+OpenCV 5.x majors. Install CUDA builds of `torch`/`torchvision` from the appropriate PyTorch
+index for your platform if you want GPU inference.
+
+> ⚠️ **Age/gender (`--mode ag`) is currently disabled.** It relies on
+> [paddlex](https://github.com/PaddlePaddle/PaddleX), which hard-caps `numpy<2.4` and pins
+> `opencv-contrib-python==4.10.0.84` — incompatible with the newest numpy/OpenCV. paddlex was
+> therefore removed from `requirements.txt`. `main.py` and every other mode still work; invoking
+> `--mode ag` raises a clear, actionable error. To re-enable it, install paddlex in a **separate**
+> environment (with `numpy<2.4` and `opencv-contrib-python==4.10.0.84`) and point that module at
+> it, or reimplement the module on another model. See [`AGENTS.md`](AGENTS.md).
+
 ## Toolkit:
 | Argument              | Description                                       | Required     | Default        |
 | --------------------- |---------------------------------------------------|--------------|----------------|
@@ -33,7 +53,8 @@ Result: [P5]phone_usage.csv
 ```bash
 python main.py --mode ag --source_video_path PATH/TO/VIDEO
 ```
-Result: [P6]age_gender_race.csv    
+Result: [P6]age_gender.csv  
+> ⚠️ Requires `paddlex`, which is **not** installed by default (see [Installation & Environment](#installation--environment)). This mode is disabled until paddlex is provided in a compatible environment.
 
 #### (4) Clothing type analysis 
 ```bash
@@ -210,6 +231,36 @@ python run.py --start_row 1 --start_step 1
 | `1`   | Download the video             |
 | `2`   | Analyze the video and save results |
 | `3`   | Delete the video               |
+
+## Video Geolocation (Localization)
+
+`--mode localize` estimates **where** a video was filmed (WGS84 latitude/longitude) from the
+footage plus the city name, by wrapping the companion project
+[Monocular-OSM-Localization](https://github.com/M-Colley/Monocular-OSM-Localization) — vendored
+as a git submodule at `external/Monocular-OSM-Localization`.
+
+Because that tool is source-only (no `setup.py`) and pulls heavy extra dependencies, it is run
+as a **subprocess** using a configurable interpreter (resolved from `--osm_python`, then
+`$OSM_LOCALIZATION_PYTHON`, then the submodule's own `.venv`). With paddlex removed, its pins
+(`numpy>=2.5`, `opencv-python>=4.13`) are compatible with PedX's environment, so that interpreter
+may be PedX's own venv once the tool's requirements are also installed there.
+
+Set it up once:
+```bash
+git submodule update --init external/Monocular-OSM-Localization
+python -m venv external/Monocular-OSM-Localization/.venv
+external/Monocular-OSM-Localization/.venv/Scripts/pip install -r external/Monocular-OSM-Localization/requirements.txt
+# ffmpeg must also be on PATH
+```
+Run:
+```bash
+python main.py --mode localize --source_video_path PATH/TO/VIDEO --city "Ulm, Germany"
+```
+Result: `[L1]localization.csv` (columns `lat`, `lon`, `confidence`, `street_names`, `candidates`),
+per video, for the Visualizer. `--city` is inferred from `mapping.csv` when omitted.
+
+> This mode is intentionally **not** part of `single_all` / `mul_all`: it needs the video file
+> present (which `run.py` deletes after analysis), a separate/heavier setup, and network access.
 
 ## Method for Adding New Modules
 

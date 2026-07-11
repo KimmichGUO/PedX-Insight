@@ -56,6 +56,9 @@ from modules.crossed_pede_info.env_info import merge_env_info
 from modules.summary.video_info import generate_video_env_stats
 from modules.summary.pede_info import summary_all_info
 
+# 4 (companion tool, runs in its own environment via subprocess)
+from modules.localization.localize import run_localization
+
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
@@ -80,6 +83,7 @@ def main():
                  "risky", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "on_lane", "nearby",
                  "pedestrian", "vehicle", "environment",
                  "sum_video", "sum_pede", "personal_info", "env_info",
+                 "localize",
                  "mul_all", "single_all"
                  ],
         help="Choose the analysis mode",
@@ -101,6 +105,18 @@ def main():
         type=float,
         default=1.0,
         help="Analysis interval second",
+    )
+    parser.add_argument(
+        "--city",
+        type=str,
+        default=None,
+        help="City for --mode localize, e.g. 'Ulm, Germany' (inferred from mapping.csv if omitted)",
+    )
+    parser.add_argument(
+        "--osm_python",
+        type=str,
+        default=None,
+        help="Interpreter of the Monocular-OSM-Localization env (for --mode localize)",
     )
     args = parser.parse_args()
 
@@ -241,6 +257,12 @@ def main():
     elif args.mode == "sum_pede":
         summary_all_info(
             video_path=args.source_video_path,
+        )
+    elif args.mode == "localize":
+        run_localization(
+            video_path=args.source_video_path,
+            city=args.city,
+            osm_python=args.osm_python,
         )
 
     elif args.mode == "mul_all":

@@ -1,8 +1,13 @@
 import os
 from collections import Counter
-from paddlex import create_pipeline
 import numpy as np
 import csv
+
+# NOTE: paddlex is imported lazily inside run_age_gender (not at module load) so that
+# importing this module — and therefore main.py — still works when paddlex is absent.
+# paddlex is intentionally NOT in requirements.txt: it caps numpy<2.4 and pins
+# opencv-contrib-python==4.10.0.84, which blocked the numpy 2.5 / OpenCV 5 upgrade.
+# See README.md / AGENTS.md ("Age/gender module").
 
 def predict_age_gender(image_path, pipeline):
     output_gen = pipeline.predict(image_path, cls_threshold=1e-10)
@@ -25,6 +30,17 @@ def predict_age_gender(image_path, pipeline):
 
 
 def run_age_gender(video_path):
+    try:
+        from paddlex import create_pipeline
+    except ImportError as e:
+        raise ImportError(
+            "modules/age_gender (--mode ag) requires paddlex, which is intentionally NOT in "
+            "requirements.txt because it caps numpy<2.4 and pins opencv-contrib-python==4.10.0.84 "
+            "and blocked the numpy 2.5 / OpenCV 5 upgrade. To use age/gender, either install "
+            "paddlex in a separate environment with numpy<2.4 and opencv-contrib-python==4.10.0.84, "
+            "or reimplement this module on another model. See AGENTS.md > 'Age/gender module'."
+        ) from e
+
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     img_root = os.path.join('./analysis_results', video_name, 'pedestrian_img')
 

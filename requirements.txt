@@ -1,10 +1,17 @@
+# All dependencies pinned to their newest releases (July 2026), including the numpy 2.5.x
+# and OpenCV 5.x majors.
+#
+# paddlex was intentionally REMOVED: it hard-caps numpy<2.4 and pins
+# opencv-contrib-python==4.10.0.84, which made the newest numpy/OpenCV uninstallable
+# (pip ResolutionImpossible). Consequence: modules/age_gender (--mode ag, age/gender/race)
+# depends on paddlex and is DISABLED until reimplemented on another model, or until paddlex
+# is installed in a separate environment. See README.md and AGENTS.md.
 filterpy>=1.4.5
 lap>=0.5.13
 matplotlib>=3.11.0
 numpy>=2.5.1
 opencv_contrib_python>=5.0.0.93
 opencv_python>=5.0.0.93
-paddlex>=3.7.2
 pandas>=3.0.3
 Pillow>=12.3.0
 scipy>=1.18.0
@@ -15,3 +22,15 @@ supervision>=0.29.1
 torch>=2.13.0
 torchvision>=0.28.0
 ultralytics>=8.4.92
+
+# Optional companion tool: Monocular-OSM-Localization (geolocates a video on OpenStreetMap
+# given the video + city name). Vendored as a git submodule at
+#   external/Monocular-OSM-Localization
+# With paddlex removed, its pins (numpy>=2.5, opencv-python>=4.13) are now compatible with the
+# versions above, so it MAY run in this same venv once its own requirements are also installed.
+# It is still not listed here (source-only, no setup.py; plus heavy extra deps like osmnx/
+# open3d/gsplat). Install it in an environment of your choice and point --mode localize at it:
+#   git submodule update --init external/Monocular-OSM-Localization
+#   pip install -r external/Monocular-OSM-Localization/requirements.txt   # (+ ffmpeg on PATH)
+# then: python main.py --mode localize --source_video_path VIDEO --city "City, Country"
+#   [--osm_python PYTHON]   (defaults to the submodule's .venv or $OSM_LOCALIZATION_PYTHON)

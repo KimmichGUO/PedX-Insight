@@ -85,10 +85,31 @@ submodule (video + city → lat/lon on OpenStreetMap). Code: `modules/localizati
 - The tool is **never imported** — it is run as a **subprocess** with a configurable interpreter
   (`--osm_python` → `$OSM_LOCALIZATION_PYTHON` → the submodule `.venv`). It is source-only
   (no `setup.py`), so it is not a pip dependency; it is vendored as a git submodule.
-- Emits per-video `[L1]localization.csv` (`lat`, `lon`, `confidence`, `street_names`,
-  `candidates`) for the Visualizer. `--city` is inferred from `mapping.csv` if omitted.
-- **Not** part of `single_all`/`mul_all` (needs the video present, a separate/heavier env, network).
+- Emits per-video `[L1]localization.csv` (`lat`, `lon`, `confidence_level`,
+  `confidence_spread_m`, `street_names`, `status`, `candidates`). `--city` is inferred from
+  `mapping.csv` if omitted — the video id is everything after the FIRST underscore of the
+  filename stem (YouTube ids can contain underscores; never rsplit).
+- `run.py --localize` runs it per video after analysis and BEFORE deletion (Step 2.5,
+  `check=False` so failures never block the batch). Not part of `single_all`/`mul_all`.
+- `get_all_video_locations.py` aggregates all `[L1]` files →
+  `summary_data/all_video_locations.csv` (city/video_name derived from the folder name, NOT
+  from the [L1] row — keeps join-consistency with all_video_info.csv). That CSV is the input
+  contract of PedX-Visualizer's `scripts/import-video-coordinates.js` (joins `videos.link`,
+  writes real latitude/longitude + street_name + localization_confidence, replacing mock data).
 - Setup is documented in `README.md` → "Video Geolocation".
+
+## Cross-repo pipeline (Crawler → Insight → Visualizer)
+
+- PedX-Crawler (`../PedX-Crawler`) discovers videos → `data/outputs/discovery.csv`;
+  its `scripts/discovery_to_mapping.py` converts that to this repo's `mapping_one_each.csv`
+  (+ merges city rows into `mapping.csv`). Names are underscore-free (`London1`) by design.
+- This repo analyzes (`run.py`) → `analysis_results/<name>_<videoid>/…` → aggregators →
+  `summary_data/all_video_info.csv`, `all_pedestrian_info.csv`, `all_time_info.csv`
+  (produced from run.py's `[A3]analysis_time.csv`, keyed by link), `all_video_locations.csv`.
+- PedX-Visualizer (`../PedX-Visualizer`) ingests those CSVs (`scripts/aggregate-csv-data.js`,
+  UPSERT key = `videos.link` = bare YouTube id) and imports real coordinates
+  (`scripts/import-video-coordinates.js`). `all_video_info.csv` also carries
+  `data_collected_date` (analysis date) for the Visualizer's temporal features.
 
 ## Testing / verification conventions
 
@@ -106,8 +127,10 @@ There is no formal test suite. Verify changes by:
 
 - `summary_data/` and `analysis_results/` are created at runtime and are not tracked. Aggregators
   now `mkdir` them; keep that if you add outputs.
-- `statistics_with_pdf_save.py` section 1 reads `summary_data/all_time_info.csv`, which **no module
-  currently produces** — a missing data source, not a code bug. Don't fabricate it.
+- `summary_data/all_time_info.csv` (used by `statistics_with_pdf_save.py` section 1 and the
+  Visualizer's `analysis_seconds`) is produced by `get_all_video_info.py` from the per-video
+  `[A3]analysis_time.csv` files that `run.py` writes — videos analyzed via bare `main.py`
+  (not `run.py`) have no `[A3]` and are simply absent from it.
 - CSV encoding is UTF-8 across the aggregation/stats path (city/country names are non-ASCII); keep
   reads and writes consistent.
 - On Windows, avoid non-ASCII glyphs in `print()` (legacy code-page `UnicodeEncodeError`).

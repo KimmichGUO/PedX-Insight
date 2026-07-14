@@ -1,4 +1,5 @@
 import os
+import re
 import pandas as pd
 import ast
 from pathlib import Path
@@ -95,7 +96,9 @@ def main():
             continue
 
         first_underscore_index = folder_name.index('_')
-        city = folder_name[:first_underscore_index]
+        # Folder prefix is the underscore-free name slug (e.g. 'London1' = city + running
+        # index from the crawler bridge); strip the numeric suffix to recover the city.
+        city = re.sub(r'\d+$', '', folder_name[:first_underscore_index])
         link = folder_name[first_underscore_index + 1:]
         city_link = folder_name  # Full folder name as city_link
 

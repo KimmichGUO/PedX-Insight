@@ -255,12 +255,19 @@ external/Monocular-OSM-Localization/.venv/Scripts/pip install -r external/Monocu
 Run:
 ```bash
 python main.py --mode localize --source_video_path PATH/TO/VIDEO --city "Ulm, Germany"
+# batch (localizes each video after analysis, before deletion):
+python run.py --localize
+# aggregate all per-video results for the Visualizer:
+python get_all_video_locations.py     # -> summary_data/all_video_locations.csv
 ```
-Result: `[L1]localization.csv` (columns `lat`, `lon`, `confidence`, `street_names`, `candidates`),
-per video, for the Visualizer. `--city` is inferred from `mapping.csv` when omitted.
+Result: `[L1]localization.csv` per video (columns `lat`, `lon`, `confidence_level`,
+`confidence_spread_m`, `street_names`, `status`, `candidates`). `--city` is inferred from
+`mapping.csv` when omitted. The aggregated `summary_data/all_video_locations.csv` is imported
+into PedX-Visualizer with `node scripts/import-video-coordinates.js` (see that repo's
+`VIDEO_COORDINATES_SETUP.md`) so the Globe shows each video at its REAL estimated position.
 
-> This mode is intentionally **not** part of `single_all` / `mul_all`: it needs the video file
-> present (which `run.py` deletes after analysis), a separate/heavier setup, and network access.
+> Localization is opt-in (`--localize` for `run.py`; not part of `single_all` / `mul_all`):
+> it needs the video file present, the Monocular-OSM-Localization environment, and network.
 
 ## Method for Adding New Modules
 

@@ -25,6 +25,7 @@ import os
 import csv
 import glob
 import json
+import time
 import subprocess
 
 # Repo-root-relative path to the vendored companion tool (a git submodule).
@@ -42,21 +43,26 @@ def _resolve_osm_python(osm_python=None):
                 os.path.join(".venv", "bin", "python")):          # POSIX
         candidate = os.path.join(OSM_REPO, rel)
         if os.path.exists(candidate):
-            return candidate
+            # Absolute: the subprocess runs with cwd=OSM_REPO, where a CWD-relative
+            # interpreter path would not resolve (POSIX exec does not search the child cwd).
+            return os.path.abspath(candidate)
     return None
 
 
 def _infer_city_from_mapping(video_path, mapping_csv="mapping.csv"):
     """Best-effort: map the video id embedded in the filename to a 'City, Country' string.
 
-    PedX names files `<name>_<video_id>.mp4`, so the video id is the segment after the
-    last underscore. mapping.csv lists each city's `videos` (a list of ids). Returns None
-    if pandas/mapping is unavailable or no row matches — the caller then requires --city.
+    PedX names files `<name>_<video_id>.mp4` where <name> never contains an underscore,
+    so the video id is everything after the FIRST underscore — the same convention the
+    aggregators use to parse analysis folder names. (YouTube ids can themselves contain
+    underscores, e.g. mtz_eM73GS0, so splitting at the LAST underscore would truncate
+    them.) mapping.csv lists each city's `videos` (a list of ids). Returns None if
+    pandas/mapping is unavailable or no row matches — the caller then requires --city.
     """
     if not os.path.exists(mapping_csv):
         return None
     stem = os.path.splitext(os.path.basename(video_path))[0]
-    video_id = stem.rsplit("_", 1)[-1] if "_" in stem else stem
+    video_id = stem.split("_", 1)[1] if "_" in stem else stem
     try:
         import pandas as pd
         df = pd.read_csv(mapping_csv)
@@ -89,10 +95,16 @@ def _extract_position(result_json_path):
         street_names = hyps[0].get("street_names")
     if isinstance(street_names, (list, tuple)):
         street_names = "; ".join(str(s) for s in street_names)
+    # spatial_confidence is a dict {level, concentration, spread_m}; flatten to scalar
+    # CSV columns instead of dumping a Python-dict repr into one cell.
+    conf = pos.get("spatial_confidence") or {}
+    if not isinstance(conf, dict):
+        conf = {"level": conf}
     return {
         "lat": pos.get("latitude"),
         "lon": pos.get("longitude"),
-        "confidence": pos.get("spatial_confidence"),
+        "confidence_level": conf.get("level"),
+        "confidence_spread_m": conf.get("spread_m"),
         "street_names": street_names,
         "hypotheses": hyps,
     }
@@ -112,7 +124,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         timeout: optional subprocess timeout (seconds).
 
     Returns:
-        dict with keys video_name, city, lat, lon, confidence, street_names.
+        dict with keys video_name, city, lat, lon, confidence_level, street_names.
     """
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"Video not found: {video_path} (localization needs the video file present)")
@@ -123,7 +135,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
     if output_csv_path is None:
         output_csv_path = os.path.join(output_dir, "[L1]localization.csv")
 
-    fieldnames = ["video_name", "city", "lat", "lon", "confidence",
+    fieldnames = ["video_name", "city", "lat", "lon", "confidence_level", "confidence_spread_m",
                   "street_names", "source", "status", "result_json", "candidates"]
 
     def _write(row):
@@ -131,6 +143,14 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
             w = csv.DictWriter(f, fieldnames=fieldnames)
             w.writeheader()
             w.writerow(row)
+
+    def _placeholder(status):
+        return {
+            "video_name": video_name, "city": city, "lat": "", "lon": "",
+            "confidence_level": "", "confidence_spread_m": "", "street_names": "",
+            "source": "monocular_osm_localization", "status": status,
+            "result_json": "", "candidates": "",
+        }
 
     # Resolve city.
     if not city:
@@ -144,11 +164,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
     # Resolve the companion tool's interpreter (must be a separate env — deps conflict).
     py = _resolve_osm_python(osm_python)
     if py is None or not os.path.exists(OSM_REPO):
-        _write({
-            "video_name": video_name, "city": city, "lat": "", "lon": "",
-            "confidence": "", "street_names": "", "source": "monocular_osm_localization",
-            "status": "osm_env_not_configured", "result_json": "", "candidates": "",
-        })
+        _write(_placeholder("osm_env_not_configured"))
         raise RuntimeError(
             "Monocular-OSM-Localization environment not found.\n"
             "Set it up once (its deps conflict with PedX, so it needs its own venv):\n"
@@ -174,21 +190,29 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         cmd += list(extra_args)
 
     print(f"[localize] {video_name}: running Monocular-OSM-Localization for city '{city}' ...")
+    # Record the start time so we only accept a result.json written by THIS run — the
+    # newest-mtime glob below would otherwise silently reuse a stale result from a
+    # previous run (e.g. after the tool errors out early this time).
+    run_started = time.time()
     # cwd = submodule root so its relative imports (src/), data/, and yolov8s.pt resolve.
-    subprocess.run(cmd, cwd=os.path.abspath(OSM_REPO), check=True, timeout=timeout)
+    try:
+        subprocess.run(cmd, cwd=os.path.abspath(OSM_REPO), check=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _write(_placeholder("timeout"))
+        raise
+    except subprocess.CalledProcessError:
+        _write(_placeholder("subprocess_failed"))
+        raise
 
     result_files = sorted(
-        glob.glob(os.path.join(osm_output_dir, "**", "result.json"), recursive=True),
+        (p for p in glob.glob(os.path.join(osm_output_dir, "**", "result.json"), recursive=True)
+         if os.path.getmtime(p) >= run_started - 1.0),  # 1s slack for coarse filesystems
         key=os.path.getmtime,
     )
     if not result_files:
-        _write({
-            "video_name": video_name, "city": city, "lat": "", "lon": "",
-            "confidence": "", "street_names": "", "source": "monocular_osm_localization",
-            "status": "no_result_json", "result_json": "", "candidates": "",
-        })
+        _write(_placeholder("no_result_json"))
         raise RuntimeError(
-            f"Localization ran but produced no result.json under {osm_output_dir}. "
+            f"Localization ran but produced no fresh result.json under {osm_output_dir}. "
             "Check the tool's logs above."
         )
 
@@ -200,7 +224,8 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         "city": city,
         "lat": pos["lat"],
         "lon": pos["lon"],
-        "confidence": pos["confidence"],
+        "confidence_level": pos["confidence_level"],
+        "confidence_spread_m": pos["confidence_spread_m"],
         "street_names": pos["street_names"],
         "source": "monocular_osm_localization",
         "status": "ok" if pos["lat"] is not None and pos["lon"] is not None else "no_position",
@@ -209,8 +234,8 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
     }
     _write(row)
     print(f"[localize] {video_name}: lat={pos['lat']}, lon={pos['lon']}, "
-          f"confidence={pos['confidence']} -> {output_csv_path}")
-    return {k: row[k] for k in ("video_name", "city", "lat", "lon", "confidence", "street_names")}
+          f"confidence={pos['confidence_level']} -> {output_csv_path}")
+    return {k: row[k] for k in ("video_name", "city", "lat", "lon", "confidence_level", "street_names")}
 
 
 if __name__ == "__main__":

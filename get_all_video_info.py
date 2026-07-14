@@ -1,4 +1,5 @@
 import os
+import re
 import pandas as pd
 import ast
 from pathlib import Path
@@ -149,6 +150,7 @@ def main():
     ]
 
     aggregated_data = []
+    time_info_rows = []
 
     for folder_path in final_results_path.iterdir():
         if not folder_path.is_dir():
@@ -162,7 +164,10 @@ def main():
             continue
 
         first_underscore_index = folder_name.index('_')
-        city = folder_name[:first_underscore_index]
+        # Folder prefix is the underscore-free name slug (e.g. 'London1' = city + running
+        # index from the crawler bridge); strip the numeric suffix to recover the city so
+        # the mapping.csv join and the Visualizer's (city,country) key work.
+        city = re.sub(r'\d+$', '', folder_name[:first_underscore_index])
         link = folder_name[first_underscore_index + 1:]
 
         print(f"  City: {city}, Link: {link}")
@@ -175,6 +180,26 @@ def main():
         video_data = parse_video_info_csv(video_info_path)
         if video_data is None:
             continue
+
+        # Analysis date (when [A1] was written) — the Visualizer's temporal features
+        # parse a data_collected_date column when present.
+        data_collected_date = pd.Timestamp(video_info_path.stat().st_mtime, unit='s').strftime('%Y-%m-%d')
+
+        # Per-video analysis wall time, written by run.py as [A3]analysis_time.csv.
+        # Aggregated below into summary_data/all_time_info.csv keyed by link.
+        analysis_time_path = folder_path / '[A3]analysis_time.csv'
+        if analysis_time_path.exists():
+            try:
+                at_df = pd.read_csv(analysis_time_path)
+                if not at_df.empty:
+                    time_info_rows.append({
+                        'link': link,
+                        'video_name': folder_name,
+                        'duration_seconds': at_df.iloc[0].get('duration_seconds'),
+                        'analysis_seconds': at_df.iloc[0].get('analysis_seconds'),
+                    })
+            except Exception as e:
+                print(f"  Warning: could not read {analysis_time_path}: {e}")
 
         vehicle_count_path = folder_path / '[V6]vehicle_count.csv'
         top_vehicle1, top_vehicle2, top_vehicle3 = None, None, None
@@ -204,6 +229,7 @@ def main():
 
         row_data['crossing_time'] = crossing_time
         row_data['crossing_speed'] = crossing_speed
+        row_data['data_collected_date'] = data_collected_date
 
         if city_info is not None:
             for col in mapping_columns:
@@ -219,7 +245,7 @@ def main():
         result_df = pd.DataFrame(aggregated_data)
 
         columns_order = ['city', 'link'] + video_info_columns + [
-            'crossing_time', 'crossing_speed'
+            'crossing_time', 'crossing_speed', 'data_collected_date'
         ] + mapping_columns
         result_df = result_df.reindex(columns=columns_order)
 
@@ -233,6 +259,15 @@ def main():
         print(f"Output file contains {len(result_df)} rows and {len(result_df.columns)} columns")
     else:
         print("No valid data found")
+
+    # all_time_info.csv: consumed by statistics_with_pdf_save.py section 1 and by the
+    # Visualizer's aggregate-csv-data.js (videos.analysis_seconds), keyed by link.
+    time_info_path = Path('./summary_data/all_time_info.csv')
+    time_info_path.parent.mkdir(parents=True, exist_ok=True)
+    time_df = pd.DataFrame(time_info_rows, columns=['link', 'video_name',
+                                                    'duration_seconds', 'analysis_seconds'])
+    time_df.to_csv(time_info_path, index=False, encoding='utf-8')
+    print(f"Analysis-time info for {len(time_df)} videos saved to {time_info_path}")
 
 
 if __name__ == "__main__":

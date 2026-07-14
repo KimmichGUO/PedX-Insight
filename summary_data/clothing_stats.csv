@@ -1,0 +1,4 @@
+clothing_type,risky_crossing_rate(%),run_red_light_rate(%)
+shirt,100.0,0.0
+shorts,100.0,0.0
+trousers,100.0,0.0

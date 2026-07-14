@@ -1,8 +1,11 @@
-/__pycache__
-/analysis_results/London1_slTbgnXsBik
+# Python bytecode — never commit, anywhere in the tree
+__pycache__/
+*.py[cod]
+
+# Runtime outputs: per-video analysis artifacts and downloaded videos
+/analysis_results/
+/videos/
 *.mp4
-/modules/sidewalk/SGDepth/models/networks/__pycache__
-/modules/sidewalk/SGDepth/models/__pycache__
+
+# Vendored SGDepth (external weights/code, kept out of this repo)
 /modules/sidewalk/SGDepth
-/modules/sidewalk/elements/__pycache__
-/analysis_results/Ulm1_Qh1n6VVKgn0

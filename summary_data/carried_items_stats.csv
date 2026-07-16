@@ -1,3 +1,4 @@
 accessory,risky_crossing_rate(%),run_red_light_rate(%)
-backpack,100.0,0.0
-handbag,100.0,0.0
+backpack,50.0,0.0
+umbrella,50.0,0.0
+handbag,50.0,0.0

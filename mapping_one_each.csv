@@ -1,5 +1,5 @@
 id,name,city,video,time_of_day,start_time,end_time,downloaded,finished
-1,Toronto,Toronto,3ai7SUaPoHM,0,27,3250,TRUE,
+1,Toronto,Toronto,3ai7SUaPoHM,0,27,3250,True,TRUE
 2,Jakarta,Jakarta,gmDBzijaIAA,0,29,2968,,
 3,Manila,Manila,JY-Xyiept88,0,43,4844,,
 4,Sydney,Sydney,wMu6Va5PhGY,0,41,3040,,

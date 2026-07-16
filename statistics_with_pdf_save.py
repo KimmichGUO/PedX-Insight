@@ -157,7 +157,10 @@ save_bar_chart_pdf(
 
 # ========== 8. vehicle ==========
 df["three wheelers"] = ((df["auto rickshaw"] == 1) | (df["rickshaw"] == 1) | (df["three wheelers -CNG-"] == 1))
-vehicle_cols = ["ambulance", "army vehicle", "bicycle", "bus", "car","garbagevan", "human", "hauler", "minibus", "minivan", "motorbike","pickup", "policecar", "scooter", "suv", "taxi", "truck", "van","wheelbarrow", "three wheelers"]
+# 'human hauler' is the real [V6]/[A2] column; the old list mistakenly split it into
+# nonexistent 'human' and 'hauler' (kept out of the list — they are legacy always-empty
+# columns retained in all_pedestrian_info.csv only for schema compatibility).
+vehicle_cols = ["ambulance", "army vehicle", "bicycle", "bus", "car","garbagevan", "human hauler", "minibus", "minivan", "motorbike","pickup", "policecar", "scooter", "suv", "taxi", "truck", "van","wheelbarrow", "three wheelers"]
 results = []
 for col in vehicle_cols:
     subset = df[df[col] == 1]

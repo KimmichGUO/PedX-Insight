@@ -1,10 +1,10 @@
 id,name,city,video,time_of_day,start_time,end_time,downloaded,finished
-1,Toronto,Toronto,3ai7SUaPoHM,0,27,3250,,
+1,Toronto,Toronto,3ai7SUaPoHM,0,27,3250,TRUE,
 2,Jakarta,Jakarta,gmDBzijaIAA,0,29,2968,,
 3,Manila,Manila,JY-Xyiept88,0,43,4844,,
 4,Sydney,Sydney,wMu6Va5PhGY,0,41,3040,,
 5,Melbourne,Melbourne,81n46krHrQA,0,42,2964,,
-6,Cincinnati,Cincinnati,G1I_PlmL_YA,0,78,2729,,
+6,Cincinnati,Cincinnati,G1I_PlmL_YA,0,78,2729,,True
 7,Brisbane,Brisbane,9pPBmcKvFOc,0,23,2922,,
 8,Monaco,Monaco,ij6xccYYIuE,1,22,1875,,
 9,Milan,Milan,ZByZSqoqzaI,0,18,3333,,
@@ -604,18 +604,18 @@ id,name,city,video,time_of_day,start_time,end_time,downloaded,finished
 1387,Be'er Sheva,Be'er Sheva,MClZXRTWYY8,0,20,788,,
 1389,Tehran,Tehran,2GLGl1QCwSo,0,7,1830,,
 1422,Ho Chi Minh City,Ho Chi Minh City,4BB6l7wfNpM,0,22,2580,,
-1423,London1,London,slTbgnXsBik,0,0,15,TRUE,TRUE
+1423,London1,London,slTbgnXsBik,0,0,15,True,True
 1424,London2,London,U3Kew0vNYH4,0,0,96,,
-1425,Ulm1,Ulm,Qh1n6VVKgn0,0,0,1206,,
-1426,Ulm2,Ulm,ULl8s4qydrk,0,0,1800,,
-1427,Berlin1,Berlin,ORPGr4m2-Sw,0,0,710,,
-1428,Paris1,Paris,UElofxU8Nvo,0,0,438,,
-1429,Tokyo1,Tokyo,pnVAm2YhJLg,0,0,193,,
-1430,NewYork1,New York,m_wznfPqd0I,0,0,88,,
-1431,Mumbai1,Mumbai,hm8yVZF-LHY,0,0,42,,
-1432,Berlin2,Berlin,xNCeG8sO-bQ,0,0,37,,
-1433,Paris2,Paris,obsNhiqsuJ4,0,0,34,,
-1434,Mumbai2,Mumbai,mJZldCMZhyA,0,0,34,,
-1435,Tokyo2,Tokyo,GuYrT1OGJyc,0,0,23,,
+1425,Ulm1,Ulm,Qh1n6VVKgn0,0,0,1206,,True
+1426,Ulm2,Ulm,ULl8s4qydrk,0,0,1800,,True
+1427,Berlin1,Berlin,ORPGr4m2-Sw,0,0,710,,True
+1428,Paris1,Paris,UElofxU8Nvo,0,0,438,,True
+1429,Tokyo1,Tokyo,pnVAm2YhJLg,0,0,193,,True
+1430,NewYork1,New York,m_wznfPqd0I,0,0,88,,True
+1431,Mumbai1,Mumbai,hm8yVZF-LHY,0,0,42,,True
+1432,Berlin2,Berlin,xNCeG8sO-bQ,0,0,37,,True
+1433,Paris2,Paris,obsNhiqsuJ4,0,0,34,,True
+1434,Mumbai2,Mumbai,mJZldCMZhyA,0,0,34,,True
+1435,Tokyo2,Tokyo,GuYrT1OGJyc,0,0,23,,True
 1436,NewYork2,New York,AcmcXLihbTQ,0,0,19,,
-1437,NewYork3,New York,8Tee4dzv0Bs,0,0,146,,
+1437,NewYork3,New York,8Tee4dzv0Bs,0,0,146,,True

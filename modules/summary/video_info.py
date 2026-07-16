@@ -89,14 +89,19 @@ def generate_video_env_stats(video_path,
                 valid_pedestrians.append(tid)
     total_pedestrians = len(valid_pedestrians) if tracked_df is not None else None
 
-    # Measured (not imported) mean pedestrian walking speed in m/s, from [S1]. Prefer
-    # tracks flagged reliable; fall back to all tracks if none qualify.
+    # Measured (not imported) mean pedestrian walking speed in m/s, from [S1] — RELIABLE
+    # tracks only. No fallback to unreliable tracks: archives analyzed with the old 1 Hz
+    # fragmenting tracker retain multi-row tracks mostly for STATIONARY pedestrians (movers
+    # fragmented into dropped 1-row tracks), so their "median speed" is a selection artifact
+    # (~0.05 m/s). Refuse (None) rather than fabricate; the metric populates on videos
+    # analyzed with the dense tracking pass.
     measured_walking_speed = None
-    if speed_df is not None and 'walking_speed_mps' in speed_df.columns and not speed_df.empty:
-        reliable = speed_df[speed_df['reliable'] == True] if 'reliable' in speed_df.columns else speed_df
-        use = reliable if not reliable.empty else speed_df
-        val = use['walking_speed_mps'].median()
-        measured_walking_speed = round(float(val), 3) if val == val else None
+    if speed_df is not None and 'walking_speed_mps' in speed_df.columns and not speed_df.empty \
+            and 'reliable' in speed_df.columns:
+        reliable = speed_df[speed_df['reliable'] == True]
+        if not reliable.empty:
+            val = reliable['walking_speed_mps'].median()
+            measured_walking_speed = round(float(val), 3) if val == val else None
 
     risky_crossing_ratio = None
     if risky_df is not None and 'track_id' in risky_df.columns and 'risk' in risky_df.columns:

@@ -92,6 +92,9 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
             download_cmd = [
                 "yt-dlp",
                 "--cookies", "www.youtube.com_cookies.txt",
+                # node runtime lets yt-dlp solve YouTube's JS challenges (node v24 installed);
+                # without it extraction is deprecated and bot-checks trigger sooner.
+                "--js-runtimes", "node",
                 "--user-agent",
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 "--referer", "https://www.youtube.com/",

@@ -12,10 +12,11 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
 
 
-# Modes that are known to be unavailable in a default install (sidewalk weights are a
-# manual download). Their failures are reported but do not fail the batch. 'ag' left this
-# set 2026-07-16: reimplemented on YuNet + genderage.onnx (no paddlex), weights auto-download.
-OPTIONAL_MODES = {"sidewalk"}
+# Modes whose failure is reported but does not fail the batch: 'sidewalk' (weights newly
+# installed, not yet live-validated) and 'pose' (new [P12] module, first live run pending).
+# Promote them out of this set after one clean batch video. 'ag' left this set 2026-07-16
+# (reimplemented on YuNet + genderage.onnx; weights auto-download).
+OPTIONAL_MODES = {"sidewalk", "pose"}
 
 
 def main():

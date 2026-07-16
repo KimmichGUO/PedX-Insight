@@ -12,9 +12,10 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
 
 
-# Modes that are known to be unavailable in a default install (paddlex removed; sidewalk
-# weights are a manual download). Their failures are reported but do not fail the batch.
-OPTIONAL_MODES = {"ag", "sidewalk"}
+# Modes that are known to be unavailable in a default install (sidewalk weights are a
+# manual download). Their failures are reported but do not fail the batch. 'ag' left this
+# set 2026-07-16: reimplemented on YuNet + genderage.onnx (no paddlex), weights auto-download.
+OPTIONAL_MODES = {"sidewalk"}
 
 
 def main():
@@ -46,7 +47,7 @@ def main():
                  "sidewalk",
                  "risky", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "on_lane", "nearby",
                  "pedestrian", "vehicle", "environment",
-                 "pet", "vehicle_speed", "headway", "signal_timing", "micro_events", "groups",
+                 "pet", "vehicle_speed", "headway", "signal_timing", "micro_events", "groups", "pose",
                  "sum_video", "sum_pede", "personal_info", "env_info",
                  "localize",
                  "mul_all", "single_all"
@@ -297,6 +298,11 @@ def main():
         run_social_groups(
             video_path=args.source_video_path,
         )
+    elif args.mode == "pose":
+        from modules.insights.pose_behavior import run_pose_behavior
+        run_pose_behavior(
+            video_path=args.source_video_path,
+        )
     elif args.mode == "localize":
         from modules.localization.localize import run_localization
         run_localization(
@@ -346,6 +352,7 @@ def main():
             run_mode("cross_pede", video_path)
             run_mode("scale", video_path)  # [S2] stripe ground-plane scale -> feeds speed
             run_mode("speed", video_path)  # after cross_pede so [C3] windows enable crossing speed
+            run_mode("pose", video_path)   # head-scanning + gait; needs the video + [C3]
             run_mode("risky", video_path)
             run_mode("crosswalk_usage", video_path)
             run_mode("run_red", video_path)
@@ -399,6 +406,7 @@ def main():
         run_mode("cross_pede", video_path)
         run_mode("scale", video_path)  # [S2] stripe ground-plane scale -> feeds speed
         run_mode("speed", video_path)  # after cross_pede so [C3] windows enable crossing speed
+        run_mode("pose", video_path)   # head-scanning + gait; needs the video + [C3]
         run_mode("risky", video_path)
         run_mode("crosswalk_usage", video_path)
         run_mode("run_red", video_path)

@@ -12,3 +12,6 @@ __pycache__/
 
 # large tracking-pass detector weight (auto-downloaded on first run)
 yolo11x.pt
+
+# SGDepth sidewalk weights (146 MB, gdown 1X1uKa... per README)
+modules/sidewalk/weights/

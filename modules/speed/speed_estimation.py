@@ -33,12 +33,19 @@ MAX_PLAUSIBLE_HEIGHT_M = 2.2
 ASSUMED_LANE_WIDTH_M = 3.5
 WAIT_SPEED_MPS = 0.3          # below this a pedestrian is "not walking" (waiting)
 RUN_SPEED_MPS = 2.2          # above this they are running
+# Occlusion/truncation guard for the height-prior scale: a standing/walking adult's
+# bbox aspect (h/w) sits around ~1.6-4.5. A lower-body-occluded (truncated) or merged
+# box falls outside this band; its SHORT height inflates px/m and thus the speed, so
+# such tracks must never be flagged reliable.
+MIN_BBOX_ASPECT = 1.4
+MAX_BBOX_ASPECT = 5.0
 
 OUTPUT_COLUMNS = [
     "track_id", "n_valid_steps", "walking_speed_mps", "crossing_speed_mps",
     "net_speed_mps", "decision_delay_s", "is_running", "mean_speed_mps",
     "median_bbox_h_px", "height_cv", "assumed_height_m", "scale_px_per_m_median",
-    "scale_source", "lane_scale_px_per_m", "camera_moving", "traj_source", "reliable",
+    "scale_source", "lane_scale_px_per_m", "camera_moving", "median_bbox_aspect",
+    "traj_source", "reliable",
 ]
 
 
@@ -202,6 +209,12 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
         fr = g["frame_id"].to_numpy(dtype=float)
         t = g["timestamp"].to_numpy(dtype=float)
         h_px = (g["y2"].to_numpy() - g["y1"].to_numpy()).astype(float)
+        w_px = (g["x2"].to_numpy() - g["x1"].to_numpy()).astype(float)
+        # Occlusion/truncation guard input: per-row bbox aspect (h/w). Guard w<=0
+        # (degenerate boxes) out of the median rather than dividing by zero.
+        aspect_valid = w_px > 0
+        median_aspect = (float(np.median(h_px[aspect_valid] / w_px[aspect_valid]))
+                         if aspect_valid.any() else float("nan"))
         cx, cy = cam_at(fr)                      # cumulative camera position at each row
         raw_fx = (g["x1"].to_numpy() + g["x2"].to_numpy()) / 2.0
         raw_fy = g["y2"].to_numpy(dtype=float)
@@ -290,8 +303,12 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
         median_dt = float(np.median(step_dts))
         n_steps = len(step_speeds)
         walking = float(np.median(step_speeds))
+        # A truncated (lower-body-occluded) or merged box breaks the height-prior
+        # scale, so an out-of-band aspect (or none computable) also fails the gate.
+        aspect_ok = (median_aspect == median_aspect
+                     and MIN_BBOX_ASPECT <= median_aspect <= MAX_BBOX_ASPECT)
         reliable = bool(median_dt <= 0.2 and n_steps >= min_samples
-                        and median_h >= 40 and height_cv < 0.35)
+                        and median_h >= 40 and height_cv < 0.35 and aspect_ok)
 
         rows.append({
             "track_id": track_id,
@@ -309,6 +326,7 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
             "scale_source": "stripe_ground_plane" if use_stripe else "height_prior",
             "lane_scale_px_per_m": round(lane_scale, 3) if lane_scale else None,
             "camera_moving": camera_moving,
+            "median_bbox_aspect": round(median_aspect, 3) if median_aspect == median_aspect else None,
             "traj_source": traj_source,
             "reliable": reliable,
         })

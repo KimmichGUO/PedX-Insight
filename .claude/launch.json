@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pedx-visualizer",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:/Users/markc/Desktop/PedX-Visualizer"],
+      "port": 3000
+    }
+  ]
+}

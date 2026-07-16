@@ -21,6 +21,14 @@ Pipeline:
 CSV-only: never opens the video. Missing/empty inputs (including the NEW producer
 [V7]vehicle_tracks.csv) -> header-only output, never a crash. Pedestrians with no
 vehicle co-occupancy get one row with NaN PET so every crossing is accounted for.
+
+Severity is gated on vehicle motion when [V8]vehicle_speed.csv exists: at
+signalized corners raw PET counts benign gaps behind QUEUED (stationary)
+vehicles, so severe/moderate additionally require the conflicting vehicle to
+have been moving (speed_at_crosswalk_mps if present, else median_speed_mps,
+>= STATIONARY_SPEED_MPS); otherwise the row gets severity 'queued'. Columns
+veh_median_speed_mps and speed_gated record the join; without [V8] (most
+archives) the old ungated severities are emitted with speed_gated=False.
 """
 
 import math
@@ -34,8 +42,10 @@ from modules.speed.speed_estimation import _resolve_assumed_height_m, _rolling_m
 OUTPUT_COLUMNS = [
     "track_id", "veh_track_id", "veh_type", "min_pet_s", "first_agent",
     "cell_y_px", "n_shared_cells", "severity", "scale_source",
-    "camera_pan_ok", "reliable",
+    "camera_pan_ok", "reliable", "veh_median_speed_mps", "speed_gated",
 ]
+
+STATIONARY_SPEED_MPS = 1.0  # below this the conflicting vehicle counts as queued
 
 MIN_IMPLIED_HEIGHT_M = 0.9    # same stripe-scale sanity window as [S1]
 MAX_IMPLIED_HEIGHT_M = 2.8
@@ -201,12 +211,71 @@ def _severity(pet, severe_pet_s, moderate_pet_s):
     return "none"
 
 
+def _load_vehicle_speeds(vehicle_speed_csv):
+    """{int veh_track_id: (median_speed_mps, gate_speed_mps)} from [V8], or None.
+
+    gate_speed is speed_at_crosswalk_mps when present (most relevant to the
+    conflict location), else median_speed_mps. Returns None when [V8] is
+    missing/empty/malformed so the caller keeps the OLD ungated behavior.
+    """
+    v8 = _read_csv_nonempty(vehicle_speed_csv)
+    if v8 is None or not {"track_id", "median_speed_mps"}.issubset(v8.columns):
+        return None
+    speeds = {}
+    for _, r in v8.iterrows():
+        try:
+            vid = int(float(r["track_id"]))
+        except (TypeError, ValueError):
+            continue
+        med = r["median_speed_mps"]
+        med = float(med) if pd.notna(med) else None
+        gate = med
+        acw = r.get("speed_at_crosswalk_mps")
+        if acw is not None and pd.notna(acw):
+            gate = float(acw)
+        speeds[vid] = (med, gate)
+    return speeds
+
+
+def _gated_severity(pet, severe_pet_s, moderate_pet_s, veh_speeds, veh_track_id):
+    """(severity, veh_median_speed_mps, speed_gated) with vehicle-motion gating.
+
+    Ungated (old behavior, speed_gated=False) when [V8] is absent, the vehicle
+    has no [V8] row, or its speed is NaN. When gated: severe/moderate keep their
+    meaning for moving vehicles (gate speed >= STATIONARY_SPEED_MPS); a sub-3 s
+    gap behind a stationary vehicle becomes 'queued'; 'none' stays 'none'.
+    """
+    base = _severity(pet, severe_pet_s, moderate_pet_s)
+    if veh_speeds is None:
+        return base, None, False
+    try:
+        key = int(float(veh_track_id))
+    except (TypeError, ValueError):
+        key = None
+    med, gate = veh_speeds.get(key, (None, None))
+    if gate is None:
+        return base, med, False
+    if base == "none":
+        return base, med, True
+    if gate >= STATIONARY_SPEED_MPS:
+        return base, med, True
+    return "queued", med, True
+
+
 def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_csv=None,
                       ego_csv=None, scale_csv=None, speed_csv=None, video_meta_csv=None,
                       mapping_csv="mapping.csv", output_csv=None, fps=None,
                       pad_s=2.0, max_pet_s=10.0, gap_break_s=1.0, max_pan_px=200.0,
-                      severe_pet_s=1.5, moderate_pet_s=3.0, smooth_window=3):
-    """Compute [I1]pet_conflicts.csv for one video. CSV-only (video may be deleted)."""
+                      severe_pet_s=1.5, moderate_pet_s=3.0, smooth_window=3,
+                      vehicle_speed_csv=None):
+    """Compute [I1]pet_conflicts.csv for one video. CSV-only (video may be deleted).
+
+    Severity is gated on vehicle motion via [V8]vehicle_speed.csv when available:
+    severe/moderate require the conflicting vehicle to have been actually moving
+    (gate speed >= STATIONARY_SPEED_MPS); sub-threshold gaps behind stationary
+    (queued) vehicles are reported as severity 'queued'. Without [V8] the old
+    ungated severities are kept and speed_gated is False.
+    """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     output_dir = os.path.join("analysis_results", video_name)
     if output_csv is None:
@@ -230,6 +299,8 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
         speed_csv = os.path.join(output_dir, "[S1]pedestrian_speed.csv")
     if video_meta_csv is None:
         video_meta_csv = os.path.join(output_dir, "[B0]video_meta.csv")
+    if vehicle_speed_csv is None:
+        vehicle_speed_csv = os.path.join(output_dir, "[V8]vehicle_speed.csv")
 
     def _write_empty(msg):
         pd.DataFrame(columns=OUTPUT_COLUMNS).to_csv(output_csv, index=False)
@@ -250,6 +321,7 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
         return _write_empty("No completed crossings in [C3].")
 
     fps = _resolve_fps(fps, video_meta_csv, ped)
+    veh_speeds = _load_vehicle_speeds(vehicle_speed_csv)  # None -> old ungated behavior
 
     # --- ego motion: interpolate camera position over TIME; gate on median step_px ---
     ego = _read_csv_nonempty(ego_csv)
@@ -311,6 +383,7 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
             "min_pet_s": None, "first_agent": None, "cell_y_px": None,
             "n_shared_cells": 0, "severity": "none", "scale_source": scale_source,
             "camera_pan_ok": camera_pan_ok, "reliable": False,
+            "veh_median_speed_mps": None, "speed_gated": False,
         })
 
     for _, cr in crossings.iterrows():
@@ -373,6 +446,8 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
             continue
         for c in conflicts:
             pet = float(c["min_pet_s"])
+            severity, veh_med_speed, speed_gated = _gated_severity(
+                pet, severe_pet_s, moderate_pet_s, veh_speeds, c["veh_track_id"])
             rows.append({
                 "track_id": tid,
                 "veh_track_id": c["veh_track_id"],
@@ -381,19 +456,24 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
                 "first_agent": c["first_agent"],
                 "cell_y_px": round(float(c["cell_y_px"]), 1),
                 "n_shared_cells": c["n_shared_cells"],
-                "severity": _severity(pet, severe_pet_s, moderate_pet_s),
+                "severity": severity,
                 "scale_source": scale_source,
                 "camera_pan_ok": camera_pan_ok,
                 "reliable": bool(camera_pan_ok and med_dt <= 0.25
                                  and scale_source != "bbox_height_prior"),
+                "veh_median_speed_mps": (round(veh_med_speed, 3)
+                                         if veh_med_speed is not None else None),
+                "speed_gated": speed_gated,
             })
 
     out = pd.DataFrame(rows, columns=OUTPUT_COLUMNS)
     out.to_csv(output_csv, index=False)
     n_conf = int(out["min_pet_s"].notna().sum()) if not out.empty else 0
     n_sev = int((out["severity"] == "severe").sum()) if not out.empty else 0
+    n_queued = int((out["severity"] == "queued").sum()) if not out.empty else 0
     print(f"[pet] {len(out)} rows over {crossings['track_id'].nunique()} crossings: "
-          f"{n_conf} conflicts ({n_sev} severe), fps={fps:.2f}, "
+          f"{n_conf} conflicts ({n_sev} severe, {n_queued} queued), fps={fps:.2f}, "
+          f"speed_gate={'[V8]' if veh_speeds is not None else 'off'}, "
           f"camera={'moving' if camera_moving else 'static'}, pan_ok={camera_pan_ok}. "
           f"Saved to {output_csv}")
     return output_csv

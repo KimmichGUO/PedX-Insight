@@ -1,10 +1,9 @@
 import os
 import cv2
 import pandas as pd
-from ultralytics import YOLO
-import math
-import torch
+from collections import defaultdict, Counter
 
+# Output-schema vehicle types (kept identical so [C6]crossing_ve_count.csv columns never change).
 id2name = {
     0: 'ambulance',
     1: 'army vehicle',
@@ -29,147 +28,190 @@ id2name = {
     20: 'wheelbarrow'
 }
 
+# COCO class id -> output vehicle type name (all 5 map onto names already present in
+# id2name, so the CSV schema is unchanged). Used for GLOBAL (worldwide) counting.
+COCO_TO_TYPE = {
+    1: 'bicycle',
+    2: 'car',
+    3: 'motorbike',   # COCO 'motorcycle'
+    5: 'bus',
+    7: 'truck',
+}
+
+
+def _load_sidecar_events(output_dir):
+    """Line-crossing events from count_vehicle's [V10] sidecar, if that pass already ran.
+    Returns (events, model_note) or (None, None) when unavailable."""
+    events_path = os.path.join(output_dir, "[V10]line_crossing_events.csv")
+    if not (os.path.exists(events_path) and os.path.getsize(events_path) > 0):
+        return None, None
+    try:
+        ev = pd.read_csv(events_path)
+    except Exception:
+        return None, None
+    if not {"frame_id", "veh_type"}.issubset(ev.columns):
+        return None, None
+    events = [{"frame": int(r["frame_id"]), "type": str(r["veh_type"])} for _, r in ev.iterrows()]
+    model_note = "from [V10] sidecar (count_vehicle pass)"
+    v6_path = os.path.join(output_dir, "[V6]vehicle_count.csv")
+    if os.path.exists(v6_path):
+        try:
+            v6 = pd.read_csv(v6_path)
+            if "Model" in v6.columns and not v6.empty:
+                model_note = str(v6["Model"].iloc[0])
+        except Exception:
+            pass
+    return events, model_note
+
 
 def analyze_vehicle_during_crossing(
         video_path,
         crossing_csv_path=None,
         output_csv_path=None,
-        analyze_interval_sec=1.0
+        analyze_interval_sec=1.0,
+        use_coco=True,
+        coco_model_path="yolo11n.pt",
+        counting_line_ratio=0.5,
+        conf_thresh=0.3,
 ):
-    model = YOLO("modules/count_vehicle/best.pt")
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model.to(device)
+    """Vehicles counted during each pedestrian crossing window.
 
+    Perf fix: this module used to duplicate count_vehicle's ENTIRE dense full-fps GPU
+    tracking pass. It now (a) exits before loading any model when no pedestrian crossed,
+    and (b) consumes the [V10]line_crossing_events.csv sidecar that count_vehicle already
+    writes, re-running its own tracking pass only when the sidecar is missing.
+    """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-
+    output_dir = os.path.join("analysis_results", video_name)
+    os.makedirs(output_dir, exist_ok=True)
     if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
-        os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[C6]crossing_ve_count.csv")
     else:
-        os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
-
+        os.makedirs(os.path.dirname(output_csv_path) or ".", exist_ok=True)
     if crossing_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
         crossing_csv_path = os.path.join(output_dir, "[C3]crossing_judge.csv")
 
-    # Read crossing data
+    columns = ['track_id', 'crossed', 'total_vehicle_count'] + list(id2name.values()) + ['model']
+
+    def _write(rows):
+        df = pd.DataFrame(rows, columns=columns)
+        df.to_csv(output_csv_path, index=False)
+        print(f"Vehicle count when crossing completed. Results saved to {output_csv_path}")
+        return df
+
+    # Missing/unreadable crossing CSV guard -> empty output with valid header.
+    if not (os.path.exists(crossing_csv_path) and os.path.getsize(crossing_csv_path) > 0):
+        print(f"Crossing CSV not found: {crossing_csv_path}")
+        return _write([])
+
     crossing_df = pd.read_csv(crossing_csv_path)
-    crossing_df = crossing_df[crossing_df['crossed'] == True]
+    crossing_df = crossing_df[crossing_df['crossed'] == True] if 'crossed' in crossing_df.columns else crossing_df.iloc[0:0]
 
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        print("Error opening video")
-        return
+    # Early-exit BEFORE any model/GPU work: no crossings -> nothing to attribute.
+    if crossing_df.empty:
+        print("No crossed pedestrians; skipping vehicle attribution pass.")
+        return _write([])
 
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    if fps <= 0:
-        fps = 30.0
+    # Preferred path: reuse the [V10] events count_vehicle already produced.
+    vehicle_crossings, model_note = _load_sidecar_events(output_dir)
 
-    analyze_every_n_frames = max(1, math.ceil(fps * analyze_interval_sec))
-
-    frame_idx = 0
-    frame_tracks = {}
-
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        frame_idx += 1
-
-        # Skip frames based on analysis interval
-        if frame_idx % analyze_every_n_frames != 0:
-            continue
-
-        # Choose appropriate tracker config based on FPS
-        if fps < 30:
-            track_results = model.track(
-                frame,
-                persist=True,
-                tracker="bytetrack.yaml",
-                conf=0.3,
-                verbose=False
-            )
-        elif fps > 45:
-            track_results = model.track(
-                frame,
-                persist=True,
-                tracker="bytetrack.yaml",
-                conf=0.3,
-                verbose=False
-            )
+    if vehicle_crossings is None:
+        # Fallback: run our own dense pass (sidecar unavailable, e.g. standalone mode).
+        from ultralytics import YOLO
+        import torch
+        if use_coco:
+            model = YOLO(coco_model_path)
+            class_map = COCO_TO_TYPE
+            model_note = "yolo11-COCO (car/bus/truck/motorcycle/bicycle)"
         else:
-            track_results = model.track(
-                frame,
-                persist=True,
-                tracker="bytetrack.yaml",
-                conf=0.3,
-                verbose=False
-            )
+            model = YOLO("modules/count_vehicle/best.pt")
+            class_map = id2name
+            model_note = "best.pt (region-specific)"
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model.to(device)
+        use_half = device == "cuda"
 
-        # Check if any detections exist
-        if track_results[0].boxes is None or len(track_results[0].boxes) == 0:
-            frame_tracks[frame_idx] = []
-            continue
+        vehicle_crossings = []
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            print("Error opening video")
+        else:
+            allowed_classes = list(class_map.keys())
+            # Dual counting lines (a lone horizontal line misses cross traffic).
+            line_y = line_x = None
+            frame_idx = 0
+            track_last_side_y = {}
+            track_last_side_x = {}
+            track_frames = defaultdict(int)
+            track_class_votes = defaultdict(Counter)
+            counted_ids = set()
 
-        boxes = track_results[0].boxes
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                frame_idx += 1
+                if line_y is None:
+                    line_y = frame.shape[0] * counting_line_ratio
+                    line_x = frame.shape[1] * counting_line_ratio
 
-        # Check if tracking IDs exist
-        if boxes.id is None:
-            frame_tracks[frame_idx] = []
-            continue
+                track_results = model.track(
+                    frame, persist=True, tracker="bytetrack.yaml",
+                    conf=conf_thresh, classes=allowed_classes,
+                    half=use_half, verbose=False,
+                )
+                boxes = track_results[0].boxes
+                if boxes is None or len(boxes) == 0 or boxes.id is None:
+                    continue
 
-        # Process each tracked vehicle
-        tracks_this_frame = []
-        for i, (box, track_id, cls_id, conf) in enumerate(zip(
-                boxes.xyxy, boxes.id, boxes.cls, boxes.conf
-        )):
-            track_id = int(track_id.cpu().numpy())
-            cls_id = int(cls_id.cpu().numpy())
-            conf = float(conf.cpu().numpy())
+                for box, track_id, cls_id, conf in zip(boxes.xyxy, boxes.id, boxes.cls, boxes.conf):
+                    track_id = int(track_id.cpu().numpy())
+                    cls_id = int(cls_id.cpu().numpy())
+                    conf = float(conf.cpu().numpy())
+                    if cls_id not in class_map or conf < conf_thresh:
+                        continue
+                    vtype = class_map[cls_id]
+                    cx = float((box[0] + box[2]) / 2.0)
+                    cy = float((box[1] + box[3]) / 2.0)
+                    track_frames[track_id] += 1
+                    track_class_votes[track_id][vtype] += 1
+                    side_y = 1 if cy >= line_y else -1
+                    side_x = 1 if cx >= line_x else -1
+                    crossed_y = track_last_side_y.get(track_id) not in (None, side_y)
+                    crossed_x = track_last_side_x.get(track_id) not in (None, side_x)
+                    if ((crossed_y or crossed_x)
+                            and track_frames[track_id] >= 2 and track_id not in counted_ids):
+                        majority_type = track_class_votes[track_id].most_common(1)[0][0]
+                        vehicle_crossings.append({'frame': frame_idx, 'type': majority_type})
+                        counted_ids.add(track_id)
+                    track_last_side_y[track_id] = side_y
+                    track_last_side_x[track_id] = side_x
+            cap.release()
+    else:
+        print(f"Reusing {len(vehicle_crossings)} line-crossing events from [V10] sidecar "
+              f"(skipped the duplicate dense tracking pass).")
 
-            # Check if the class is in our vehicle categories and confidence is above threshold
-            if cls_id in id2name and conf > 0.3:
-                tracks_this_frame.append((track_id, id2name[cls_id]))
-
-        frame_tracks[frame_idx] = tracks_this_frame
-
-    cap.release()
-
-    # Process crossing data and count vehicles
+    # For each pedestrian crossing event, count vehicle line-crossings within its window.
     output_data = []
     for _, row in crossing_df.iterrows():
         person_id = row['track_id']
-        start_frame = int(row['started_frame'])
-        end_frame = int(row['ended_frame'])
+        try:
+            start_frame = int(row['started_frame'])
+            end_frame = int(row['ended_frame'])
+        except (ValueError, TypeError):
+            start_frame, end_frame = None, None
 
-        # Collect unique vehicle tracks during crossing period
-        unique_tracks = {}
-        for f in range(start_frame, end_frame + 1):
-            if f in frame_tracks:
-                for track_id, vt in frame_tracks[f]:
-                    unique_tracks[track_id] = vt
-
-        # Count vehicles by type
         cumulative_counts = {name: 0 for name in id2name.values()}
-        for vt in unique_tracks.values():
-            cumulative_counts[vt] += 1
+        if start_frame is not None and end_frame is not None:
+            for vc in vehicle_crossings:
+                if start_frame <= vc['frame'] <= end_frame:
+                    cumulative_counts[vc['type']] += 1
 
         total_vehicles = sum(cumulative_counts.values())
-        row_data = [person_id, True, total_vehicles] + [cumulative_counts[vt] for vt in id2name.values()]
-        output_data.append(row_data)
+        output_data.append([person_id, True, total_vehicles]
+                           + [cumulative_counts[vt] for vt in id2name.values()]
+                           + [model_note])
 
-    # Create output DataFrame
-    columns = ['track_id', 'crossed', 'total_vehicle_count'] + list(id2name.values())
-    output_df = pd.DataFrame(output_data, columns=columns)
-
-    if output_df.empty:
-        output_df = pd.DataFrame(columns=columns)
-
-    output_df.to_csv(output_csv_path, index=False)
-    print(f"Vehicle count when crossing completed. Results saved to {output_csv_path}")
-    print(f"YOLO is running on: {model.device}")
+    df = _write(output_data)
     print(f"Total crossing events analyzed: {len(crossing_df)}")
-
-    return output_df
+    return df

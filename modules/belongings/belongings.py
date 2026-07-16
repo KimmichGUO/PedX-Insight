@@ -4,6 +4,7 @@ import pandas as pd
 from ultralytics import YOLO
 import math
 import torch
+from collections import defaultdict
 
 def run_belongings_detection(
     video_path,
@@ -11,7 +12,7 @@ def run_belongings_detection(
     weights="yolo11n.pt",
     tracking_csv_path=None,
     output_csv_path=None,
-
+    vote_fraction=0.2,
 ):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if tracking_csv_path is None:
@@ -54,26 +55,28 @@ def run_belongings_detection(
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
 
-    results_list = []
-    frame_cache = dict()
-    # Start at 0 so the pre-increment below makes frame_cache keys 1-indexed, matching the
-    # tracking CSV's 1-indexed frame_id (starting at -1 shifted every crop by one frame).
-    frame_id = 0
-    success, frame = cap.read()
+    # FIX #24: aggregate per pedestrian with a VOTE instead of an OR-latch, and read frames
+    # on demand instead of caching the whole video to RAM. For each track we count how many of
+    # its analyzed frames each item was detected in; the item is reported present only if that
+    # fraction reaches `vote_fraction` (so one lucky single-frame detection no longer latches an
+    # item on for the whole pedestrian).
+    detect_counts = defaultdict(lambda: {name: 0 for name in TARGET_CLASSES.values()})
+    frame_counts = defaultdict(int)  # analyzed frames actually processed per track (vote denominator)
+    first_frame = {}                 # first analyzed frame per track, kept for the frame_id column
 
-    while success:
-        frame_id += 1
-        if frame_id % analyze_every_n_frames == 0:
-            frame_cache[frame_id] = frame.copy()
-        success, frame = cap.read()
+    # Only the sampled frames that actually carry tracking rows need to be decoded.
+    analyzed_fids = sorted(
+        fid for fid in df["frame_id"].unique() if fid % analyze_every_n_frames == 0
+    )
 
-    for fid in sorted(df["frame_id"].unique()):
-        if fid % analyze_every_n_frames != 0:
-            continue
-
+    for fid in analyzed_fids:
         frame_data = df[df["frame_id"] == fid]
-        frame = frame_cache.get(fid)
-        if frame is None:
+        # Read this frame on demand. tracking frame_id is 1-indexed while OpenCV's
+        # CAP_PROP_POS_FRAMES is 0-indexed, so seek to fid - 1. If the video is missing/deleted
+        # the read fails and we simply skip (empty output stays a valid header-only CSV).
+        cap.set(cv2.CAP_PROP_POS_FRAMES, fid - 1)
+        success, frame = cap.read()
+        if not success or frame is None:
             continue
 
         for _, row in frame_data.iterrows():
@@ -86,21 +89,31 @@ def run_belongings_detection(
 
             result = model(crop, verbose=False)[0]
 
-            item_flags = {name: 0 for name in TARGET_CLASSES.values()}
+            detected = set()
             for det in result.boxes.data.cpu().numpy():
                 cls_id = int(det[5])
                 if cls_id in TARGET_CLASSES:
-                    name = TARGET_CLASSES[cls_id]
-                    item_flags[name] = 1
+                    detected.add(TARGET_CLASSES[cls_id])
 
-            row_data = {
-                "frame_id": fid,
-                "track_id": track_id,
-                **item_flags
-            }
-            results_list.append(row_data)
+            frame_counts[track_id] += 1
+            first_frame.setdefault(track_id, fid)
+            for name in detected:
+                detect_counts[track_id][name] += 1
 
     cap.release()
+
+    results_list = []
+    for track_id in sorted(frame_counts.keys()):
+        total = frame_counts[track_id]
+        item_flags = {
+            name: (1 if detect_counts[track_id][name] / total >= vote_fraction else 0)
+            for name in TARGET_CLASSES.values()
+        }
+        results_list.append({
+            "frame_id": first_frame[track_id],
+            "track_id": track_id,
+            **item_flags,
+        })
 
     df_out = pd.DataFrame(results_list, columns=["frame_id", "track_id"] + list(TARGET_CLASSES.values()))
     df_out.to_csv(output_csv_path, index=False)

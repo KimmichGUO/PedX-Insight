@@ -1,181 +1,122 @@
-import cv2
+"""Pedestrian waiting-time detection (module [P3]).
+
+Rewritten (fix #10). The previous version ran Lucas-Kanade optical flow between
+frames sampled ~1 s apart — a large-displacement regime that violates LK's
+small-motion assumption — and thresholded raw pixels (2.0 px), which is not
+scale-aware, so far pedestrians were always "waiting" and near ones rarely were.
+Camera motion also contaminated the estimate.
+
+This version measures a metric velocity on the pedestrian's foot-point trajectory
+(dense [B2] preferred, else 1 Hz [B1]), converts pixels to metres with the same
+per-person height-prior scale used by [S1], and subtracts camera motion from
+[B3]ego_motion.csv when the camera is moving. A pedestrian is "waiting" while their
+metric speed is below `wait_speed_mps`; contiguous waiting spans of at least
+`min_wait_seconds` are summed. Output column names (track_id, waiting_time) are
+unchanged.
+"""
+
+import os
+import math
 import numpy as np
 import pandas as pd
-import os
+
+from modules.speed.speed_estimation import _resolve_assumed_height_m, _rolling_median
+
+WAIT_SPEED_MPS = 0.3
+MIN_WAIT_SECONDS = 1.0
+
 
 def run_waiting_time_analysis(video_path, csv_path=None, output_csv=None,
-                             move_thresh=2.0, frame_thresh=30, min_good_points=5):
-
+                              mapping_csv="mapping.csv", wait_speed_mps=WAIT_SPEED_MPS,
+                              min_wait_seconds=MIN_WAIT_SECONDS, smooth_window=3,
+                              # accepted for backward compatibility; no longer used
+                              move_thresh=None, frame_thresh=None, min_good_points=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-
-    if csv_path is None:
-        csv_path = os.path.join("analysis_results", video_name, "[B1]tracked_pedestrians.csv")
+    output_dir = os.path.join("analysis_results", video_name)
+    os.makedirs(output_dir, exist_ok=True)
     if output_csv is None:
-        output_dir = os.path.join("analysis_results", video_name)
-        os.makedirs(output_dir, exist_ok=True)
         output_csv = os.path.join(output_dir, "[P3]waiting_time.csv")
-    else:
-        os.makedirs(os.path.dirname(output_csv), exist_ok=True)
+
+    dense_path = os.path.join(output_dir, "[B2]dense_tracks.csv")
+    b1_path = os.path.join(output_dir, "[B1]tracked_pedestrians.csv")
+    if csv_path is None:
+        csv_path = dense_path if (os.path.exists(dense_path) and os.path.getsize(dense_path) > 0) else b1_path
+
+    def _write_empty(msg):
+        pd.DataFrame(columns=["track_id", "waiting_time"]).to_csv(output_csv, index=False)
+        print(f"[waiting] {msg} Empty results saved to {output_csv}")
 
     if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0:
-        pd.DataFrame(columns=["track_id", "waiting_time"]).to_csv(output_csv, index=False)
-        print(f"Tracking CSV not found or empty. Empty results saved to {output_csv}")
-        return
-
+        return _write_empty("Trajectory CSV missing/empty.")
     df = pd.read_csv(csv_path)
-    if df.empty:
-        pd.DataFrame(columns=["track_id", "waiting_time"]).to_csv(output_csv, index=False)
-        print(f"Tracking CSV is empty. Empty results saved to {output_csv}")
-        return
+    # Header-only [B2] must not defeat the fallback to a populated [B1] (row count, not size).
+    if df.empty and csv_path == dense_path and os.path.exists(b1_path) and os.path.getsize(b1_path) > 0:
+        b1_df = pd.read_csv(b1_path)
+        if not b1_df.empty:
+            df = b1_df
+    if df.empty or not {"frame_id", "timestamp", "track_id", "x1", "y1", "x2", "y2"}.issubset(df.columns):
+        return _write_empty("Trajectory CSV empty or malformed.")
 
-    cap = cv2.VideoCapture(video_path)
-    frame_cache = {}
+    assumed_height_m, _ = _resolve_assumed_height_m(video_name, mapping_csv)
 
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    if fps <= 0:
-        fps = 30
+    # Optional ego-motion: ALWAYS subtract when available (subtracting a near-zero series
+    # on static clips is harmless; the old moving-only gate left partial pans uncompensated).
+    ego_fx = ego_fy = None
+    ego_path = os.path.join(output_dir, "[B3]ego_motion.csv")
+    if os.path.exists(ego_path) and os.path.getsize(ego_path) > 0:
+        try:
+            e = pd.read_csv(ego_path)
+            if not e.empty:
+                ef = e.sort_values("frame_id")
+                fr = ef["frame_id"].to_numpy(dtype=float)
+                ego_fx = (fr, ef["cam_x"].to_numpy(dtype=float))
+                ego_fy = (fr, ef["cam_y"].to_numpy(dtype=float))
+        except Exception:
+            pass
 
-    # Only cache the (sparsely sampled) frames the tracking CSV actually references, instead
-    # of decoding the whole video into memory, which risks OOM on long / HD clips.
-    needed_frames = set(df["frame_id"].astype(int))
-    for i in range(1, total_frames + 1):
-        ret, frame = cap.read()
-        if not ret:
-            break
-        if i in needed_frames:
-            frame_cache[i] = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    cap.release()
+    def cam_at(frame_ids):
+        if ego_fx is None:
+            z = np.zeros_like(frame_ids, dtype=float)
+            return z, z
+        return (np.interp(frame_ids, ego_fx[0], ego_fx[1]),
+                np.interp(frame_ids, ego_fy[0], ego_fy[1]))
 
     results = []
+    for track_id, g in df.groupby("track_id"):
+        g = g.sort_values("timestamp").reset_index(drop=True)
+        if len(g) < 2:
+            continue
+        fr = g["frame_id"].to_numpy(dtype=float)
+        t = g["timestamp"].to_numpy(dtype=float)
+        h_px = (g["y2"].to_numpy() - g["y1"].to_numpy()).astype(float)
+        cx, cy = cam_at(fr)
+        # Ego-compensate BEFORE smoothing (smoothed foot minus raw camera diffs
+        # re-injected camera shake as fake pedestrian motion).
+        foot_x = _rolling_median((g["x1"].to_numpy() + g["x2"].to_numpy()) / 2.0 - cx, smooth_window)
+        foot_y = _rolling_median(g["y2"].to_numpy(dtype=float) - cy, smooth_window)
 
-    for track_id, group in df.groupby("track_id"):
-        group = group.sort_values("frame_id").reset_index(drop=True)
-        waiting_counter = 0
-        total_waiting_frames = 0
-
-        for i in range(len(group) - 1):
-            f0, f1 = group.loc[i, "frame_id"], group.loc[i + 1, "frame_id"]
-            if f0 not in frame_cache or f1 not in frame_cache:
+        waiting_total = 0.0
+        seg = 0.0
+        for i in range(len(g) - 1):
+            dt = t[i + 1] - t[i]
+            h_avg = 0.5 * (h_px[i] + h_px[i + 1])
+            if dt <= 0 or h_avg <= 1:
                 continue
-
-            x1, y1, x2, y2 = group.loc[i, ["x1", "y1", "x2", "y2"]].astype(int)
-            roi0 = frame_cache[f0][y1:y2, x1:x2]
-            roi1 = frame_cache[f1][y1:y2, x1:x2]
-
-            p0 = cv2.goodFeaturesToTrack(roi0, maxCorners=20, qualityLevel=0.01, minDistance=3)
-            if p0 is None or len(p0) < min_good_points:
-                continue
-            p0 += np.array([[x1, y1]])
-
-            p1, st, _ = cv2.calcOpticalFlowPyrLK(frame_cache[f0], frame_cache[f1], p0.astype(np.float32), None)
-            if p1 is None:
-                continue
-
-            good = st.flatten() == 1
-            if good.sum() < min_good_points:
-                continue
-
-            dists = np.linalg.norm(p1[good] - p0[good], axis=1)
-            median_dist = np.median(dists)
-
-            if median_dist < move_thresh:
-                # Accumulate the physical frame span between the two sampled frames, not a bare
-                # count of intervals. The tracking CSV is sampled every N frames, so counting
-                # intervals and later dividing by the physical fps underestimated waiting time
-                # by roughly the sampling factor N.
-                waiting_counter += int(f1 - f0)
+            scale = h_avg / assumed_height_m
+            dxp = foot_x[i + 1] - foot_x[i]      # foot series already ego-compensated
+            dyp = foot_y[i + 1] - foot_y[i]
+            v = (math.hypot(dxp, dyp) / scale) / dt
+            if v < wait_speed_mps:
+                seg += dt
             else:
-                if waiting_counter >= frame_thresh:
-                    total_waiting_frames += waiting_counter
-                waiting_counter = 0  # reset
+                if seg >= min_wait_seconds:
+                    waiting_total += seg
+                seg = 0.0
+        if seg >= min_wait_seconds:
+            waiting_total += seg
 
-        if waiting_counter >= frame_thresh:
-            total_waiting_frames += waiting_counter
+        if waiting_total >= 1.0:
+            results.append({"track_id": track_id, "waiting_time": round(waiting_total, 2)})
 
-        waiting_time = round(total_waiting_frames / fps, 2)
-
-
-        if waiting_time >= 1.0:
-            results.append({"track_id": track_id, "waiting_time": waiting_time})
-
-    pd.DataFrame(results).to_csv(output_csv, index=False)
-    print(f"\nWaiting time detection results saved to {output_csv}")
-
-# import os
-# import cv2
-# import pandas as pd
-# from collections import defaultdict
-# import math
-#
-# def run_waiting_time_analysis(video_path, tracking_csv_path=None, output_csv_path=None, distance_threshold=15):
-#     video_name = os.path.splitext(os.path.basename(video_path))[0]
-#
-#     if tracking_csv_path is None:
-#         tracking_csv_path = os.path.join("analysis_results", video_name, "tracked_pedestrians.csv")
-#     if output_csv_path is None:
-#         output_dir = os.path.join("analysis_results", video_name)
-#         os.makedirs(output_dir, exist_ok=True)
-#         output_csv_path = os.path.join(output_dir, "waiting_time_pedestrian.csv")
-#
-#     cap = cv2.VideoCapture(video_path)
-#     fps = cap.get(cv2.CAP_PROP_FPS)
-#     cap.release()
-#
-#     df = pd.read_csv(tracking_csv_path)
-#
-#     track_points = defaultdict(list)
-#     for _, row in df.iterrows():
-#         frame_id = int(row["frame_id"])
-#         track_id = int(row["track_id"])
-#         x1, y1, x2, y2 = row["x1"], row["y1"], row["x2"], row["y2"]
-#         cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
-#         track_points[track_id].append((frame_id, cx, cy))
-#
-#     results = []
-#
-#     for track_id, points in track_points.items():
-#         points.sort()
-#         segment_frames = []
-#         base_cx, base_cy = None, None
-#
-#         for frame_id, cx, cy in points:
-#             if not segment_frames:
-#                 base_cx, base_cy = cx, cy
-#                 segment_frames = [frame_id]
-#                 continue
-#
-#             dist = math.hypot(cx - base_cx, cy - base_cy)
-#
-#             if dist <= distance_threshold:
-#                 segment_frames.append(frame_id)
-#             else:
-#                 if len(segment_frames) > 1:
-#                     duration_sec = len(segment_frames) / fps
-#                     if duration_sec >= 1.0:
-#                         results.append({
-#                             "track_id": track_id,
-#                             "start_frame": segment_frames[0],
-#                             "end_frame": segment_frames[-1],
-#                             "frame_count": len(segment_frames),
-#                             "waiting_time_sec": round(duration_sec, 2)
-#                         })
-#                 base_cx, base_cy = cx, cy
-#                 segment_frames = [frame_id]
-#
-#         if len(segment_frames) > 1:
-#             duration_sec = len(segment_frames) / fps
-#             if duration_sec >= 1.0:
-#                 results.append({
-#                     "track_id": track_id,
-#                     "start_frame": segment_frames[0],
-#                     "end_frame": segment_frames[-1],
-#                     "frame_count": len(segment_frames),
-#                     "waiting_time_sec": round(duration_sec, 2)
-#                 })
-#
-#     results_df = pd.DataFrame(results)
-#     results_df.to_csv(output_csv_path, index=False)
-#     print(f"\nwaiting detection results saved to {output_csv_path}")
-#
+    pd.DataFrame(results, columns=["track_id", "waiting_time"]).to_csv(output_csv, index=False)
+    print(f"[waiting] {len(results)} waiting pedestrians. Saved to {output_csv}")

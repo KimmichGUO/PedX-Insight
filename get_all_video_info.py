@@ -135,7 +135,7 @@ def main():
     # Define required columns
     video_info_columns = [
         'video_name', 'duration_seconds', 'total_frames', 'total_pedestrians',
-        'total_crossed_pedestrians', 'average_age', 'phone_usage_ratio',
+        'total_crossed_pedestrians', 'measured_avg_walking_speed_mps', 'average_age', 'phone_usage_ratio',
         'risky_crossing_ratio', 'run_red_light_ratio', 'crosswalk_usage_ratio',
         'traffic_signs_ratio', 'total_vehicles', 'top3_vehicles', 'main_weather',
         'sidewalk_prob', 'crosswalk_prob', 'traffic_light_prob', 'avg_road_width',
@@ -230,6 +230,11 @@ def main():
         row_data['crossing_time'] = crossing_time
         row_data['crossing_speed'] = crossing_speed
         row_data['data_collected_date'] = data_collected_date
+        # Per-rank vehicle columns from [V6] (top3_vehicles above is the stringified
+        # list copied from [A1]; these are the individually addressable ranks).
+        row_data['top_vehicle1'] = top_vehicle1
+        row_data['top_vehicle2'] = top_vehicle2
+        row_data['top_vehicle3'] = top_vehicle3
 
         if city_info is not None:
             for col in mapping_columns:
@@ -245,6 +250,7 @@ def main():
         result_df = pd.DataFrame(aggregated_data)
 
         columns_order = ['city', 'link'] + video_info_columns + [
+            'top_vehicle1', 'top_vehicle2', 'top_vehicle3',
             'crossing_time', 'crossing_speed', 'data_collected_date'
         ] + mapping_columns
         result_df = result_df.reindex(columns=columns_order)

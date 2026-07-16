@@ -1,4 +1,9 @@
 vehicle_type,risky_crossing_rate(%),run_red_light_rate(%)
-bus,100.0,0.0
-motorbike,100.0,0.0
-three wheelers,100.0,0.0
+bicycle,0.0,0.0
+bus,4.0,24.0
+car,0.0,21.73913043478261
+motorbike,3.125,21.875
+pickup,0.0,11.11111111111111
+suv,0.0,100.0
+truck,0.0,60.0
+three wheelers,3.3333333333333335,23.333333333333332

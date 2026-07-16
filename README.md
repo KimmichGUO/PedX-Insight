@@ -42,7 +42,52 @@ python main.py --mode single_all --source_video_path PATH/TO/VIDEO --analysis_in
 ```bash
 python main.py --mode id_img --source_video_path PATH/TO/VIDEO --analysis_interval 1.0 --weights_yolo "yolo11n.pt" 
 ```
-Result: [B1]tracked_pedestrians.csv
+Result: [B1]tracked_pedestrians.csv (1 Hz, for the appearance/environment modules) **and**
+[B2]dense_tracks.csv (dense foot-point trajectory, for the kinematic modules).
+The tracker now runs **densely** (default `tracking_fps=15`) so ByteTrack association stays
+valid for moving pedestrians, while [B1] is still down-sampled to `analysis_interval`. Set
+`tracking_fps<=0` in `ultralytics_pedestrian_tracking_with_imgsave` to fall back to 1-rate tracking.
+
+#### (1b) Pedestrian speed (measured)
+```bash
+python main.py --mode speed --source_video_path PATH/TO/VIDEO
+```
+Result: [S1]pedestrian_speed.csv
+Measures each pedestrian's walking/net speed in **m/s** from their foot-point trajectory (prefers
+[B2], falls back to [B1]). Pixel→metre scale uses a per-pedestrian height prior (bbox height ÷ the
+city's `avg_height` from `mapping.csv`, fallback 1.70 m). Per-track columns include `walking_speed_mps`,
+`net_speed_mps`, quality fields, and a `reliable` flag. This replaces the previous behaviour where
+`crossing_speed` was a city-level constant imported from an external CSV, never measured from the video.
+The per-video median flows into `[A1]video_info.csv` as `measured_avg_walking_speed_mps`.
+> Note: within-video/relative speed is trustworthy; absolute cross-city m/s is approximate on
+> uncalibrated monocular footage — gate on the `reliable` flag.
+
+#### (1c) Camera ego-motion
+```bash
+python main.py --mode ego --source_video_path PATH/TO/VIDEO
+```
+Result: [B3]ego_motion.csv
+Estimates the per-frame global background translation (Lucas-Kanade on background features, with the
+pedestrian boxes from [B2] masked out) and accumulates it into a camera position. `speed` and `waiting`
+subtract it when the camera is actually moving (handheld / dashcam / pan), so pedestrian motion is not
+confounded with camera motion. Static-camera videos are left untouched.
+
+#### (1d) Ground-plane scale calibration
+```bash
+python main.py --mode scale --source_video_path PATH/TO/VIDEO
+```
+Result: [S2]scale_calibration.csv
+Recovers a real ground-plane metric scale from **crosswalk stripe periodicity**: a zebra crossing is a
+periodic ground pattern of known real period (default 1.0 m = 0.5 m stripe + 0.5 m gap), so its period in
+pixels gives pixels-per-metre at that image depth. Samples across depths are fit to `scale(y) = a*y + b`
+(pixels-per-metre vs image row). [S1] prefers this over the height prior when the fit quality is `good`,
+and falls back automatically otherwise.
+> `stripe_period_m` is a country-dependent assumption — a wrong period scales every speed proportionally.
+> The assumed period and a `quality` flag are recorded in [S2] for auditability.
+
+**Scale priority used by [S1]:** stripe ground plane ([S2], ~2-5%) → per-pedestrian height prior
+(`avg_height` from mapping.csv, ~10-20%) → lane-width cross-check ([V5]).
+
 #### (2) Phone usage detection
 ```bash
 python main.py --mode phone --source_video_path PATH/TO/VIDEO --analysis_interval 1.0 --weights_yolo "yolo11n.pt" 
@@ -211,6 +256,23 @@ python main.py --mode sum_pede --source_video_path PATH/TO/VIDEO
 ```
 Result: [A2]pedestrian_info.csv   
 This function is used to extract and summary the information of all crossed pedestrians from whole video.
+
+### 6. Novel Behavioral Insights
+Six insight modules consume the CSVs above (no video needed once the producers ran; all are
+part of `single_all`/`mul_all` and unit-tested under `tests/`):
+
+| Mode | Output | What it measures |
+|------|--------|------------------|
+| `pet` | [I1]pet_conflicts.csv | **Post-encroachment time** pedestrian↔vehicle surrogate-safety conflicts (PET < 1.5 s = severe); pure time gap, robust to scale error |
+| `vehicle_speed` | [V8]vehicle_speed.csv | Per-vehicle **metric speed profiles** (median/p85/max, at-crosswalk vs mid-block) with reliable flag |
+| `headway` | [V11]headway_stats.csv | **Time-headway distribution** at the counting line: shifted-exponential fit, platoon fraction, flow |
+| `signal_timing` | [P10]signal_timing.csv | **Phase-relative crossing starts**: anticipatory starts, startup latency, red-clearance exposure |
+| `micro_events` | [P11]micro_events.csv | **Curb-dance hesitation**: aborted starts, mid-crossing freezes, evasive speed bursts |
+| `groups` | [I2]/[I3] group CSVs | **Social groups & platooning**: co-moving clusters, leader/follower launch lags, group-vs-solo |
+
+Supporting sidecars written by the producers: `[B0]video_meta.csv` (fps/width/height, survives video
+deletion), `[V7]vehicle_tracks.csv` (dense per-frame vehicle trajectories), `[V10]line_crossing_events.csv`
+(vehicle counting-line events; also reused by `crossing_vehicle_count` to skip its duplicate GPU pass).
 
 ## Dataset
 https://github.com/Shaadalam9/pedestrians-in-youtube

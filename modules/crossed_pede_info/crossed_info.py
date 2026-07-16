@@ -39,6 +39,7 @@ def extract_pedestrian_info(
         crosswalk_usage_csv = os.path.join(output_dir, "[C4]crosswalk_usage.csv")
     if nearby_count_path is None:
         nearby_count_path = os.path.join(output_dir, "[C10]nearby_count.csv")
+    speed_csv_path = os.path.join(output_dir, "[S1]pedestrian_speed.csv")
 
     def safe_read_csv(path):
         if os.path.exists(path):
@@ -55,6 +56,7 @@ def extract_pedestrian_info(
     run_redlight_df = safe_read_csv(run_redlight_csv)
     crosswalk_usage_df = safe_read_csv(crosswalk_usage_csv)
     nearby_count_df = safe_read_csv(nearby_count_path)
+    speed_df = safe_read_csv(speed_csv_path)
 
     belongings_cols = ['backpack', 'umbrella', 'handbag', 'suitcase']
     clothing_cols = ['short_sleeved_shirt', 'long_sleeved_shirt', 'short_sleeved_outwear',
@@ -65,6 +67,7 @@ def extract_pedestrian_info(
         'track_id', 'crossed', 'nearby_count_beginning', 'nearby_count_whole',
         'risky_crossing', 'run_red_light', 'crosswalk_use_or_not',
         'gender', 'age', 'phone_using',
+        'walking_speed_mps', 'crossing_speed_mps', 'decision_delay_s',
         *belongings_cols,
         *clothing_cols
     ]
@@ -129,6 +132,10 @@ def extract_pedestrian_info(
         else:
             cwuse = 'None'
 
+        speed_row = speed_df[speed_df['track_id'] == pid] if not speed_df.empty else pd.DataFrame()
+        def _sp(col):
+            return speed_row[col].values[0] if (not speed_row.empty and col in speed_row.columns) else 'None'
+
         final_row = {
             'track_id': pid,
             'crossed': crossed,
@@ -140,6 +147,9 @@ def extract_pedestrian_info(
             'gender': gender,
             'age': age,
             'phone_using': phone_using,
+            'walking_speed_mps': _sp('walking_speed_mps'),
+            'crossing_speed_mps': _sp('crossing_speed_mps'),
+            'decision_delay_s': _sp('decision_delay_s'),
             **belongings_result,
             **clothing_result
         }

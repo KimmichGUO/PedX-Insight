@@ -2,7 +2,19 @@ import os
 import pandas as pd
 
 def update_video_status(input_csv, output_csv):
+    if not (os.path.exists(input_csv) and os.path.getsize(input_csv) > 0):
+        print(f"Mapping CSV missing or empty, nothing to update: {input_csv}")
+        return
+
     df = pd.read_csv(input_csv)
+
+    # Ensure the status columns exist, and force object dtype: an all-empty CSV column is
+    # inferred as float64, and pandas 3 removed the silent upcast on setitem — assigning
+    # True below would raise on a float64 column. Same guard as run.py.
+    for col in ['downloaded', 'finished']:
+        if col not in df.columns:
+            df[col] = None
+        df[col] = df[col].astype('object')
 
     for idx, row in df.iterrows():
         # Use 'name' (not 'city') to match run.py's f"{name}_{video_id}" folder/file naming;

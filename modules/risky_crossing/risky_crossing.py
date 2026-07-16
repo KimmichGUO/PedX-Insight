@@ -1,7 +1,27 @@
-import cv2
 import os
 import bisect
 import pandas as pd
+
+
+def _read_csv_or_empty(csv_path, columns):
+    """Read an input CSV defensively.
+
+    Upstream env modules run in their own subprocesses, so any of them can fail
+    without stopping the pipeline (e.g. missing model weights -> no [E2]/[E3]/
+    [E7] written). A missing, empty, or unparseable input must degrade to an
+    empty DataFrame with the expected columns -- never a crash -- so this module
+    still writes a valid [C1] output.
+    """
+    if not csv_path or not os.path.exists(csv_path):
+        return pd.DataFrame(columns=columns)
+    try:
+        df = pd.read_csv(csv_path)
+    except (pd.errors.EmptyDataError, pd.errors.ParserError):
+        return pd.DataFrame(columns=columns)
+    for col in columns:
+        if col not in df.columns:
+            df[col] = pd.NA
+    return df
 
 
 def detect_crossing_risk(
@@ -10,7 +30,8 @@ def detect_crossing_risk(
         crosswalk_csv=None,
         traffic_sign_csv=None,
         crossing_judge_csv=None,
-        output_csv_path=None
+        output_csv_path=None,
+        tracked_csv=None
 ):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     output_dir = os.path.join("analysis_results", video_name)
@@ -26,8 +47,14 @@ def detect_crossing_risk(
         traffic_sign_csv = os.path.join(output_dir, "[E3]traffic_sign.csv")
     if crossing_judge_csv is None:
         crossing_judge_csv = os.path.join(output_dir, "[C3]crossing_judge.csv")
+    if tracked_csv is None:
+        tracked_csv = os.path.join(output_dir, "[B1]tracked_pedestrians.csv")
 
-    df_crossing = pd.read_csv(crossing_judge_csv)
+    # Missing/empty [C3] -> no crossings -> header-only output below.
+    df_crossing = _read_csv_or_empty(
+        crossing_judge_csv,
+        ['track_id', 'crossed', 'started_frame', 'ended_frame']
+    )
     crossed_pedestrians = df_crossing[df_crossing['crossed'] == True].copy()
 
     if crossed_pedestrians.empty:
@@ -39,19 +66,43 @@ def detect_crossing_risk(
         print(f"No crossed pedestrians found. Empty results saved to {output_csv_path}")
         return
 
-    df_light = pd.read_csv(traffic_light_csv)
-    light_state_map = dict(zip(df_light["frame_id"], df_light["main_light_color"]))
+    # [E2] traffic light. The producer writes the literal string 'None' as
+    # main_light_color for every no-light sample, and 'None' is in pandas'
+    # default na_values, so read_csv hands those cells back as NaN. Without
+    # normalization the `light_state == "None"` rule below never fires (a
+    # video with no lights at all would classify every frame 'not risky').
+    # Normalize every value to 'red'/'green'/'yellow' or the literal 'None',
+    # and KEEP the 'None' samples in the map so the forward-fill correctly
+    # returns to the unknown state after the last real color sample instead
+    # of propagating a stale green.
+    df_light = _read_csv_or_empty(traffic_light_csv, ["frame_id", "main_light_color"])
+    light_state_map = {}
+    for _, row in df_light.iterrows():
+        try:
+            light_frame_id = int(row["frame_id"])
+        except (ValueError, TypeError):
+            continue
+        color = str(row["main_light_color"]).strip().lower()
+        light_state_map[light_frame_id] = color if color in ("red", "green", "yellow") else "None"
 
-    df_crosswalk = pd.read_csv(crosswalk_csv)
-    crosswalk_map = {
-        row["frame_id"]: row["crosswalk_detected"].strip().lower() == "yes"
-        for _, row in df_crosswalk.iterrows()
-    }
+    # [E7] crosswalk. str() guards NaN cells (float) that would break .strip().
+    df_crosswalk = _read_csv_or_empty(crosswalk_csv, ["frame_id", "crosswalk_detected"])
+    crosswalk_map = {}
+    for _, row in df_crosswalk.iterrows():
+        try:
+            crosswalk_frame_id = int(row["frame_id"])
+        except (ValueError, TypeError):
+            continue
+        crosswalk_map[crosswalk_frame_id] = str(row["crosswalk_detected"]).strip().lower() == "yes"
 
-    df_sign = pd.read_csv(traffic_sign_csv)
+    df_sign = _read_csv_or_empty(traffic_sign_csv, ["frame_id", "sign_classes_1", "sign_classes_2"])
     sign_map = {}
     for _, row in df_sign.iterrows():
-        sign_map[row["frame_id"]] = {
+        try:
+            sign_frame_id = int(row["frame_id"])
+        except (ValueError, TypeError):
+            continue
+        sign_map[sign_frame_id] = {
             "sign_classes_1": str(row["sign_classes_1"]).split(";") if pd.notna(row["sign_classes_1"]) else [],
             "sign_classes_2": str(row["sign_classes_2"]).split(";") if pd.notna(row["sign_classes_2"]) else []
         }
@@ -71,12 +122,34 @@ def detect_crossing_risk(
         idx = bisect.bisect_right(sign_frames_sorted, frame_id) - 1
         return sign_map[sign_frames_sorted[idx]] if idx >= 0 else {"sign_classes_1": [], "sign_classes_2": []}
 
+    # Per-track full-frame span from the tracking CSV, used only as a fallback
+    # window when [C3] has no crossing window for a track (guarded: missing file
+    # -> empty map -> such a track is skipped rather than crashing).
+    df_tracks = _read_csv_or_empty(tracked_csv, ['frame_id', 'track_id'])
+    full_track_span = {}
+    if not df_tracks.empty:
+        for tid, grp in df_tracks.groupby('track_id'):
+            full_track_span[tid] = (int(grp['frame_id'].min()), int(grp['frame_id'].max()))
+
     results = []
 
     for _, pedestrian in crossed_pedestrians.iterrows():
         track_id = pedestrian['track_id']
-        started_frame = int(pedestrian['started_frame'])
-        ended_frame = int(pedestrian['ended_frame'])
+
+        # FIX #17: evaluate risk ONLY over the on-carriageway crossing sub-window
+        # (started_frame..ended_frame from [C3]crossing_judge.csv). Spanning the
+        # whole track let post-crossing sidewalk walking inflate risky_ratio.
+        # Fall back to the full track span only when [C3] has no valid window.
+        started_raw = pedestrian['started_frame']
+        ended_raw = pedestrian['ended_frame']
+        if pd.notna(started_raw) and pd.notna(ended_raw):
+            started_frame = int(started_raw)
+            ended_frame = int(ended_raw)
+        elif track_id in full_track_span:
+            started_frame, ended_frame = full_track_span[track_id]
+        else:
+            # No crossing window and no track geometry available -> skip safely.
+            continue
 
         risky_frame_count = 0
         total_frame_count = ended_frame - started_frame + 1

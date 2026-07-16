@@ -1,0 +1,27 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+# BoT-SORT config for PedX-Insight (fix #6). Adds appearance Re-ID and Global Motion
+# Compensation on top of ByteTrack-style association:
+#  - with_reid + model: auto -> uses the detector's own features to re-identify a
+#    pedestrian after occlusion / a crossing path, cutting ID swaps that pure-motion
+#    ByteTrack suffers at crosswalks.
+#  - gmc_method: sparseOptFlow -> compensates camera motion (handheld / pan / dashcam)
+#    inside the tracker, so track association survives a moving camera.
+# track_buffer is sized to the dense tracking rate (~15 Hz -> ~2 s), like mybytetrack.yaml.
+
+tracker_type: botsort
+track_high_thresh: 0.25
+track_low_thresh: 0.1
+new_track_thresh: 0.25
+track_buffer: 30
+match_thresh: 0.8
+fuse_score: True
+
+# BoT-SORT specifics
+gmc_method: sparseOptFlow   # global motion compensation for moving cameras
+
+# ReID
+proximity_thresh: 0.5
+appearance_thresh: 0.8
+with_reid: True
+model: auto                 # use the detector's features for appearance ReID

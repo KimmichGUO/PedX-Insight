@@ -1,2 +1,5 @@
 weather,daytime,run_red_light_prob,risky_crossing_prob
-rain,Day,0.0,100.0
+rain,Day,14.285714285714285,3.571428571428571
+cloudy,Day,100.0,0.0
+sunrise,Day,27.27272727272727,0.0
+shine,Day,50.0,0.0

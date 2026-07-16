@@ -235,6 +235,12 @@ save_bar_chart_pdf(continent_stats.reset_index(), "continent", ["crosswalk_usage
 
 # ========== 13. continent speed and decision time ==========
 df = pd.read_csv("./summary_data/all_video_info.csv")
+# Prefer the MEASURED per-video walking speed (from [S1], via video_info) over the imported
+# city-constant crossing_speed; fall back to the constant where no measurement exists.
+if "measured_avg_walking_speed_mps" in df.columns:
+    df["measured_walking_speed"] = df["measured_avg_walking_speed_mps"].fillna(df["crossing_speed"])
+else:
+    df["measured_walking_speed"] = df["crossing_speed"]
 continents = df["continent"].dropna().unique()
 results = []
 for cont in continents:
@@ -244,11 +250,12 @@ for cont in continents:
         "continent": cont,
         "avg_decision_time": subset["crossing_time"].mean(skipna=True),
         "avg_crossing_speed": subset["crossing_speed"].mean(skipna=True),
+        "avg_measured_walking_speed": subset["measured_walking_speed"].mean(skipna=True),
     })
 results_df = pd.DataFrame(results)
 print(results_df)
 save_csv(results_df, "./summary_data/crossing_stats.csv")
-save_bar_chart_pdf(results_df, "continent", ["avg_decision_time", "avg_crossing_speed"], "./summary_data/crossing_stats.pdf", "Average Desicion Time & Crossing Speed by Continent")
+save_bar_chart_pdf(results_df, "continent", ["avg_decision_time", "avg_crossing_speed", "avg_measured_walking_speed"], "./summary_data/crossing_stats.pdf", "Decision Time, Imported & Measured Speed by Continent")
 
 
 # ========== 13. others ==========

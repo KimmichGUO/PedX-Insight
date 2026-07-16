@@ -5,8 +5,8 @@ import math
 
 def calculate_nearby_count(video_path, crossing_csv=None, tracked_pede_csv=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
+    output_dir = os.path.join("analysis_results", video_name)
     if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[C10]nearby_count.csv")
     if tracked_pede_csv is None:
@@ -51,15 +51,26 @@ def calculate_nearby_count(video_path, crossing_csv=None, tracked_pede_csv=None,
             frame_id = p['frame_id']
             px = (p['x1'] + p['x2']) / 2
             py = p['y2']
-            radius = (p['x2'] - p['x1'])
+            # FIX #22 (revised): scale-aware, symmetric proximity. Approximate a
+            # pixels-per-metre scale from bbox height (a walking adult ~1.7 m).
+            # Using only the ego pedestrian's scale made counts asymmetric
+            # (A near B != B near A), so threshold each pair at ~2 m using the
+            # MEAN of the two pedestrians' height-derived scales. Heights are
+            # clamped to a small positive floor so degenerate/truncated boxes
+            # cannot collapse the radius to zero.
+            ego_height = max(p['y2'] - p['y1'], 1.0)
 
             frame_peds = tracked_df[tracked_df['frame_id'] == frame_id]
+
+            other_heights = np.maximum(frame_peds['y2'] - frame_peds['y1'], 1.0)
+            pair_scale_px_per_m = 0.5 * (ego_height + other_heights) / 1.7
+            radii = 2.0 * pair_scale_px_per_m
 
             dx = (frame_peds['x1'] + frame_peds['x2']) / 2 - px
             dy = frame_peds['y2'] - py
             distances = np.sqrt(dx**2 + dy**2)
 
-            nearby_count = ((distances <= radius) & (frame_peds['track_id'] != track_id)).sum()
+            nearby_count = ((distances <= radii) & (frame_peds['track_id'] != track_id)).sum()
             nearby_counts_all.append(nearby_count)
 
             if frame_id <= first_5th_frames:

@@ -1,14 +1,16 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Default Ultralytics settings for ByteTrack tracker when using mode="track"
-# For documentation and examples see https://docs.ultralytics.com/modes/track/
-# For ByteTrack source code see https://github.com/ifzhang/ByteTrack
+# ByteTrack config for PedX-Insight. Single collapsed config (replaces the old
+# mybytetrack_30/45/60.yaml, whose track_buffer was sized to NATIVE fps while the
+# tracker only stepped once per ~1 s, giving a 90-180 s lost-track window).
+# The tracker now steps at ~tracking_fps (default 15 Hz); track_buffer=30 -> ~2 s
+# occlusion bridge at that rate.
 
 tracker_type: bytetrack # tracker type, ['botsort', 'bytetrack']
 track_high_thresh: 0.25 # threshold for the first association
 track_low_thresh: 0.1 # threshold for the second association
 new_track_thresh: 0.25 # threshold for init new track if the detection does not match any tracks
-track_buffer: 180 # buffer to calculate the time when to remove tracks
+track_buffer: 30 # buffer (in tracker steps) before a lost track is removed (~2 s at 15 Hz)
 match_thresh: 0.8 # threshold for matching tracks
 fuse_score: True # Whether to fuse confidence scores with the iou distances before matching
 # min_box_area: 10  # threshold for min box areas(for tracker evaluation, not used for now)

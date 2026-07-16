@@ -124,6 +124,14 @@ def run_lane_detection(video_path, weights="yolo11n.pt", analyze_interval_sec=1.
 
         # for f in range(frame_idx, min(frame_idx + interval_frames, total_frames)):
         for f in range(int(frame_idx), min(int(frame_idx + interval_frames), int(total_frames))):
+            # CONTRACT: each lane side is written independently. If a side was not
+            # detected (left_line/right_line is None), ALL FOUR of its coordinates
+            # (x1, y1, x2, y2) are written as 0 — the all-zero side is the explicit
+            # "undetected" sentinel. A row may therefore be one-sided (one side valid,
+            # the other all zeros). Consumers that need both lane boundaries (e.g.
+            # road_width lane scaling, pede_on_lane polygon checks, speed estimation)
+            # MUST skip rows where either side is all-zero; do not treat x=0 as a
+            # real boundary at the image's left edge.
             results.append({
                 'frame': f,
                 'left_x1': left_line[0] if left_line else 0,

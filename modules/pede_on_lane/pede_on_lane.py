@@ -45,7 +45,7 @@ def pedestrian_on_lane(video_path, tracking_csv_path=None, lane_csv_path=None, o
 
         x1, y1, x2, y2 = row['x1'], row['y1'], row['x2'], row['y2']
         center_x = (x1 + x2) / 2
-        center_y = y1
+        center_y = y2  # foot-point (ground contact); the lane polygon lives on the ground plane
         radius = (x2 - x1) / 2
 
         person_circle = Point(center_x, center_y).buffer(radius)

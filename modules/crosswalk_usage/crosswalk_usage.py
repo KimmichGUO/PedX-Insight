@@ -25,7 +25,7 @@ def circle_overlaps_crosswalk(circle_center, radius, crosswalk_boxes):
             return True
     return False
 
-def determine_crosswalk_usage(video_path, crossing_csv_path=None, track_csv_path=None, crosswalk_csv_path=None, output_csv_path=None):
+def determine_crosswalk_usage(video_path, crossing_csv_path=None, track_csv_path=None, crosswalk_csv_path=None, output_csv_path=None, frame_window=30):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if crossing_csv_path is None:
         crossing_csv_path = os.path.join("analysis_results", video_name, "[C3]crossing_judge.csv")
@@ -51,17 +51,34 @@ def determine_crosswalk_usage(video_path, crossing_csv_path=None, track_csv_path
             continue
 
         person_track = tracked_df[tracked_df["track_id"] == tid]
+
+        # [FIX #16] Only attribute crosswalk use during the actual on-road crossing and at
+        # the pedestrian's feet: (a) restrict to the [C3] on-road window (started..ended,
+        # padded by the tight frame_window) instead of the whole track; (b) test the FOOT
+        # point ((x1+x2)/2, y2) rather than the head (y1); (c) use a proximity radius of
+        # half the box width (dropping the old 2x inflation, as the crosswalk boxes are
+        # already inflated); (d) check overlap only within a tight +/-frame_window
+        # (~1 s at these frame rates) instead of the old +/-250 frames (~8 s), which
+        # massively over-attributed crosswalk use.
+        started = row.get("started_frame")
+        ended = row.get("ended_frame")
+        if pd.notna(started) and pd.notna(ended):
+            person_track = person_track[
+                (person_track["frame_id"] >= started - frame_window)
+                & (person_track["frame_id"] <= ended + frame_window)
+            ]
+
         used_crosswalk = False
 
         for _, trow in person_track.iterrows():
             frame_id = int(trow["frame_id"])
             x1, y1, x2, y2 = trow["x1"], trow["y1"], trow["x2"], trow["y2"]
             cx = (x1 + x2) / 2
-            cy = y1
-            radius = (x2 - x1) * 2
+            cy = y2
+            radius = (x2 - x1) / 2
             circle_center = (cx, cy)
 
-            for offset in range(-250, 251):
+            for offset in range(-frame_window, frame_window + 1):
                 check_frame = frame_id + offset
                 if check_frame < 0 or check_frame > max_frame_id:
                     continue

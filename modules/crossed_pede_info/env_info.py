@@ -114,9 +114,21 @@ def merge_env_info(video_path,
         signs_in_range = rows_in_range(df_sign, 'frame_id', start_frame, end_frame)
         special_not_risky_flag = 0
         if not signs_in_range.empty:
+            def sign_tokens(value):
+                # sign_classes_* cells are ';'-joined class codes (traffic_sign.py). Split
+                # into exact tokens (mirroring risky_crossing.py) instead of substring-
+                # matching the joined string: codes that merely CONTAIN 'i1'/'pg'/'w57'
+                # (e.g. TT100K 'il100', 'i10', 'pg'-prefixed names) must not set
+                # crossing_sign. NaN cells yield no tokens.
+                if pd.isna(value):
+                    return []
+                return [tok.strip() for tok in str(value).split(';') if tok.strip()]
+
             for _, srow in signs_in_range.iterrows():
-                if any(sign in str(srow.get('sign_classes_1', '')) for sign in special_not_risky_signs) \
-                   or ("Pedestrian Crossing" in str(srow.get('sign_classes_2', ''))):
+                codes_1 = sign_tokens(srow.get('sign_classes_1', ''))
+                codes_2 = sign_tokens(srow.get('sign_classes_2', ''))
+                if any(code in special_not_risky_signs for code in codes_1) \
+                   or ("Pedestrian Crossing" in codes_2):
                     special_not_risky_flag = 1
                     break
 

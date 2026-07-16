@@ -133,14 +133,21 @@ def main():
             pedestrian_columns = [
                 'track_id', 'crossed', 'nearby_count_beginning', 'nearby_count_whole',
                 'risky_crossing', 'run_red_light', 'crosswalk_use_or_not', 'gender',
-                'age', 'phone_using', 'backpack', 'umbrella', 'handbag', 'suitcase',
+                'age', 'phone_using', 'walking_speed_mps', 'crossing_speed_mps', 'decision_delay_s',
+                'backpack', 'umbrella', 'handbag', 'suitcase',
                 'short_sleeved_shirt', 'long_sleeved_shirt', 'short_sleeved_outwear',
                 'long_sleeved_outwear', 'vest', 'sling', 'shorts', 'trousers', 'skirt',
                 'short_sleeved_dress', 'long_sleeved_dress', 'vest_dress', 'sling_dress',
                 'weather', 'daytime', 'police_car', 'arrow_board', 'cones', 'accident',
                 'crack', 'potholes', 'avg_vehicle_total', 'crossing_sign', 'avg_road_width',
+                # NOTE: the real [A2]/[V6] class is the single name 'human hauler'
+                # (with a space); the legacy 'human'/'hauler' entries never matched a
+                # real column and stay only so existing consumers of
+                # all_pedestrian_info.csv (statistics_with_pdf_save.py vehicle_cols)
+                # keep finding the columns they index. They remain empty.
                 'crosswalk', 'sidewalk', 'ambulance', 'army vehicle', 'auto rickshaw',
-                'bicycle', 'bus', 'car', 'garbagevan', 'human', 'hauler', 'minibus',
+                'bicycle', 'bus', 'car', 'garbagevan', 'human hauler', 'human',
+                'hauler', 'minibus',
                 'minivan', 'motorbike', 'pickup', 'policecar', 'rickshaw', 'scooter',
                 'suv', 'taxi', 'three wheelers -CNG-', 'truck', 'van', 'wheelbarrow'
             ]
@@ -169,14 +176,18 @@ def main():
         pedestrian_columns = [
             'track_id', 'crossed', 'nearby_count_beginning', 'nearby_count_whole',
             'risky_crossing', 'run_red_light', 'crosswalk_use_or_not', 'gender',
-            'age', 'phone_using', 'backpack', 'umbrella', 'handbag', 'suitcase',
+            'age', 'phone_using', 'walking_speed_mps', 'crossing_speed_mps', 'decision_delay_s',
+            'backpack', 'umbrella', 'handbag', 'suitcase',
             'short_sleeved_shirt', 'long_sleeved_shirt', 'short_sleeved_outwear',
             'long_sleeved_outwear', 'vest', 'sling', 'shorts', 'trousers', 'skirt',
             'short_sleeved_dress', 'long_sleeved_dress', 'vest_dress', 'sling_dress',
             'weather', 'daytime', 'police_car', 'arrow_board', 'cones', 'accident',
             'crack', 'potholes', 'avg_vehicle_total', 'crossing_sign', 'avg_road_width',
+            # 'human hauler' is the real [A2] column; 'human'/'hauler' are legacy
+            # always-empty columns kept for downstream consumers (see note above).
             'crosswalk', 'sidewalk', 'ambulance', 'army vehicle', 'auto rickshaw',
-            'bicycle', 'bus', 'car', 'garbagevan', 'human', 'hauler', 'minibus',
+            'bicycle', 'bus', 'car', 'garbagevan', 'human hauler', 'human',
+            'hauler', 'minibus',
             'minivan', 'motorbike', 'pickup', 'policecar', 'rickshaw', 'scooter',
             'suv', 'taxi', 'three wheelers -CNG-', 'truck', 'van', 'wheelbarrow'
         ]

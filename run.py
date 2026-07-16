@@ -131,10 +131,16 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
 
         # Step 2.5: Geolocate (optional) — must run BEFORE deletion, needs the video file.
         if localize and effective_start_step <= 2:
+            # Call the wrapper directly (it forwards unknown flags to the OSM tool);
+            # main.py's strict argparse can't carry tool flags. The flags below are the
+            # proven fast/safe configuration: no splat/aerial refinement, ~0.7s frame
+            # spacing for real VO baselines, capped frame budget.
             localize_cmd = [
-                sys.executable, "main.py",
-                "--mode", "localize",
+                sys.executable, os.path.join("modules", "localization", "localize.py"),
                 "--source_video_path", video_path,
+                "--no-splat", "--no-aerial",
+                "--frame-stride", "20", "--max-frames", "600",
+                "--vo-segment", "60:900",
             ]
             print(f"Localizing video {video_name} ...")
             # check=False: a failed/unconfigured localization must never block the pipeline;

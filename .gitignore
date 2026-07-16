@@ -9,3 +9,6 @@ __pycache__/
 
 # Vendored SGDepth (external weights/code, kept out of this repo)
 /modules/sidewalk/SGDepth
+
+# large tracking-pass detector weight (auto-downloaded on first run)
+yolo11x.pt

@@ -299,20 +299,31 @@ python run.py --start_row 1 --start_step 1
 `--mode localize` estimates **where** a video was filmed (WGS84 latitude/longitude) from the
 footage plus the city name, by wrapping the companion project
 [Monocular-OSM-Localization](https://github.com/M-Colley/Monocular-OSM-Localization) — vendored
-as a git submodule at `external/Monocular-OSM-Localization`.
+as a git submodule at `external/Monocular-OSM-Localization`, **pinned to its
+[`0.1.0`](https://github.com/M-Colley/Monocular-OSM-Localization/releases/tag/0.1.0) release**.
 
-Because that tool is source-only (no `setup.py`) and pulls heavy extra dependencies, it is run
-as a **subprocess** using a configurable interpreter (resolved from `--osm_python`, then
-`$OSM_LOCALIZATION_PYTHON`, then the submodule's own `.venv`). With paddlex removed, its pins
-(`numpy>=2.5`, `opencv-python>=4.13`) are compatible with PedX's environment, so that interpreter
-may be PedX's own venv once the tool's requirements are also installed there.
+> **Not a pip dependency.** Even at 0.1.0 the tool ships no package metadata (no `setup.py` /
+> `pyproject.toml`, and it is not on PyPI), so it cannot be `pip install`ed. It stays vendored
+> as a git submodule and is run as a **subprocess** using a configurable interpreter (resolved
+> from `--osm_python`, then `$OSM_LOCALIZATION_PYTHON`, then the submodule's own `.venv`, then —
+> new — PedX's own interpreter if the tool's deps are importable there).
 
-Set it up once:
+0.1.0's pins (`numpy>=2.5`, `opencv-python>=4.13`, `osmnx`, …) are compatible with PedX's
+environment, so the simplest setup is to install the tool's requirements **into PedX's own venv**
+and let `localize` run with no separate interpreter — the closest thing to using it "as a
+dependency". Pick one:
+
 ```bash
-git submodule update --init external/Monocular-OSM-Localization
+git submodule update --init external/Monocular-OSM-Localization   # checks out the 0.1.0 tag
+
+# A) reuse PedX's venv (recommended; then --osm_python is not needed):
+pip install -r external/Monocular-OSM-Localization/requirements.txt
+
+# B) or give the tool a dedicated venv:
 python -m venv external/Monocular-OSM-Localization/.venv
 external/Monocular-OSM-Localization/.venv/Scripts/pip install -r external/Monocular-OSM-Localization/requirements.txt
-# ffmpeg must also be on PATH
+
+# ffmpeg must also be on PATH in either case
 ```
 Run:
 ```bash

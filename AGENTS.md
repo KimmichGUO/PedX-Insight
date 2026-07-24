@@ -80,11 +80,16 @@ included**. To make that installable, **`paddlex` was removed** (Option B):
 ## Localization (`--mode localize`)
 
 Wraps the [Monocular-OSM-Localization](https://github.com/M-Colley/Monocular-OSM-Localization)
-submodule (video + city → lat/lon on OpenStreetMap). Code: `modules/localization/localize.py`.
+submodule (video + city → lat/lon on OpenStreetMap), pinned to its `0.1.0` release. Code:
+`modules/localization/localize.py`.
 
-- The tool is **never imported** — it is run as a **subprocess** with a configurable interpreter
-  (`--osm_python` → `$OSM_LOCALIZATION_PYTHON` → the submodule `.venv`). It is source-only
-  (no `setup.py`), so it is not a pip dependency; it is vendored as a git submodule.
+- The tool ships no package metadata (no `setup.py`/`pyproject.toml`, not on PyPI), so it is
+  **not** a pip dependency even at 0.1.0 — it stays vendored as a git submodule and is **never
+  imported**, only run as a **subprocess** with a configurable interpreter: `--osm_python` →
+  `$OSM_LOCALIZATION_PYTHON` → the submodule `.venv` → PedX's own interpreter (used only if the
+  tool's deps are importable there, probed via `osmnx`). 0.1.0's pins are compatible with PedX's
+  env, so `pip install -r external/Monocular-OSM-Localization/requirements.txt` into PedX's venv
+  makes localize run with no separate interpreter.
 - Emits per-video `[L1]localization.csv` (`lat`, `lon`, `confidence_level`,
   `confidence_spread_m`, `street_names`, `status`, `candidates`). `--city` is inferred from
   `mapping.csv` if omitted — the video id is everything after the FIRST underscore of the

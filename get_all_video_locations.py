@@ -14,7 +14,8 @@ def main():
 
     The output is the input contract of PedX-Visualizer's
     scripts/import-video-coordinates.js (columns: city, link, video_name, lat, lon,
-    confidence_level, confidence_spread_m, street_names, status, source, city_lat, city_lon).
+    confidence_level, confidence_spread_m, street_names, status, source, city_lat, city_lon,
+    route_latlon, route_length_m, trajectory_source).
     """
     final_results_path = Path('./analysis_results')
     mapping_csv_path = Path('./mapping.csv')
@@ -61,7 +62,10 @@ def main():
     # own 'city' is the "City, Country" query string sent to the localizer, not the slug.
     location_columns = ['lat', 'lon', 'confidence_level',
                         'confidence_spread_m', 'street_names', 'status', 'source',
-                        'result_json', 'candidates']
+                        'result_json', 'candidates',
+                        # Camera route through the city (visual odometry snapped to OSM).
+                        # Older [L1] files predate these columns, hence .get(col, None).
+                        'route_latlon', 'route_length_m', 'trajectory_source']
 
     aggregated_rows = []
 
@@ -109,7 +113,8 @@ def main():
 
     columns_order = ['city', 'link', 'video_name', 'lat', 'lon', 'confidence_level',
                      'confidence_spread_m', 'street_names', 'status', 'source',
-                     'city_lat', 'city_lon', 'result_json', 'candidates']
+                     'city_lat', 'city_lon', 'result_json', 'candidates',
+                     'route_latlon', 'route_length_m', 'trajectory_source']
 
     result_df = pd.DataFrame(aggregated_rows).reindex(columns=columns_order) if aggregated_rows \
         else pd.DataFrame(columns=columns_order)

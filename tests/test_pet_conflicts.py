@@ -9,8 +9,20 @@ Fixtures (per the review spec):
   (b) disjoint paths -> single NaN-PET row;
   (c) linear camera drift injected into BOTH pixel tracks plus a matching
       synthetic [B3] -> PET identical to the static case (ego-comp invariance);
-  (d) cumulative pan > 200 px -> row flagged camera_pan_ok=False, no PET.
+  (d) FAST local pan (50 px/s) -> row flagged camera_pan_ok=False, no PET.
 Plus: missing [V7] -> header-only output (empty-input guard).
+
+Camera-gate regressions (the [I1]-degenerate bug):
+  (i) a long-video [B3] whose CUMULATIVE cam_x/cam_y has already random-walked to
+      ~30,000 px before the crossing, but which drifts slowly (5 px/s) during it
+      -> camera_pan_ok stays True and the PET is still 2.0 s. The old gate
+      (max |cam - cam[0]| <= 200 px) declared every full-length video corrupted
+      and emitted 0 conflicts across all 11 new cities;
+  (j) local_camera_stats() directly: a constant offset added to the whole
+      cumulative series changes nothing, and the rate does not grow with the
+      window length;
+  (k) forward-driving camera (all bboxes growing together) -> ego_regime
+      'forward_motion' -> gated, even though step_px is ~0.
 
 Speed-gating fixtures (severe_timing shifts the vehicle 1 s earlier -> PET 1.0 s):
   (f) moving [V8] row (median 5.0 m/s) -> stays 'severe', speed_gated=True;
@@ -36,18 +48,25 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pandas as pd
 
-from modules.insights.pet_conflicts import (OUTPUT_COLUMNS, pet_from_tracks,
-                                            run_pet_conflicts)
+from modules.insights.pet_conflicts import (OUTPUT_COLUMNS, local_camera_stats,
+                                            pet_from_tracks, run_pet_conflicts)
 
 FPS = 10.0
 
 
-def _build_case(tmp, drift=None, far_vehicle=False, severe_timing=False, v8=None):
+def _build_case(tmp, drift=None, far_vehicle=False, severe_timing=False, v8=None,
+                b3_prehistory_s=0.0, expanding=False):
     """Write synthetic [B2]/[V7]/[C3]/[S2] (and [B3] when drift, [V8] when v8) into tmp.
 
     severe_timing: shift the vehicle 1 s earlier (y2 = 10*t + 61, t in [3, 5]) so it
     enters the shared cell at t=3.9 -> PET = 3.9 - 2.9 = 1.0 s (< 1.5 s, severe).
     v8: None (no [V8] file) | 'moving' (median 5.0 m/s) | 'stationary' (0.4 m/s).
+    b3_prehistory_s: prepend this many seconds of the SAME slow drift at negative
+        timestamps, so [B3]'s cumulative cam_x/cam_y is already huge when the
+        crossing starts (what a full-length video looks like). The crossing tracks
+        are untouched: only the camera's integrated history grows.
+    expanding: add 4 extra [B2] tracks whose bbox heights all grow together, the
+        signature of a forward-driving camera.
     """
     if drift is None:
         cam_x = lambda t: 0.0
@@ -63,6 +82,15 @@ def _build_case(tmp, drift=None, far_vehicle=False, severe_timing=False, v8=None
         y2 = 105.0 + cam_y(t)
         b2.append({"frame_id": i + 1, "timestamp": t, "track_id": 1,
                    "x1": x - 5.0, "y1": y2 - 17.0, "x2": x + 5.0, "y2": y2})
+    if expanding:
+        for k in range(4):
+            for i in range(31):
+                t = i / 10.0
+                h = 20.0 * (1.0 + 0.25 * t)      # ~0.25/s relative growth >> 0.05/s
+                y2 = 300.0 + 40.0 * k
+                b2.append({"frame_id": i + 1, "timestamp": t, "track_id": 100 + k,
+                           "x1": 200.0 + 40.0 * k, "y1": y2 - h,
+                           "x2": 200.0 + 40.0 * k + h / 2.0, "y2": y2})
     b2_path = os.path.join(tmp, "[B2]dense_tracks.csv")
     pd.DataFrame(b2).to_csv(b2_path, index=False)
 
@@ -93,8 +121,9 @@ def _build_case(tmp, drift=None, far_vehicle=False, severe_timing=False, v8=None
 
     b3_path = os.path.join(tmp, "[B3]ego_motion.csv")
     if drift is not None:
-        b3, prev = [], (cam_x(0.0), cam_y(0.0))
-        for i in range(61):
+        i_start = -int(round(b3_prehistory_s * 10))
+        b3, prev = [], (cam_x((i_start - 1) / 10.0), cam_y((i_start - 1) / 10.0))
+        for i in range(i_start, 61):
             t = i / 10.0
             cx, cy = cam_x(t), cam_y(t)
             b3.append({"frame_id": i + 1, "timestamp": t, "cam_x": cx, "cam_y": cy,
@@ -188,8 +217,8 @@ def test_ego_comp_invariance():
         shutil.rmtree(tmp_c, ignore_errors=True)
 
 
-def test_large_pan_flagged():
-    # cam_x = 50*t -> 300 px cumulative over 6 s > 200 px threshold
+def test_fast_local_pan_flagged():
+    # cam_x = 50*t -> a LOCAL translation rate of 50 px/s, above the 30 px/s gate
     tmp = tempfile.mkdtemp(prefix="pet_d_")
     try:
         out = _run(tmp, drift=(lambda t: 50.0 * t, lambda t: 0.0))
@@ -198,9 +227,73 @@ def test_large_pan_flagged():
         assert bool(r["camera_pan_ok"]) is False
         assert pd.isna(r["min_pet_s"])
         assert bool(r["reliable"]) is False
-        print("test_large_pan_flagged OK")
+        assert r["local_step_rate_px_s"] > 30.0, r["local_step_rate_px_s"]
+        print("test_fast_local_pan_flagged OK (50 px/s local rate -> gated)")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_long_video_cumulative_pan_not_flagged():
+    """REGRESSION: huge CUMULATIVE cam_x must not gate a locally-calm crossing.
+
+    100 minutes of 5 px/s drift before the crossing puts [B3]'s integrated cam_x at
+    ~-30,000 px, exactly like the real 11-city archives (22k-89k px). The camera is
+    still only moving 5 px/s while the pedestrian crosses, so the PET must survive
+    untouched. The old max(|cam - cam[0]|) <= 200 px test rejected this outright.
+    """
+    tmp = tempfile.mkdtemp(prefix="pet_i_")
+    try:
+        out = _run(tmp, drift=(lambda t: 5.0 * t, lambda t: 0.0), b3_prehistory_s=6000.0)
+        b3 = pd.read_csv(os.path.join(tmp, "[B3]ego_motion.csv"))
+        span = float(b3["cam_x"].max() - b3["cam_x"].min())
+        assert span > 20000.0, span            # the file really is a long random walk
+        assert len(out) == 1, out
+        r = out.iloc[0]
+        assert bool(r["camera_pan_ok"]) is True, r.to_dict()
+        assert r["min_pet_s"] == 2.0, r["min_pet_s"]
+        assert r["first_agent"] == "ped"
+        assert r["local_step_rate_px_s"] <= 30.0, r["local_step_rate_px_s"]
+        assert r["local_pan_px"] < 200.0, r["local_pan_px"]   # local excursion is tiny
+        assert bool(r["reliable"]) is True
+        print(f"test_long_video_cumulative_pan_not_flagged OK "
+              f"(cam_x spans {span:.0f} px, local rate "
+              f"{r['local_step_rate_px_s']:.1f} px/s, PET 2.0)")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_forward_motion_gated():
+    # every bbox grows together -> forward-driving camera; [B3]'s median translation
+    # cannot remove radial flow, so the crossing must be gated on expansion alone
+    tmp = tempfile.mkdtemp(prefix="pet_k_")
+    try:
+        out = _run(tmp, expanding=True)
+        assert len(out) == 1, out
+        r = out.iloc[0]
+        assert r["ego_regime"] == "forward_motion", r["ego_regime"]
+        assert r["ego_expansion"] > 0.05, r["ego_expansion"]
+        assert bool(r["camera_pan_ok"]) is False
+        assert pd.isna(r["min_pet_s"])
+        print("test_forward_motion_gated OK (expansion %.3f/s -> gated)" % r["ego_expansion"])
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_local_camera_stats_direct():
+    """The gate must read local DIFFERENCES, not the absolute cumulative position."""
+    import numpy as np
+    t = np.arange(0.0, 100.0, 0.1)
+    rate = np.full(t.shape, 20.0)                      # 20 px/s everywhere
+    for offset in (0.0, 50000.0):                      # cumulative random-walk offset
+        cam = (t, offset + 20.0 * t, offset - 20.0 * t, rate)
+        r_short, p_short = local_camera_stats(cam, 10.0, 12.0)
+        r_long, p_long = local_camera_stats(cam, 10.0, 90.0)
+        assert r_short == r_long == 20.0, (r_short, r_long)   # rate: length-invariant
+        assert abs(p_short - math.hypot(40.0, 40.0)) < 1.0, p_short
+        assert p_long > p_short                                # excursion does grow
+    # no [B3] and an empty window -> NaN, which must never gate
+    assert all(v != v for v in local_camera_stats(None, 0.0, 1.0))
+    print("test_local_camera_stats_direct OK")
 
 
 def test_missing_v7_header_only():
@@ -297,7 +390,10 @@ if __name__ == "__main__":
     test_exact_pet()
     test_disjoint_paths_nan()
     test_ego_comp_invariance()
-    test_large_pan_flagged()
+    test_fast_local_pan_flagged()
+    test_long_video_cumulative_pan_not_flagged()
+    test_forward_motion_gated()
+    test_local_camera_stats_direct()
     test_missing_v7_header_only()
     test_speed_gate_moving_stays_severe()
     test_speed_gate_stationary_queued()

@@ -6,9 +6,12 @@ surrogate-safety measure (PET < 1.5 s = serious conflict). PET is a pure time
 difference, so monocular-scale errors only perturb the cell size, not the gap.
 
 Pipeline:
-  1. Ego-compensate both agents with [B3] (subtract interpolated camera position
-     when the median step_px >= 1.0); skip the video entirely (camera_pan_ok=False)
-     when the cumulative camera displacement exceeds ``max_pan_px`` (default 200 px).
+  1. Ego-compensate both agents with [B3]: subtract the interpolated CUMULATIVE
+     camera position from both, so the shared term cancels in every ped-vehicle
+     comparison. Compensation is applied whenever [B3] exists (a near-zero series
+     on a static clip is harmless; the old global `median step_px >= 1` switch left
+     partially-panning videos fully uncompensated). Each crossing is then gated on
+     LOCAL camera sanity over its own conflict window (see below).
   2. Grid the ground plane into ~1 m cells whose pixel side is scale(y):
      [S2] a*y+b when quality=='good' (with an implied-stature sanity guard),
      else the pedestrian's own [S1] scale_px_per_m_median, else a bbox-height prior.
@@ -29,6 +32,28 @@ have been moving (speed_at_crosswalk_mps if present, else median_speed_mps,
 >= STATIONARY_SPEED_MPS); otherwise the row gets severity 'queued'. Columns
 veh_median_speed_mps and speed_gated record the join; without [V8] (most
 archives) the old ungated severities are emitted with speed_gated=False.
+
+CAMERA GATE (per crossing, never per video). [B3]'s cam_x/cam_y are the CUMULATIVE
+integrated camera position - a random walk that reaches 20k-90k px on a full-length
+clip - so any absolute threshold on them fires on every long video (the old
+`max(|cam - cam[0]|) <= 200 px` test declared all 11 new cities pan-corrupted and
+emitted zero conflicts). The gate is therefore LOCAL and rate-based, so it cannot
+scale with video length:
+  * local_step_rate_px_s = median(step_px / dt) over the ego samples inside the
+    crossing's conflict window - the background TRANSLATION rate. Gated at
+    ``max_pan_rate_px_s`` (30 px/s). Pure translation is exactly what the
+    subtraction removes, so this only has to reject motion fast enough that the
+    per-interval model itself breaks down (blur, tracking loss, whip pans).
+  * ego_expansion = median |relative bbox-height growth| over the same window via
+    [S1]'s estimate_ego_expansion(). A forward-driving camera produces radial flow
+    that a median TRANSLATION cannot remove, which does corrupt cell occupancy.
+    Gated at ``max_ego_expansion`` (0.05/s, the [S1] constant). Unknown (< 3
+    co-visible tracks) never gates.
+local_pan_px (the peak-to-peak cam_x/cam_y EXCURSION inside the window - a
+difference, not an absolute position) is reported and folded into `reliable`
+against ``max_pan_px``, but is not a hard gate: a slow steady pan is precisely the
+case the ego subtraction handles exactly. New columns local_pan_px,
+local_step_rate_px_s, ego_expansion, ego_regime expose all four numbers per row.
 """
 
 import math
@@ -37,15 +62,26 @@ import os
 import numpy as np
 import pandas as pd
 
-from modules.speed.speed_estimation import _resolve_assumed_height_m, _rolling_median
+from modules.speed.speed_estimation import (EGO_SMOOTH_SAMPLES,
+                                            EGO_STATIC_MAX_EXPANSION,
+                                            _resolve_assumed_height_m,
+                                            _rolling_median,
+                                            estimate_ego_expansion)
 
 OUTPUT_COLUMNS = [
     "track_id", "veh_track_id", "veh_type", "min_pet_s", "first_agent",
     "cell_y_px", "n_shared_cells", "severity", "scale_source",
     "camera_pan_ok", "reliable", "veh_median_speed_mps", "speed_gated",
+    "local_pan_px", "local_step_rate_px_s", "ego_expansion", "ego_regime",
 ]
 
 STATIONARY_SPEED_MPS = 1.0  # below this the conflicting vehicle counts as queued
+
+# Local camera-translation gate: median background motion inside the conflict window,
+# in px/s so it is independent of both the [B3] sampling interval and the video length.
+# Measured on the 11 new cities: per-crossing medians are 0-2 px/s while the camera is
+# parked at the corner and 40-100 px/s while it is panning/driving.
+MAX_PAN_RATE_PX_S = 30.0
 
 MIN_IMPLIED_HEIGHT_M = 0.9    # same stripe-scale sanity window as [S1]
 MAX_IMPLIED_HEIGHT_M = 2.8
@@ -139,6 +175,47 @@ def _cell_intervals(t, x, y, scale_fn, gap_break_s):
         ivs.append((start_t, last_t, float(np.mean(ys))))
         out[key] = ivs
     return out
+
+
+def local_camera_stats(cam, t0, t1):
+    """LOCAL camera motion inside [t0, t1] -> (pan_rate_px_s, pan_px).
+
+    cam is (timestamps, cam_x, cam_y, step_rate_px_s) from [B3], or None.
+      * pan_rate_px_s = median per-second background translation over the window
+        (a RATE: independent of the window length AND of the video length);
+      * pan_px = peak-to-peak EXCURSION of the cumulative cam_x/cam_y inside the
+        window, i.e. a difference of positions, never the absolute random-walk value.
+    Both are NaN when [B3] is absent or the window contains no ego sample.
+    Pure function -> unit-testable without any CSV.
+    """
+    nan = float("nan")
+    if cam is None:
+        return nan, nan
+    et, ex, ey, rate = cam
+    if et.size == 0:
+        return nan, nan
+    lo = int(np.searchsorted(et, t0, side="left"))
+    hi = int(np.searchsorted(et, t1, side="right"))
+    if hi <= lo:                      # window falls between samples -> nearest one
+        j = min(max(lo, 0), et.size - 1)
+        lo, hi = j, j + 1
+    r = rate[lo:hi]
+    r = r[np.isfinite(r)]
+    pan_rate = float(np.median(r)) if r.size else nan
+    pan_px = float(np.hypot(np.ptp(ex[lo:hi]), np.ptp(ey[lo:hi])))
+    return pan_rate, pan_px
+
+
+def _window_expansion(exp, f0, f1):
+    """Median |forward-motion expansion| (1/s) over frames [f0, f1]; NaN if unknown."""
+    if exp is None:
+        return float("nan")
+    ef, ev = exp
+    lo = int(np.searchsorted(ef, f0, side="left"))
+    hi = int(np.searchsorted(ef, f1, side="right"))
+    if hi <= lo:
+        return float("nan")
+    return float(np.median(np.abs(ev[lo:hi])))
 
 
 def pet_from_tracks(ped_df, veh_df, scale_fn, max_pet_s=10.0, gap_break_s=1.0):
@@ -267,7 +344,8 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
                       mapping_csv="mapping.csv", output_csv=None, fps=None,
                       pad_s=2.0, max_pet_s=10.0, gap_break_s=1.0, max_pan_px=200.0,
                       severe_pet_s=1.5, moderate_pet_s=3.0, smooth_window=3,
-                      vehicle_speed_csv=None):
+                      vehicle_speed_csv=None, max_pan_rate_px_s=MAX_PAN_RATE_PX_S,
+                      max_ego_expansion=EGO_STATIC_MAX_EXPANSION):
     """Compute [I1]pet_conflicts.csv for one video. CSV-only (video may be deleted).
 
     Severity is gated on vehicle motion via [V8]vehicle_speed.csv when available:
@@ -275,6 +353,13 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
     (gate speed >= STATIONARY_SPEED_MPS); sub-threshold gaps behind stationary
     (queued) vehicles are reported as severity 'queued'. Without [V8] the old
     ungated severities are kept and speed_gated is False.
+
+    The camera sanity gate is LOCAL to each crossing's conflict window (see the
+    module docstring): camera_pan_ok requires the median background translation
+    rate <= max_pan_rate_px_s AND, when measurable, the forward-motion expansion
+    <= max_ego_expansion. max_pan_px now bounds the LOCAL peak-to-peak camera
+    excursion inside that window (a difference, not the cumulative position) and
+    contributes to `reliable` only.
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     output_dir = os.path.join("analysis_results", video_name)
@@ -323,25 +408,46 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
     fps = _resolve_fps(fps, video_meta_csv, ped)
     veh_speeds = _load_vehicle_speeds(vehicle_speed_csv)  # None -> old ungated behavior
 
-    # --- ego motion: interpolate camera position over TIME; gate on median step_px ---
+    # --- ego motion -------------------------------------------------------------
+    # cam_x/cam_y are the CUMULATIVE integrated camera position. Subtracting the
+    # interpolated value from BOTH agents is the correct compensation: the shared
+    # term cancels in every ped-vehicle comparison, so its absolute magnitude (tens
+    # of thousands of px on a long clip) is irrelevant. It is applied whenever [B3]
+    # exists - the old `median step_px >= 1` switch disabled it on videos that are
+    # mostly parked but pan sometimes (e.g. Manila, median 0.80 px), leaving exactly
+    # the panning stretches uncompensated. step_px is the PER-INTERVAL translation,
+    # which is what the local gate below is built from.
     ego = _read_csv_nonempty(ego_csv)
-    camera_moving, cam_t = False, None
-    camera_pan_ok = True
+    camera_moving, cam_t, cam = False, None, None
     if ego is not None and {"timestamp", "cam_x", "cam_y", "step_px"}.issubset(ego.columns):
         ego = ego.sort_values("timestamp")
-        camera_moving = bool(ego["step_px"].median() >= 1.0)
+        camera_moving = bool(ego["step_px"].median() >= 1.0)   # reported flag only
         et = ego["timestamp"].to_numpy(dtype=float)
         ex = ego["cam_x"].to_numpy(dtype=float)
         ey = ego["cam_y"].to_numpy(dtype=float)
+        es = ego["step_px"].to_numpy(dtype=float)
         cam_t = (et, ex, ey)
-        # cumulative camera displacement from its first position
-        pan = float(np.max(np.hypot(ex - ex[0], ey - ey[0])))
-        camera_pan_ok = pan <= max_pan_px
+        dt = np.diff(et)
+        dt_pos = dt[dt > 0]
+        med_dt = float(np.median(dt_pos)) if dt_pos.size else 1.0
+        step_dt = np.concatenate(([med_dt], dt)) if dt.size else np.array([med_dt])
+        step_dt = np.where(step_dt > 0, step_dt, med_dt)
+        cam = (et, ex, ey, _rolling_median(es / step_dt, 5))
 
     def cam_at(ts):
-        if cam_t is None or not camera_moving:
+        if cam_t is None:
             return np.zeros_like(ts, dtype=float), np.zeros_like(ts, dtype=float)
         return (np.interp(ts, cam_t[0], cam_t[1]), np.interp(ts, cam_t[0], cam_t[2]))
+
+    # Forward-driving camera: radial flow that [B3]'s median TRANSLATION cannot
+    # remove, so it really does corrupt ground-cell occupancy. Same detector and
+    # constants as [S1] so both modules agree on what "camera-static" means.
+    exp = None
+    exp_map = estimate_ego_expansion(ped)
+    if exp_map:
+        ef = np.array(sorted(exp_map), dtype=float)
+        win = EGO_SMOOTH_SAMPLES if EGO_SMOOTH_SAMPLES % 2 else EGO_SMOOTH_SAMPLES + 1
+        exp = (ef, _rolling_median(np.array([exp_map[int(f)] for f in ef], dtype=float), win))
 
     # --- scale sources ---
     stripe_a = stripe_b = None
@@ -374,23 +480,39 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
                                     "veh_track_id": vid, "veh_type": vtype.to_numpy()}))
     veh_pts = pd.concat(vparts, ignore_index=True) if vparts else pd.DataFrame(
         columns=["t", "x", "y", "veh_track_id", "veh_type"])
+    veh_pts = veh_pts.sort_values("t").reset_index(drop=True)
+    veh_t = veh_pts["t"].to_numpy(dtype=float)     # sorted -> searchsorted window slices
 
     rows = []
+    n_gated = 0
 
-    def _nan_row(tid, scale_source):
-        rows.append({
+    def _cam_fields(pan_rate, pan_px, expansion, regime, pan_ok):
+        return {
+            "camera_pan_ok": pan_ok,
+            "local_pan_px": None if pan_px != pan_px else round(pan_px, 1),
+            "local_step_rate_px_s": None if pan_rate != pan_rate else round(pan_rate, 3),
+            "ego_expansion": None if expansion != expansion else round(expansion, 4),
+            "ego_regime": regime,
+        }
+
+    def _nan_row(tid, scale_source, cam_fields):
+        row = {
             "track_id": tid, "veh_track_id": None, "veh_type": None,
             "min_pet_s": None, "first_agent": None, "cell_y_px": None,
             "n_shared_cells": 0, "severity": "none", "scale_source": scale_source,
-            "camera_pan_ok": camera_pan_ok, "reliable": False,
-            "veh_median_speed_mps": None, "speed_gated": False,
-        })
+            "reliable": False, "veh_median_speed_mps": None, "speed_gated": False,
+        }
+        row.update(cam_fields)
+        rows.append(row)
+
+    # camera fields for crossings that die before their window is known
+    _unknown_cam = _cam_fields(float("nan"), float("nan"), float("nan"), "unknown", True)
 
     for _, cr in crossings.iterrows():
         tid = cr["track_id"]
         g = ped[ped["track_id"] == tid].sort_values("timestamp")
         if len(g) < 2:
-            _nan_row(tid, "none")
+            _nan_row(tid, "none", _unknown_cam)
             continue
         h_px = (g["y2"].to_numpy(dtype=float) - g["y1"].to_numpy(dtype=float))
         median_h = float(np.median(h_px))
@@ -411,15 +533,11 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
             scale_source = "s1_track_median"
         if scale_fn is None:
             if median_h <= 1:
-                _nan_row(tid, "none")
+                _nan_row(tid, "none", _unknown_cam)
                 continue
             const = median_h / assumed_height_m
             scale_fn = lambda yy, c=const: c
             scale_source = "bbox_height_prior"
-
-        if not camera_pan_ok:
-            _nan_row(tid, scale_source)
-            continue
 
         # pedestrian window: [started, ended] +/- pad_s (frames are [B2]-native units)
         start_f = float(cr["started_frame"]) - pad_s * fps
@@ -427,9 +545,32 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
         end_f = (float(ended) if pd.notna(ended) else float(g["frame_id"].max())) + pad_s * fps
         w = g[(g["frame_id"] >= start_f) & (g["frame_id"] <= end_f)]
         if len(w) < 2:
-            _nan_row(tid, scale_source)
+            _nan_row(tid, scale_source, _unknown_cam)
             continue
         ts = w["timestamp"].to_numpy(dtype=float)
+
+        # --- LOCAL camera gate over this crossing's conflict window ---------------
+        # The window spans the vehicle-search range, because co-occupancy is compared
+        # up to max_pet_s either side of the pedestrian's own presence.
+        wt0, wt1 = ts[0] - max_pet_s, ts[-1] + max_pet_s
+        pan_rate, pan_px = local_camera_stats(cam, wt0, wt1)
+        wf = w["frame_id"].to_numpy(dtype=float)
+        expansion = _window_expansion(exp, wf[0], wf[-1])
+        if expansion != expansion:
+            regime = "unknown"
+        elif expansion <= max_ego_expansion:
+            regime = "static"
+        else:
+            regime = "forward_motion"
+        # NaN (no [B3] / no co-visible tracks) never gates: unknown != corrupted.
+        pan_ok = bool((pan_rate != pan_rate or pan_rate <= max_pan_rate_px_s)
+                      and regime != "forward_motion")
+        cam_fields = _cam_fields(pan_rate, pan_px, expansion, regime, pan_ok)
+        if not pan_ok:
+            n_gated += 1
+            _nan_row(tid, scale_source, cam_fields)
+            continue
+
         cx, cy = cam_at(ts)
         ped_df = pd.DataFrame({
             "t": ts,
@@ -437,18 +578,21 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
                                  smooth_window),
             "y": _rolling_median(w["y2"].to_numpy(dtype=float) - cy, smooth_window),
         })
-        vsub = veh_pts[(veh_pts["t"] >= ts[0] - max_pet_s) & (veh_pts["t"] <= ts[-1] + max_pet_s)]
+        lo = int(np.searchsorted(veh_t, wt0, side="left"))
+        hi = int(np.searchsorted(veh_t, wt1, side="right"))
+        vsub = veh_pts.iloc[lo:hi]
         conflicts = pet_from_tracks(ped_df, vsub, scale_fn,
                                     max_pet_s=max_pet_s, gap_break_s=gap_break_s)
         med_dt = float(np.median(np.diff(ts))) if len(ts) > 1 else float("inf")
         if not conflicts:
-            _nan_row(tid, scale_source)
+            _nan_row(tid, scale_source, cam_fields)
             continue
+        pan_local_ok = bool(pan_px != pan_px or pan_px <= max_pan_px)
         for c in conflicts:
             pet = float(c["min_pet_s"])
             severity, veh_med_speed, speed_gated = _gated_severity(
                 pet, severe_pet_s, moderate_pet_s, veh_speeds, c["veh_track_id"])
-            rows.append({
+            row = {
                 "track_id": tid,
                 "veh_track_id": c["veh_track_id"],
                 "veh_type": c["veh_type"],
@@ -458,23 +602,30 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
                 "n_shared_cells": c["n_shared_cells"],
                 "severity": severity,
                 "scale_source": scale_source,
-                "camera_pan_ok": camera_pan_ok,
-                "reliable": bool(camera_pan_ok and med_dt <= 0.25
+                # `reliable` is the conservative subset: on top of the local gate it
+                # also demands a small local camera EXCURSION, a dense enough sample
+                # rate and a measured (non-prior) scale.
+                "reliable": bool(pan_ok and pan_local_ok and med_dt <= 0.25
                                  and scale_source != "bbox_height_prior"),
                 "veh_median_speed_mps": (round(veh_med_speed, 3)
                                          if veh_med_speed is not None else None),
                 "speed_gated": speed_gated,
-            })
+            }
+            row.update(cam_fields)
+            rows.append(row)
 
     out = pd.DataFrame(rows, columns=OUTPUT_COLUMNS)
     out.to_csv(output_csv, index=False)
     n_conf = int(out["min_pet_s"].notna().sum()) if not out.empty else 0
     n_sev = int((out["severity"] == "severe").sum()) if not out.empty else 0
     n_queued = int((out["severity"] == "queued").sum()) if not out.empty else 0
-    print(f"[pet] {len(out)} rows over {crossings['track_id'].nunique()} crossings: "
-          f"{n_conf} conflicts ({n_sev} severe, {n_queued} queued), fps={fps:.2f}, "
-          f"speed_gate={'[V8]' if veh_speeds is not None else 'off'}, "
-          f"camera={'moving' if camera_moving else 'static'}, pan_ok={camera_pan_ok}. "
+    n_mod = int((out["severity"] == "moderate").sum()) if not out.empty else 0
+    n_cross = int(crossings["track_id"].nunique())
+    print(f"[pet] {len(out)} rows over {n_cross} crossings: "
+          f"{n_conf} conflicts ({n_sev} severe, {n_mod} moderate, {n_queued} queued), "
+          f"fps={fps:.2f}, speed_gate={'[V8]' if veh_speeds is not None else 'off'}, "
+          f"camera={'moving' if camera_moving else 'static'}, "
+          f"{n_gated}/{n_cross} crossings camera-gated locally. "
           f"Saved to {output_csv}")
     return output_csv
 

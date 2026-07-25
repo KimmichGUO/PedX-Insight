@@ -7,6 +7,10 @@ Covers the spec's test strategy (pure core, no video / GPU / ultralytics):
   * ear/eye visibility asymmetry tiebreak       => resolves a nose-less look
   * brief (<0.3 s) glance                       => not counted
   * synthetic 2.0 Hz ankle sinusoid at 15 Hz    => cadence within 0.1 Hz
+  * 1.4/1.8/2.2/2.6 Hz sweep                    => each recovered within 0.1 Hz
+  * moderately noisy 2.0 Hz gait                => still recovered (no over-reject)
+  * too-short window / sparse sampling / gaps   => NaN
+  * dominant 0.5 Hz sway, 1.0 Hz stride-only    => NaN (outside the accept band)
   * noise-only keypoints                        => not reliable, no cadence
   * reliability gate boundaries (frames / conf / bbox height)
   * IoU matching greedy uniqueness
@@ -29,11 +33,13 @@ from modules.insights.pose_behavior import (
     OUTPUT_COLUMNS,
     KP_NOSE, KP_L_EYE, KP_R_EYE, KP_L_EAR, KP_R_EAR,
     KP_L_SHOULDER, KP_R_SHOULDER, KP_L_ANKLE, KP_R_ANKLE,
-    YAW_THR,
+    YAW_THR, CADENCE_BAND_HZ,
     head_yaw_series,
     count_sustained_looks,
     ankle_y_series,
+    cadence_signal,
     gait_cadence,
+    gait_cadence_detail,
     compute_track_metrics,
     match_tracks_to_detections,
     run_pose_behavior,
@@ -74,6 +80,16 @@ def set_nose_offset(kps, i0, i1, frac):
 
 def times(n, fs=FS, t0=0.0):
     return t0 + np.arange(n) / fs
+
+
+def gait_signal(freq_hz, duration_s, fs=FS, amp=3.0, noise_sd=0.0, drift=5.0,
+                seed=0):
+    """Synthetic ankle-y trace: sinusoid at ``freq_hz`` + linear drift + noise."""
+    rng = np.random.default_rng(seed)
+    t = np.arange(0.0, duration_s, 1.0 / fs)
+    y = (300.0 + amp * np.sin(2 * np.pi * freq_hz * t) + drift * t
+         + rng.normal(0.0, noise_sd, size=len(t)))
+    return t, y
 
 
 # ------------------------------------------------------------------ tests ---
@@ -170,6 +186,148 @@ def test_cadence_two_hz():
     print("ok  test_cadence_two_hz")
 
 
+def test_cadence_recovers_plausible_band():
+    # a sweep across the whole accepted band must come back within 0.1 Hz
+    for f in (1.4, 1.8, 2.0, 2.2, 2.6, 2.9):
+        t, y = gait_signal(f, 6.0)
+        cadence, steps, reason = gait_cadence_detail(t, y)
+        assert reason == "", (f, reason)
+        assert abs(cadence - f) <= 0.1, (f, cadence)
+        assert steps is not None and steps > 0, (f, steps)
+    print("ok  test_cadence_recovers_plausible_band")
+
+
+def test_cadence_survives_moderate_noise():
+    # the gates must not be so tight that ordinary keypoint jitter kills a real
+    # cadence: 3 px oscillation with 1-2 px keypoint noise is still recovered
+    for sd in (0.5, 1.0, 1.5, 2.0):
+        for seed in (0, 1, 2):
+            t, y = gait_signal(2.0, 6.0, noise_sd=sd, seed=seed)
+            cadence, _steps, reason = gait_cadence_detail(t, y)
+            assert reason == "", (sd, seed, reason)
+            assert abs(cadence - 2.0) <= 0.15, (sd, seed, cadence)
+    # a longer window rescues even a 1:1 amplitude-to-noise trace
+    t, y = gait_signal(2.0, 12.0, noise_sd=3.0, seed=5)
+    cadence, _steps, reason = gait_cadence_detail(t, y)
+    assert reason == "" and abs(cadence - 2.0) <= 0.15, (cadence, reason)
+    print("ok  test_cadence_survives_moderate_noise")
+
+
+def test_cadence_short_window_is_nan():
+    # [P12] defect: short windows leak into neighbouring bins.  A 2 s window
+    # cannot resolve the band at all (df = 0.5 Hz) -> must refuse to answer,
+    # even though the underlying signal is a perfect 2.0 Hz gait.
+    for dur in (1.5, 2.0, 3.0):
+        t, y = gait_signal(2.0, dur)
+        cadence, steps, reason = gait_cadence_detail(t, y)
+        assert cadence != cadence, (dur, cadence)      # NaN
+        assert steps is None, (dur, steps)
+        assert reason in ("too_few_samples", "window_too_short"), (dur, reason)
+    # ... and the same signal over a long-enough window IS accepted
+    cadence, _steps, reason = gait_cadence_detail(*gait_signal(2.0, 6.0))
+    assert reason == "" and abs(cadence - 2.0) <= 0.1, (cadence, reason)
+    print("ok  test_cadence_short_window_is_nan")
+
+
+def test_cadence_out_of_physiological_band_is_nan():
+    # 0.5 Hz body sway (the old code's favourite artifact: it clipped exactly
+    # onto the 0.50 Hz search-band edge) and a 1.0 Hz single-ankle stride
+    # signal are both outside the accepted step-frequency band.
+    for f in (0.5, 0.8, 1.0, 3.6):
+        t, y = gait_signal(f, 10.0)
+        cadence, steps, reason = gait_cadence_detail(t, y)
+        assert cadence != cadence, (f, cadence)
+        assert steps is None, (f, steps)
+        assert reason in ("out_of_physiological_band", "peak_not_dominant",
+                          "peak_not_concentrated"), (f, reason)
+    print("ok  test_cadence_out_of_physiological_band_is_nan")
+
+
+def test_cadence_sparse_sampling_is_nan():
+    # 5 Hz pose sampling -> Nyquist 2.5 Hz < band top: 2.0 Hz is unverifiable
+    # against its aliases, so no estimate may be emitted.
+    for fs in (3.0, 5.0):
+        t, y = gait_signal(2.0, 10.0, fs=fs)
+        cadence, _steps, reason = gait_cadence_detail(t, y)
+        assert cadence != cadence, (fs, cadence)
+        assert reason in ("sampling_too_sparse", "too_few_samples"), (fs, reason)
+    print("ok  test_cadence_sparse_sampling_is_nan")
+
+
+def test_cadence_large_dropout_is_nan():
+    # 6 s of the 10 s window is missing: interpolating across it would invent
+    # a signal, so the coverage gate must refuse.
+    t, y = gait_signal(2.0, 10.0)
+    keep = (t < 2.0) | (t > 8.0)
+    cadence, _steps, reason = gait_cadence_detail(t[keep], y[keep])
+    assert cadence != cadence, cadence
+    assert reason == "sparse_coverage", reason
+    print("ok  test_cadence_large_dropout_is_nan")
+
+
+def test_cadence_pure_noise_is_nan():
+    # no periodic content at all, over a long, densely sampled window
+    for seed in (0, 1, 2, 3, 4):
+        rng = np.random.default_rng(seed)
+        t = np.arange(0.0, 8.0, 1.0 / FS)
+        y = 300.0 + rng.normal(0.0, 3.0, size=len(t))
+        cadence, steps, reason = gait_cadence_detail(t, y)
+        assert cadence != cadence, (seed, cadence)
+        assert steps is None, (seed, steps)
+        assert reason != "", (seed, reason)
+    print("ok  test_cadence_pure_noise_is_nan")
+
+
+def test_cadence_signal_prefers_both_ankles():
+    # both ankles confident -> strict (step-frequency) series is used
+    n = 90
+    kps, confs, _bh = make_frames(n)
+    sig = cadence_signal(kps, confs)
+    assert np.isfinite(sig).all()
+    # right ankle dropped on most frames -> strict series too sparse, the
+    # mixed series is used instead (and still has every frame)
+    confs[:, KP_R_ANKLE] = 0.0
+    sig = cadence_signal(kps, confs)
+    assert np.isfinite(sig).sum() == n, np.isfinite(sig).sum()
+    strict = ankle_y_series(kps, confs, require_both=True)
+    assert np.isfinite(strict).sum() == 0, np.isfinite(strict).sum()
+    print("ok  test_cadence_signal_prefers_both_ankles")
+
+
+def test_compute_track_metrics_short_crossing_no_cadence():
+    # a 2 s crossing window is too short for cadence but head scanning in the
+    # pre-window is unaffected
+    n = 120
+    kps, confs, bh = make_frames(n)
+    t = times(n)
+    osc = 3.0 * np.sin(2 * np.pi * 2.0 * t)
+    kps[:, KP_L_ANKLE, 1] = 300.0 + osc
+    kps[:, KP_R_ANKLE, 1] = 300.0 + osc
+    set_nose_offset(kps, 15, 24, -0.5)          # 0.6 s look, pre-window
+    stats = compute_track_metrics(t, kps, confs, bh, window_s=(6.0, 8.0))
+    assert stats["cadence_hz"] is None, stats
+    assert stats["step_count"] is None, stats
+    assert stats["looked_left"] is True, stats
+    assert stats["n_head_turns"] == 1, stats
+    print("ok  test_compute_track_metrics_short_crossing_no_cadence")
+
+
+def test_emitted_cadence_always_in_band():
+    # nothing outside CADENCE_BAND_HZ may ever reach the output
+    rng = np.random.default_rng(3)
+    lo, hi = CADENCE_BAND_HZ
+    for _ in range(60):
+        f = float(rng.uniform(0.2, 6.0))
+        dur = float(rng.uniform(1.0, 12.0))
+        sd = float(rng.uniform(0.0, 6.0))
+        t, y = gait_signal(f, dur, noise_sd=sd, seed=int(f * 1000))
+        cadence, steps, _r = gait_cadence_detail(t, y)
+        if cadence == cadence:
+            assert lo <= cadence <= hi, (f, dur, cadence)
+            assert steps is not None
+    print("ok  test_emitted_cadence_always_in_band")
+
+
 def test_noise_only_not_reliable():
     # 30 frames of low-confidence noise keypoints: reliability gate fails on
     # median conf, ankles are below the conf floor -> no cadence either
@@ -264,6 +422,16 @@ if __name__ == "__main__":
     test_ear_eye_tiebreak()
     test_gap_breaks_look()
     test_cadence_two_hz()
+    test_cadence_recovers_plausible_band()
+    test_cadence_survives_moderate_noise()
+    test_cadence_short_window_is_nan()
+    test_cadence_out_of_physiological_band_is_nan()
+    test_cadence_sparse_sampling_is_nan()
+    test_cadence_large_dropout_is_nan()
+    test_cadence_pure_noise_is_nan()
+    test_cadence_signal_prefers_both_ankles()
+    test_compute_track_metrics_short_crossing_no_cadence()
+    test_emitted_cadence_always_in_band()
     test_noise_only_not_reliable()
     test_noise_ankle_no_cadence_peak()
     test_reliable_gate_boundaries()

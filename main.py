@@ -12,11 +12,13 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
 
 
-# Modes whose failure is reported but does not fail the batch: 'sidewalk' (weights newly
-# installed, not yet live-validated) and 'pose' (new [P12] module, first live run pending).
-# Promote them out of this set after one clean batch video. 'ag' left this set 2026-07-16
-# (reimplemented on YuNet + genderage.onnx; weights auto-download).
-OPTIONAL_MODES = {"sidewalk", "pose"}
+# Modes whose failure is reported but does not fail the batch. Now EMPTY: 'sidewalk' and
+# 'pose' were promoted 2026-07-24 after succeeding on all 11 batch cities ([E9] 86.8%
+# non-empty polygon rate; [P12] real pose output, median keypoint confidence 0.73-0.96).
+# Leaving them soft would let a real failure exit 0 and have run.py mark the video
+# finished=TRUE — the exact silent gap that left Toronto/Cincinnati without [E9]/[P12].
+# 'ag' left this set 2026-07-16 (reimplemented on YuNet + genderage.onnx).
+OPTIONAL_MODES = set()
 
 
 def main():

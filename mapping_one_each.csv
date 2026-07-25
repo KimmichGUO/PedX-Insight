@@ -9,10 +9,10 @@ id,name,city,video,time_of_day,start_time,end_time,downloaded,finished
 8,Monaco,Monaco,ij6xccYYIuE,1,22,1875,TRUE,TRUE
 9,Milan,Milan,ZByZSqoqzaI,0,18,3333,TRUE,TRUE
 10,Kuala Lumpur,Kuala Lumpur,AxQcSoA9vGQ,0,23,3140,TRUE,TRUE
-11,Chicago,Chicago,XzwI2rGmf04,0,22,3730,TRUE,
-12,Las Vegas,Las Vegas,KWciBlhQjRA,0,20,4569,,
-13,Los Angeles,Los Angeles,4uhMg5na888,0,13,2687,,
-14,New York,New York,_Wyg213IZDI,0,18,3133,,
+11,Chicago,Chicago,XzwI2rGmf04,0,22,3730,TRUE,TRUE
+12,Las Vegas,Las Vegas,KWciBlhQjRA,0,20,4569,TRUE,TRUE
+13,Los Angeles,Los Angeles,4uhMg5na888,0,13,2687,TRUE,TRUE
+14,New York,New York,_Wyg213IZDI,0,18,3133,TRUE,
 15,Dhaka,Dhaka,ZruaEnhtYLA,0,58,1531,,
 16,Luanda,Luanda,z3Gx2hp3Vo8,0,0,1836,,
 17,Moscow,Moscow,wCKLtcGQnWc,0,0,2253,,

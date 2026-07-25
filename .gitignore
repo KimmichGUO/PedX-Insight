@@ -15,3 +15,7 @@ yolo11x.pt
 
 # SGDepth sidewalk weights (146 MB, gdown 1X1uKa... per README)
 modules/sidewalk/weights/
+
+# pose weights (118 MB, auto-downloaded by ultralytics)
+yolo11x-pose.pt
+yolo11*-pose.pt

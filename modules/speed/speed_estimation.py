@@ -39,13 +39,26 @@ RUN_SPEED_MPS = 2.2          # above this they are running
 # such tracks must never be flagged reliable.
 MIN_BBOX_ASPECT = 1.4
 MAX_BBOX_ASPECT = 5.0
+# Forward-camera gate: |median relative bbox-height growth| above this (per second) means
+# the camera is translating toward/away from the scene, which [B3]'s median-translation ego
+# model cannot remove (radial flow cancels in the median). Static reference: a stopped-at-
+# lights dashcam clip measures 0.000/s; driving clips measure 0.10-0.18/s.
+EGO_STATIC_MAX_EXPANSION = 0.05
+EGO_SMOOTH_SAMPLES = 15          # ~1 s at the 15 Hz dense rate
+# Second half of the gate: residual background TRANSLATION from [B3]. Expansion catches a
+# forward-driving camera; step_px catches pan/lateral motion, which inflates speed just as
+# badly (binning per-step speed by step_px showed 0.68 -> 3.29 m/s as step_px grew).
+EGO_STATIC_MAX_STEP_PX = 0.5
+# A crossing chord may span a few contaminated intervals without being ruined; require the
+# window to be overwhelmingly - not perfectly - camera-static.
+CROSSING_STATIC_MIN_FRAC = 0.9
 
 OUTPUT_COLUMNS = [
     "track_id", "n_valid_steps", "walking_speed_mps", "crossing_speed_mps",
     "net_speed_mps", "decision_delay_s", "is_running", "mean_speed_mps",
     "median_bbox_h_px", "height_cv", "assumed_height_m", "scale_px_per_m_median",
     "scale_source", "lane_scale_px_per_m", "camera_moving", "median_bbox_aspect",
-    "traj_source", "reliable",
+    "ego_regime", "ego_static_frac", "traj_source", "reliable",
 ]
 
 
@@ -79,6 +92,64 @@ def _rolling_median(a, w=3):
     for i in range(half, len(a) - half):
         out[i] = np.median(a[i - half:i + half + 1])
     return out
+
+
+def estimate_ego_expansion(df, min_tracks=3, lag_s=0.5):
+    """Per-frame FORWARD-camera indicator, computed from the dense tracks alone.
+
+    [B3]'s ego model is a median background TRANSLATION, which is structurally blind to a
+    forward-driving camera: that motion is radial (left of frame flows left, right flows
+    right), so the median translation cancels to ~0 and compensates nothing. The residual
+    expansion then enters every pedestrian's displacement and inflates measured speed
+    (observed: dashcam cities reported 1.4-2.6 m/s median "walking", p90 > 5 m/s).
+
+    Forward motion has an unambiguous signature that survives in the CSVs: static objects
+    approach, so ALL bounding boxes grow together. We therefore take, for each pair of
+    consecutive dense frames, the median RELATIVE height growth rate across the tracks
+    visible in both:
+
+        expansion(f) = median_over_tracks( (h_next/h_prev - 1) / dt )      [1/s]
+
+    A pedestrian's own approach/recede motion is idiosyncratic, so with several tracks the
+    median reflects the camera.
+
+    The comparison spans `lag_s` seconds rather than one frame-step: box coordinates are
+    written as INTEGERS, so over a single 1/15 s step even a fast approach moves the box
+    edge by ~1 px and the signal is quantised away to zero. Over ~0.5 s it is ~10 px and
+    measurable. Returns {frame_id: expansion_rate_per_s} anchored at the interval start,
+    for anchors where at least `min_tracks` tracks were matched across the lag.
+    Pure function of the dataframe -> unit-testable without a video.
+    """
+    need = {"frame_id", "track_id", "y1", "y2", "timestamp"}
+    if df is None or df.empty or not need.issubset(df.columns):
+        return {}
+    d = df[["frame_id", "track_id", "y1", "y2", "timestamp"]].copy()
+    d["h"] = (d["y2"] - d["y1"]).astype(float)
+    d = d[d["h"] > 1]
+    if d.empty:
+        return {}
+
+    # per-anchor-frame accumulation of each track's relative growth rate across the lag
+    acc = {}
+    for _, g in d.groupby("track_id"):
+        g = g.sort_values("timestamp")
+        t = g["timestamp"].to_numpy(dtype=float)
+        h = g["h"].to_numpy(dtype=float)
+        f = g["frame_id"].to_numpy(dtype=float)
+        if t.size < 2:
+            continue
+        # j[i] = first sample at least lag_s after sample i
+        j = np.searchsorted(t, t + lag_s, side="left")
+        for i in range(t.size):
+            k = j[i]
+            if k >= t.size:
+                break
+            dt = t[k] - t[i]
+            if dt <= 0 or h[i] <= 1:
+                continue
+            acc.setdefault(int(f[i]), []).append((h[k] / h[i] - 1.0) / dt)
+
+    return {fid: float(np.median(v)) for fid, v in acc.items() if len(v) >= min_tracks}
 
 
 def _lane_scale_px_per_m(lane_csv):
@@ -152,6 +223,7 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
     # pans fully uncompensated, and subtracting a near-zero series on static clips is
     # harmless. camera_moving remains as a reported flag only.
     ego_fx = ego_fy = None
+    ego_step_frames = ego_step_px = None
     camera_moving = False
     ego_path = os.path.join(output_dir, "[B3]ego_motion.csv")
     if os.path.exists(ego_path) and os.path.getsize(ego_path) > 0:
@@ -163,6 +235,9 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
                 fr = ef["frame_id"].to_numpy(dtype=float)
                 ego_fx = (fr, ef["cam_x"].to_numpy(dtype=float))
                 ego_fy = (fr, ef["cam_y"].to_numpy(dtype=float))
+                # residual translation magnitude per frame, for the second gate
+                ego_step_frames = fr
+                ego_step_px = _rolling_median(ef["step_px"].to_numpy(dtype=float), 5)
         except Exception as e:
             print(f"[speed][warn] ego-motion read failed: {e}")
 
@@ -186,6 +261,48 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
         except Exception as e:
             print(f"[speed][warn] stripe calibration read failed: {e}")
     scale_source = "stripe_ground_plane" if stripe_a is not None else "height_prior"
+
+    # Forward-camera gate. Build a smoothed per-frame expansion series; a step is usable
+    # only while the camera is NOT translating forward/backward. On a driving dashcam this
+    # keeps the stopped-at-the-lights intervals — exactly when pedestrians cross — and
+    # discards the driving intervals whose radial flow would inflate every speed.
+    exp_map = estimate_ego_expansion(df)
+    ego_frames = ego_static_flags = None
+    ego_expansion_median = float("nan")
+    if exp_map:
+        ego_frames = np.array(sorted(exp_map), dtype=float)
+        ev = np.array([exp_map[int(f)] for f in ego_frames], dtype=float)
+        win = EGO_SMOOTH_SAMPLES if EGO_SMOOTH_SAMPLES % 2 else EGO_SMOOTH_SAMPLES + 1
+        ev_s = _rolling_median(ev, win)
+        ego_expansion_median = float(np.median(np.abs(ev_s)))
+        ego_static_flags = np.abs(ev_s) <= EGO_STATIC_MAX_EXPANSION
+        ego_regime = ("static" if ego_expansion_median <= EGO_STATIC_MAX_EXPANSION
+                      else "forward_motion")
+        print(f"[speed] ego regime: {ego_regime} (median |expansion| "
+              f"{ego_expansion_median:.3f}/s); {int(ego_static_flags.sum())}/"
+              f"{ego_static_flags.size} intervals camera-static")
+    else:
+        ego_regime = "unknown"
+
+    def step_is_ego_static(frame_id):
+        """True when the camera is still over the interval containing this step.
+
+        TWO conditions, because the two camera motions corrupt speed by different routes:
+          * expansion  -> forward/backward drive (radial flow; invisible to [B3]'s median)
+          * step_px    -> pan / lateral translation (visible to [B3])
+        Anchors are looked up by nearest PRECEDING interval start; frames before the first
+        anchor (or with too few co-visible tracks) are trusted only on a globally static
+        video."""
+        if ego_step_px is not None:
+            j = int(np.searchsorted(ego_step_frames, float(frame_id), side="right")) - 1
+            if j >= 0 and ego_step_px[j] > EGO_STATIC_MAX_STEP_PX:
+                return False
+        if ego_static_flags is None:
+            return True                      # no expansion info -> translation gate only
+        i = int(np.searchsorted(ego_frames, float(frame_id), side="right")) - 1
+        if i < 0:
+            return ego_regime == "static"
+        return bool(ego_static_flags[i])
 
     # Region context: [C3] crossing windows.
     cross_win = {}
@@ -239,10 +356,16 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
                 use_stripe = False
 
         step_speeds, step_scales, step_dts, per_step = [], [], [], []
+        n_moving_steps = 0
         for i in range(len(g) - 1):
             dt = t[i + 1] - t[i]
             h_avg = 0.5 * (h_px[i] + h_px[i + 1])
             if dt <= 0 or h_avg <= 1:
+                per_step.append(None); continue
+            # Discard steps taken while the camera translates: the uncompensated radial
+            # flow would be counted as pedestrian motion.
+            if not step_is_ego_static(fr[i + 1]):
+                n_moving_steps += 1
                 per_step.append(None); continue
             if use_stripe:
                 # ground-plane scale at the IMAGE foot row (rung A); degenerate near/above
@@ -265,12 +388,18 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
         if not step_speeds:
             continue
         median_scale = float(np.median(step_scales))
+        # Fraction of this track's usable steps taken with a non-translating camera.
+        total_considered = len(step_speeds) + n_moving_steps
+        ego_static_frac = (len(step_speeds) / total_considered) if total_considered else 0.0
 
-        # net (chord) speed; foot series is already ego-compensated
+        # net (chord) speed; foot series is already ego-compensated. A chord that spans
+        # camera-translation intervals is contaminated end-to-end, so refuse it there.
         net_dx = foot_x[-1] - foot_x[0]
         net_dy = foot_y[-1] - foot_y[0]
         net_dt = t[-1] - t[0]
         net_speed = (math.hypot(net_dx, net_dy) / median_scale) / net_dt if net_dt > 0 else float("nan")
+        if ego_static_frac < 0.8:
+            net_speed = float("nan")
 
         # region-aware crossing speed + decision delay from the [C3] window
         crossing_speed = float("nan"); decision_delay = float("nan")
@@ -282,10 +411,14 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
             if in_win.sum() >= 2:
                 idx = np.where(in_win)[0]
                 a, b = idx[0], idx[-1]
+                # Only trust the curb-to-curb chord if the camera held still across it.
+                # A few contaminated intervals are tolerable; a driving stretch is not.
+                win_flags = [step_is_ego_static(fr[k]) for k in range(a + 1, b + 1)]
+                win_static = (sum(win_flags) / len(win_flags)) >= CROSSING_STATIC_MIN_FRAC if win_flags else False
                 cdx = foot_x[b] - foot_x[a]
                 cdy = foot_y[b] - foot_y[a]
                 cdt = t[b] - t[a]
-                if cdt > 0:
+                if cdt > 0 and win_static:
                     crossing_speed = (math.hypot(cdx, cdy) / median_scale) / cdt
             # decision delay: contiguous near-stationary time just before crossing start.
             # No observations before the start (track begins mid-crossing) -> unknown (NaN),
@@ -307,8 +440,11 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
         # scale, so an out-of-band aspect (or none computable) also fails the gate.
         aspect_ok = (median_aspect == median_aspect
                      and MIN_BBOX_ASPECT <= median_aspect <= MAX_BBOX_ASPECT)
+        # An uncompensated translating camera is the single largest speed-inflation source,
+        # so a track measured mostly while driving is never reliable.
         reliable = bool(median_dt <= 0.2 and n_steps >= min_samples
-                        and median_h >= 40 and height_cv < 0.35 and aspect_ok)
+                        and median_h >= 40 and height_cv < 0.35 and aspect_ok
+                        and ego_static_frac >= 0.8)
 
         rows.append({
             "track_id": track_id,
@@ -327,6 +463,8 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
             "lane_scale_px_per_m": round(lane_scale, 3) if lane_scale else None,
             "camera_moving": camera_moving,
             "median_bbox_aspect": round(median_aspect, 3) if median_aspect == median_aspect else None,
+            "ego_regime": ego_regime,
+            "ego_static_frac": round(ego_static_frac, 3),
             "traj_source": traj_source,
             "reliable": reliable,
         })
@@ -338,7 +476,7 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
     print(f"[speed] {len(out)} tracks ({n_rel} reliable, {n_stripe} stripe-scaled / "
           f"{len(out) - n_stripe} height-prior), source={traj_source}, "
           f"height={assumed_height_m:.2f} m ({height_source}), "
-          f"camera={'moving' if camera_moving else 'static'}, "
+          f"ego={ego_regime}, camera={'moving' if camera_moving else 'static'}, "
           f"lane_scale={'%.1f' % lane_scale if lane_scale else 'n/a'}. Saved to {output_csv}")
     return output_csv
 

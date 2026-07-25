@@ -135,12 +135,22 @@ def main():
     # Define required columns
     video_info_columns = [
         'video_name', 'duration_seconds', 'total_frames', 'total_pedestrians',
-        'total_crossed_pedestrians', 'measured_avg_walking_speed_mps', 'average_age', 'phone_usage_ratio',
+        'total_crossed_pedestrians', 'measured_avg_walking_speed_mps',
+        'measured_crossing_speed_mps', 'measured_crossing_speed_n', 'pipeline_version',
+        'average_age', 'phone_usage_ratio',
         'risky_crossing_ratio', 'run_red_light_ratio', 'crosswalk_usage_ratio',
         'traffic_signs_ratio', 'total_vehicles', 'top3_vehicles', 'main_weather',
         'sidewalk_prob', 'crosswalk_prob', 'traffic_light_prob', 'avg_road_width',
         'Crack_prob', 'Potholes_prob', 'police_car_prob', 'Arrow Board_prob',
-        'cones_prob', 'accident_prob'
+        'cones_prob', 'accident_prob',
+        # novel-insight rollup (see modules/summary/video_info.py::_insight_rollup)
+        'pet_severe_conflicts', 'pet_moderate_conflicts', 'pet_queued_interactions', 'pet_min_s',
+        'vehicle_median_speed_mps', 'vehicle_p85_speed_mps',
+        'mean_headway_s', 'platoon_frac', 'vehicle_flow_per_min',
+        'anticipatory_start_frac', 'mean_red_exposure_s',
+        'hesitation_rate', 'aborted_start_rate', 'evasive_event_count',
+        'n_social_groups', 'grouped_pedestrians',
+        'look_before_cross_frac', 'looked_both_ways_frac', 'median_cadence_hz', 'cadence_n'
     ]
 
     mapping_columns = [

@@ -136,13 +136,18 @@ def test_gate_boundaries():
 
 
 def test_output_column_order():
-    """median_bbox_aspect sits right before traj_source; prior columns unchanged."""
+    """Column-order contract: the historical prefix keeps its order, median_bbox_aspect
+    stays after camera_moving and before traj_source, and reliable stays last. Newer
+    columns (e.g. the ego gate's ego_regime/ego_static_frac) may be appended in between —
+    the module's contract permits ADDING columns, only renaming/removing is forbidden."""
     df = run_fixture(make_ped_track())
     assert list(df.columns) == OUTPUT_COLUMNS, df.columns
     i = OUTPUT_COLUMNS.index("median_bbox_aspect")
-    assert OUTPUT_COLUMNS[i + 1] == "traj_source", OUTPUT_COLUMNS
-    assert OUTPUT_COLUMNS[i - 1] == "camera_moving", OUTPUT_COLUMNS
+    assert OUTPUT_COLUMNS.index("camera_moving") < i, OUTPUT_COLUMNS
+    assert i < OUTPUT_COLUMNS.index("traj_source"), OUTPUT_COLUMNS
     assert OUTPUT_COLUMNS[-1] == "reliable", OUTPUT_COLUMNS
+    for col in ("track_id", "walking_speed_mps", "crossing_speed_mps", "reliable"):
+        assert col in OUTPUT_COLUMNS, col
     print("ok  test_output_column_order")
 
 

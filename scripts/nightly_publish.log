@@ -1,0 +1,7 @@
+2026-07-25 11:00:50  ===== nightly publish start =====
+2026-07-25 11:00:50  ok   get_all_pede_info.py
+2026-07-25 11:00:51  ok   get_all_video_info.py
+2026-07-25 11:00:56  ok   statistics_with_pdf_save.py
+2026-07-25 11:00:56  ok   copied summary_data CSVs
+2026-07-25 11:04:22  ok   db:publish (aggregate + coordinates + views + insights)
+2026-07-25 11:04:22  ===== nightly publish done =====

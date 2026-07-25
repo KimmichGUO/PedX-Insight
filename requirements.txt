@@ -24,16 +24,13 @@ torchvision>=0.28.0
 ultralytics>=8.4.92
 
 # Optional companion tool: Monocular-OSM-Localization (geolocates a video on OpenStreetMap
-# given the video + city name). Vendored as a git submodule at
-#   external/Monocular-OSM-Localization
-# pinned to its 0.1.0 release. It publishes no installable package (source-only, no setup.py/
-# pyproject.toml, not on PyPI), so it is NOT a pip dependency and is not listed here; it is run
-# as a subprocess by modules/localization/localize.py. Its 0.1.0 pins (numpy>=2.5,
-# opencv-python>=4.13, osmnx, ...) are compatible with the versions above, so its requirements
-# CAN be installed into this same venv -- then --mode localize runs with PedX's own interpreter,
-# no separate env needed. (Its stack is still heavy: osmnx/open3d/geopandas/pycolmap.)
-#   git submodule update --init external/Monocular-OSM-Localization        # checks out 0.1.0
-#   pip install -r external/Monocular-OSM-Localization/requirements.txt    # (+ ffmpeg on PATH)
+# given the video + city name). It is now a real pip package -- distribution
+# `monocular-osm-localization`, import name `monocular_osm` -- run as a subprocess by
+# modules/localization/localize.py. It is kept OUT of this core file on purpose: its geo/CV
+# stack (osmnx/open3d/geopandas/pycolmap/...) is heavy and most PedX runs never localize.
+# Install it only when you need localization -- easiest into this same venv, so --mode localize
+# needs no separate interpreter:
+#   pip install -r requirements-localize.txt   # (+ ffmpeg on PATH)
 # then: python main.py --mode localize --source_video_path VIDEO --city "City, Country"
-#   [--osm_python PYTHON]   (auto-uses PedX's venv if the tool's deps are importable there,
-#    else the submodule's .venv or $OSM_LOCALIZATION_PYTHON)
+#   [--osm_python PYTHON]   (auto-uses PedX's venv if `monocular_osm` is importable there,
+#    else $OSM_LOCALIZATION_PYTHON)

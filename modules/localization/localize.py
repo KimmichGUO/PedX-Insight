@@ -2,31 +2,25 @@
 [L1] Video geolocation via the Monocular-OSM-Localization companion tool.
 
 Given a video + its city, this estimates where the video was filmed (WGS84 lat/lon)
-by running the vendored `external/Monocular-OSM-Localization` project (pinned to its
-`0.1.0` release) and emitting a per-video CSV that the Visualizer can plot alongside
-PedX's other summaries.
+by running the `monocular-osm-localization` package and emitting a per-video CSV that
+the Visualizer can plot alongside PedX's other summaries.
 
-The tool ships no package metadata (no setup.py / pyproject.toml, not on PyPI), so it
-CANNOT be `pip install`ed as a real dependency; it stays vendored as a git submodule and
-is invoked as a SUBPROCESS (never imported) using a configurable Python interpreter,
-resolved in priority order from:
+The tool is now a pip-installable package (distribution `monocular-osm-localization`,
+import name `monocular_osm`, console script `osm-localize`). PedX runs it as a
+SUBPROCESS via `python -m monocular_osm.cli` -- never imported -- so its heavy CV/geo
+pipeline (osmnx, open3d, pycolmap, ...) stays in its own process and never loads into
+PedX's interpreter. The interpreter that runs it is resolved in priority order from:
     1. the `osm_python` argument,
     2. the `OSM_LOCALIZATION_PYTHON` env var,
-    3. the submodule's own venv (external/Monocular-OSM-Localization/.venv),
-    4. PedX's own interpreter, but only if the tool's deps are importable there.
-Since 0.1.0's pins (numpy>=2.5, opencv>=4.13, osmnx, ...) are compatible with PedX's env,
-you can install the tool's requirements straight into PedX's own venv and run localize
-without a separate interpreter (option 4) -- the closest thing to using it "as a
-dependency" given it publishes no installable package.
+    3. PedX's own interpreter, if the `monocular_osm` package is importable there.
 
-Set it up once -- either reuse PedX's venv:
-    git submodule update --init external/Monocular-OSM-Localization   # checks out the 0.1.0 tag
-    pip install -r external/Monocular-OSM-Localization/requirements.txt
-or give it a dedicated venv:
-    python -m venv external/Monocular-OSM-Localization/.venv
-    external/Monocular-OSM-Localization/.venv/Scripts/pip install -r \
-        external/Monocular-OSM-Localization/requirements.txt
-    # (ffmpeg must also be on PATH in either case)
+It is an OPTIONAL companion, deliberately kept out of PedX's core `requirements.txt`
+because of that heavy stack (most PedX runs never localize). Install it once -- easiest
+straight into PedX's own venv, so `--mode localize` needs no separate interpreter:
+    pip install "git+https://github.com/M-Colley/Monocular-OSM-Localization.git@0.1.1"
+    # (once published to PyPI:  pip install monocular-osm-localization)
+    # ffmpeg must also be on PATH
+See requirements-localize.txt for the pinned optional-dependency declaration.
 """
 
 import os
@@ -38,39 +32,35 @@ import time
 import subprocess
 import importlib.util
 
-# Repo-root-relative path to the vendored companion tool (a git submodule).
-OSM_REPO = os.path.join("external", "Monocular-OSM-Localization")
+# The companion tool as a pip package: import name (find_spec / -m target) and the
+# one-line install hint surfaced when it is missing. Not on PyPI yet, so install is
+# from git pinned to the 0.1.1 tag; switch to the bare name once it is published.
+OSM_PACKAGE = "monocular_osm"
+OSM_INSTALL_HINT = ('pip install '
+                    '"git+https://github.com/M-Colley/Monocular-OSM-Localization.git@0.1.1"')
+
+# The tool caches working data (OSM graphs, metadata, OCR/geocoding results) under its
+# --data-dir and may make other CWD-relative writes. We hand it a stable, gitignored
+# directory so runs share that cache and nothing litters the PedX repo root.
+OSM_CACHE_DIR = os.path.abspath("osm_localization_cache")
 
 
 def _resolve_osm_python(osm_python=None):
-    """Locate a Python interpreter that can run the companion tool.
+    """Locate a Python interpreter that has the `monocular_osm` package installed.
 
-    Priority: the `osm_python` argument, then `$OSM_LOCALIZATION_PYTHON`, then the
-    submodule's own `.venv`, and finally PedX's own interpreter -- but the last
-    fallback is used only when the tool's dependencies are actually importable in
-    that interpreter. Since 0.1.0's pins are compatible with PedX's env, installing
-    the tool's requirements into PedX's venv lets `--mode localize` run without a
-    dedicated interpreter. Returns None when none is found, so the caller can emit a
-    clear setup message instead of failing cryptically inside the subprocess.
+    Priority: the `osm_python` argument, then `$OSM_LOCALIZATION_PYTHON`, then PedX's
+    own interpreter when the package is importable there (the common case: the package
+    was `pip install`ed into PedX's venv). Returns None when none is found, so the
+    caller can point the user at the one-line pip install instead of failing cryptically
+    inside the subprocess.
     """
     if osm_python:
         return osm_python
     env_python = os.environ.get("OSM_LOCALIZATION_PYTHON")
     if env_python:
         return env_python
-    for rel in (os.path.join(".venv", "Scripts", "python.exe"),  # Windows
-                os.path.join(".venv", "bin", "python")):          # POSIX
-        candidate = os.path.join(OSM_REPO, rel)
-        if os.path.exists(candidate):
-            # Absolute: the subprocess runs with cwd=OSM_REPO, where a CWD-relative
-            # interpreter path would not resolve (POSIX exec does not search the child cwd).
-            return os.path.abspath(candidate)
-    # Last resort: PedX's own interpreter, iff the tool's requirements were installed
-    # here too. `osmnx` is a tool-only dependency (PedX never imports it), so its
-    # presence is a reliable signal that `pip install -r <tool>/requirements.txt` was
-    # run in this interpreter. find_spec() only checks importability -- it does not
-    # execute the (heavy) module.
-    if importlib.util.find_spec("osmnx") is not None:
+    # find_spec() only checks importability -- it does not import the (heavy) package.
+    if importlib.util.find_spec(OSM_PACKAGE) is not None:
         return sys.executable
     return None
 
@@ -146,7 +136,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
             mapping.csv via the video id; a clear error is raised if that fails.
         osm_python: interpreter of the companion tool's env (see module docstring).
         output_csv_path: override for the output CSV location.
-        extra_args: extra CLI flags forwarded to the companion tool's main.py.
+        extra_args: extra CLI flags forwarded to the monocular_osm CLI.
         timeout: optional subprocess timeout (seconds).
 
     Returns:
@@ -187,45 +177,47 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
             "(e.g. --city 'Ulm, Germany'); it is required for the --mode localize step."
         )
 
-    # Resolve the interpreter that runs the companion tool (see _resolve_osm_python).
+    # Resolve the interpreter that has the monocular_osm package (see _resolve_osm_python).
     py = _resolve_osm_python(osm_python)
-    if py is None or not os.path.exists(OSM_REPO):
+    if py is None:
         _write(_placeholder("osm_env_not_configured"))
         raise RuntimeError(
-            "Monocular-OSM-Localization environment not found.\n"
-            "Set it up once (0.1.0's deps are compatible with PedX, so either option works):\n"
-            "  git submodule update --init external/Monocular-OSM-Localization  # 0.1.0 tag\n"
-            "  # A) reuse PedX's own venv (then no --osm_python needed):\n"
-            "  pip install -r external/Monocular-OSM-Localization/requirements.txt\n"
-            "  # B) or give it a dedicated venv:\n"
-            "  python -m venv external/Monocular-OSM-Localization/.venv\n"
-            "  external/Monocular-OSM-Localization/.venv/Scripts/pip install -r "
-            "external/Monocular-OSM-Localization/requirements.txt\n"
-            "Then re-run, or pass its interpreter via --osm_python / OSM_LOCALIZATION_PYTHON.\n"
+            "The `monocular_osm` package is not installed in this environment.\n"
+            "It is an OPTIONAL companion, kept out of PedX's core requirements because of "
+            "its heavy geo/CV stack (osmnx, open3d, pycolmap, ...).\n"
+            "Install it into PedX's venv (then no --osm_python is needed):\n"
+            f"  {OSM_INSTALL_HINT}\n"
+            "  # ffmpeg must also be on PATH\n"
+            "or point --osm_python / $OSM_LOCALIZATION_PYTHON at an interpreter that has it.\n"
             f"(wrote a placeholder {output_csv_path} with status=osm_env_not_configured)"
         )
 
-    # The tool writes output/<slug>/result.json; give it a per-video output dir we can scan.
+    # The tool writes <output-dir>/<slug>/result.json; give it a per-video output dir we scan.
     osm_output_dir = os.path.abspath(os.path.join(output_dir, "osm_localization"))
     os.makedirs(osm_output_dir, exist_ok=True)
+    os.makedirs(OSM_CACHE_DIR, exist_ok=True)
 
+    # `-m monocular_osm.cli` is the installed package's entry point (identical to the
+    # `osm-localize` console script) -- no source checkout or cwd-relative imports needed.
     cmd = [
-        py, "main.py",
+        py, "-m", "monocular_osm.cli",
         "--video", os.path.abspath(video_path),
         "--city", city,
         "--output-dir", osm_output_dir,
+        "--data-dir", OSM_CACHE_DIR,
     ]
     if extra_args:
         cmd += list(extra_args)
 
-    print(f"[localize] {video_name}: running Monocular-OSM-Localization for city '{city}' ...")
+    print(f"[localize] {video_name}: running monocular_osm for city '{city}' ...")
     # Record the start time so we only accept a result.json written by THIS run — the
     # newest-mtime glob below would otherwise silently reuse a stale result from a
     # previous run (e.g. after the tool errors out early this time).
     run_started = time.time()
-    # cwd = submodule root so its relative imports (src/), data/, and yolov8s.pt resolve.
+    # cwd = a stable, gitignored cache dir so the tool's default ./data cache and any
+    # other relative writes never litter the repo root; imports resolve from the pkg.
     try:
-        subprocess.run(cmd, cwd=os.path.abspath(OSM_REPO), check=True, timeout=timeout)
+        subprocess.run(cmd, cwd=OSM_CACHE_DIR, check=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         _write(_placeholder("timeout"))
         raise
@@ -272,8 +264,10 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Geolocate a video via Monocular-OSM-Localization.")
     p.add_argument("--source_video_path", required=True)
     p.add_argument("--city", default=None, help="'City, Country'; inferred from mapping.csv if omitted")
-    p.add_argument("--osm_python", default=None, help="Interpreter of the companion tool's env")
+    p.add_argument("--osm_python", default=None,
+                   help="Interpreter that has the monocular_osm package installed "
+                        "(defaults to PedX's own if importable there)")
     args, unknown = p.parse_known_args()
-    # Any unrecognized flags are forwarded to the companion tool's main.py.
+    # Any unrecognized flags are forwarded to the monocular_osm CLI.
     run_localization(video_path=args.source_video_path, city=args.city,
                      osm_python=args.osm_python, extra_args=unknown)

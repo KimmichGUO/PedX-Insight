@@ -50,7 +50,8 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
         csv_file (str): Path to the CSV file containing video info. Default = "mapping_each.csv".
         localize (bool): Also geolocate each video (--mode localize) after analysis and
                          BEFORE deletion (localization needs the video file). Requires the
-                         Monocular-OSM-Localization environment; failures never block the run.
+                         monocular_osm package (pip install -r requirements-localize.txt);
+                         failures never block the run.
     """
     # Read CSV
     df = pd.read_csv(csv_file)
@@ -168,7 +169,7 @@ if __name__ == "__main__":
     parser.add_argument("--csv", type=str, default="mapping_one_each.csv", help="Path to CSV file with video info")
     parser.add_argument("--localize", action="store_true",
                         help="Also geolocate each video (--mode localize) after analysis, before deletion. "
-                             "Requires the Monocular-OSM-Localization environment (see README).")
+                             "Requires the monocular_osm package (see README / requirements-localize.txt).")
 
     args = parser.parse_args()
 

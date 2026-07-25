@@ -298,33 +298,46 @@ python run.py --start_row 1 --start_step 1
 
 `--mode localize` estimates **where** a video was filmed (WGS84 latitude/longitude) from the
 footage plus the city name, by wrapping the companion project
-[Monocular-OSM-Localization](https://github.com/M-Colley/Monocular-OSM-Localization) — vendored
-as a git submodule at `external/Monocular-OSM-Localization`, **pinned to its
-[`0.1.0`](https://github.com/M-Colley/Monocular-OSM-Localization/releases/tag/0.1.0) release**.
+[Monocular-OSM-Localization](https://github.com/M-Colley/Monocular-OSM-Localization) — now a
+**pip-installable package** (distribution `monocular-osm-localization`, import name
+`monocular_osm`, console script `osm-localize`).
 
-> **Not a pip dependency.** Even at 0.1.0 the tool ships no package metadata (no `setup.py` /
-> `pyproject.toml`, and it is not on PyPI), so it cannot be `pip install`ed. It stays vendored
-> as a git submodule and is run as a **subprocess** using a configurable interpreter (resolved
-> from `--osm_python`, then `$OSM_LOCALIZATION_PYTHON`, then the submodule's own `.venv`, then —
-> new — PedX's own interpreter if the tool's deps are importable there).
+PedX runs it as a **subprocess** (`python -m monocular_osm.cli`, never imported) so its heavy
+CV/geo pipeline stays in its own process. The interpreter is resolved from `--osm_python`, then
+`$OSM_LOCALIZATION_PYTHON`, then PedX's own interpreter when `monocular_osm` is importable there.
 
-0.1.0's pins (`numpy>=2.5`, `opencv-python>=4.13`, `osmnx`, …) are compatible with PedX's
-environment, so the simplest setup is to install the tool's requirements **into PedX's own venv**
-and let `localize` run with no separate interpreter — the closest thing to using it "as a
-dependency". Pick one:
+It is an **optional** dependency, deliberately kept out of the core `requirements.txt` because
+its stack (osmnx, open3d, geopandas, pycolmap, …) is heavy and most runs never localize. Install
+it only when you need it — easiest into PedX's own venv, so no separate interpreter is required:
 
 ```bash
-git submodule update --init external/Monocular-OSM-Localization   # checks out the 0.1.0 tag
-
-# A) reuse PedX's venv (recommended; then --osm_python is not needed):
-pip install -r external/Monocular-OSM-Localization/requirements.txt
-
-# B) or give the tool a dedicated venv:
-python -m venv external/Monocular-OSM-Localization/.venv
-external/Monocular-OSM-Localization/.venv/Scripts/pip install -r external/Monocular-OSM-Localization/requirements.txt
-
-# ffmpeg must also be on PATH in either case
+pip install -r requirements-localize.txt
+#   which is:  pip install "git+https://github.com/M-Colley/Monocular-OSM-Localization.git@0.1.1"
+#   (once on PyPI:  pip install monocular-osm-localization)
+# ffmpeg must also be on PATH
 ```
+
+> ### ⚠️ Set `MLY_TOKEN` — it is the single biggest accuracy lever
+>
+> The tool's default configuration localizes via dense **Mapillary** Visual Place Recognition,
+> which needs a free access token. Without it the pipeline still runs, but silently falls back
+> to the sparse tokenless KartaView source and — per the tool's own README — the GPS-free
+> result **collapses to kilometre-scale error** instead of the ~30–156 m it reaches with a key.
+>
+> This is visible in our own data: the `confidence_spread_m` values in
+> `summary_data/all_video_locations.csv` sit in the 4–14 km range with `confidence_level=low`,
+> which is the tokenless fallback.
+>
+> Get one in ~2 min (free): [mapillary.com](https://www.mapillary.com/) → *Settings →
+> Developers → Register an application* → copy the **Client Token** (starts with `MLY|`).
+> ```bash
+> setx MLY_TOKEN "MLY|xxxxxxxx|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"     # Windows, persists
+> export MLY_TOKEN="MLY|xxxxxxxx|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"   # macOS/Linux
+> ```
+> PedX passes no `env=` to the subprocess, so the token is inherited automatically once set —
+> no PedX flag or config change needed. The tool prints
+> `-> mapillary source needs MLY_TOKEN env var; falling back to kartaview` when it is missing.
+
 Run:
 ```bash
 python main.py --mode localize --source_video_path PATH/TO/VIDEO --city "Ulm, Germany"
@@ -340,7 +353,8 @@ into PedX-Visualizer with `node scripts/import-video-coordinates.js` (see that r
 `VIDEO_COORDINATES_SETUP.md`) so the Globe shows each video at its REAL estimated position.
 
 > Localization is opt-in (`--localize` for `run.py`; not part of `single_all` / `mul_all`):
-> it needs the video file present, the Monocular-OSM-Localization environment, and network.
+> it needs the video file present, the `monocular_osm` package installed, network, and
+> `MLY_TOKEN` set for usable accuracy (see the callout above).
 
 ## Method for Adding New Modules
 

@@ -1,0 +1,19 @@
+# Optional dependency for `--mode localize` (video -> lat/lon on OpenStreetMap).
+#
+# The companion tool is a real pip package now (distribution `monocular-osm-localization`,
+# import name `monocular_osm`, console script `osm-localize`). PedX runs it as a subprocess
+# via `python -m monocular_osm.cli` from modules/localization/localize.py.
+#
+# It is kept OUT of the core requirements.txt on purpose: its geo/CV stack (osmnx, open3d,
+# geopandas, pycolmap, contextily, pyproj, yt-dlp, ...) is heavy and most PedX runs never
+# localize. Install it only when you need localization:
+#
+#   pip install -r requirements-localize.txt
+#
+# Installing it into PedX's own venv means `--mode localize` needs no separate interpreter
+# (localize.py auto-uses the current interpreter when `monocular_osm` is importable).
+# ffmpeg must also be on PATH.
+#
+# Not on PyPI yet, so this installs from git, pinned to the 0.1.1 tag. Once it is published to
+# PyPI, replace the line below with the plain pinned spec, e.g.  monocular-osm-localization>=0.1.1
+monocular-osm-localization @ git+https://github.com/M-Colley/Monocular-OSM-Localization.git@0.1.1

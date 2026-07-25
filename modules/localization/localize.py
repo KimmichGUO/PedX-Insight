@@ -116,6 +116,19 @@ def _extract_position(result_json_path):
     conf = pos.get("spatial_confidence") or {}
     if not isinstance(conf, dict):
         conf = {"level": conf}
+    # The tool also estimates the camera's ROUTE through the city (visual odometry snapped
+    # to the OSM graph) as position.route_latlon = [[lat, lon], ...]. These are walking-tour
+    # videos, so that polyline is the path actually walked. Everything but the single chosen
+    # point used to be dropped here, leaving the route computed but discarded.
+    clean_route = []
+    for p in pos.get("route_latlon") or []:
+        if isinstance(p, (list, tuple)) and len(p) >= 2:
+            try:
+                lat_p, lon_p = float(p[0]), float(p[1])
+            except (TypeError, ValueError):
+                continue
+            if abs(lat_p) <= 90 and abs(lon_p) <= 180:
+                clean_route.append([lat_p, lon_p])
     return {
         "lat": pos.get("latitude"),
         "lon": pos.get("longitude"),
@@ -123,6 +136,10 @@ def _extract_position(result_json_path):
         "confidence_spread_m": conf.get("spread_m"),
         "street_names": street_names,
         "hypotheses": hyps,
+        "route_latlon": clean_route,
+        # Length and provenance live at the top level of result.json, not under position.
+        "route_length_m": data.get("estimated_length_m"),
+        "trajectory_source": data.get("trajectory_source"),
     }
 
 
@@ -152,7 +169,8 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         output_csv_path = os.path.join(output_dir, "[L1]localization.csv")
 
     fieldnames = ["video_name", "city", "lat", "lon", "confidence_level", "confidence_spread_m",
-                  "street_names", "source", "status", "result_json", "candidates"]
+                  "street_names", "source", "status", "result_json", "candidates",
+                  "route_latlon", "route_length_m", "trajectory_source"]
 
     def _write(row):
         with open(output_csv_path, "w", newline="", encoding="utf-8") as f:
@@ -166,6 +184,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
             "confidence_level": "", "confidence_spread_m": "", "street_names": "",
             "source": "monocular_osm_localization", "status": status,
             "result_json": "", "candidates": "",
+            "route_latlon": "", "route_length_m": "", "trajectory_source": "",
         }
 
     # Resolve city.
@@ -252,10 +271,16 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         "status": "ok" if pos["lat"] is not None and pos["lon"] is not None else "no_position",
         "result_json": os.path.relpath(result_json),
         "candidates": json.dumps(pos["hypotheses"], ensure_ascii=False),
+        # Empty string (not "[]") when there is no route, so the Visualizer importer can
+        # tell "no route estimated" from "route estimated as empty".
+        "route_latlon": json.dumps(pos["route_latlon"], ensure_ascii=False) if pos["route_latlon"] else "",
+        "route_length_m": pos["route_length_m"] if pos["route_length_m"] is not None else "",
+        "trajectory_source": pos["trajectory_source"] or "",
     }
     _write(row)
     print(f"[localize] {video_name}: lat={pos['lat']}, lon={pos['lon']}, "
-          f"confidence={pos['confidence_level']} -> {output_csv_path}")
+          f"confidence={pos['confidence_level']}, route={len(pos['route_latlon'])} pts "
+          f"-> {output_csv_path}")
     return {k: row[k] for k in ("video_name", "city", "lat", "lon", "confidence_level", "street_names")}
 
 

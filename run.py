@@ -149,6 +149,7 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
                 print(f"[FAIL] Analysis failed for {video_name}")
                 continue
 
+        localize_failed = False
         # Step 2.5: Geolocate (optional) — must run BEFORE deletion, needs the video file.
         if localize and effective_start_step <= 2:
             # Call the wrapper directly (it forwards unknown flags to the OSM tool);
@@ -166,13 +167,25 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
             # check=False: a failed/unconfigured localization must never block the pipeline;
             # localize writes its own status row into [L1]localization.csv either way.
             result = subprocess.run(localize_cmd, check=False)
-            print(f"[{'OK' if result.returncode == 0 else 'WARN'}] Localization "
-                  f"{'completed' if result.returncode == 0 else 'failed (continuing)'} for {video_name}")
+            localize_failed = result.returncode != 0
+            print(f"[{'OK' if not localize_failed else 'WARN'}] Localization "
+                  f"{'completed' if not localize_failed else 'failed (continuing)'} for {video_name}")
 
-        # Step 3: Delete video
+        # Step 3: Delete video -- but NOT if localization was asked for and failed.
+        # Localization is the only step that needs the video file, and its usual failure
+        # mode is a transient one: the OSM road graph is fetched from Overpass, which
+        # rate-limits and times out (observed: 21 s just to connect, and a dense city's
+        # graph query then exceeding the 180 s timeout). Deleting on failure turns a
+        # retryable network blip into a mandatory multi-hundred-MB re-download, so the
+        # video is kept and the operator is told how to retry it.
         if effective_start_step <= 3 and os.path.exists(video_path):
-            os.remove(video_path)
-            print(f"[OK] Deleted video {video_name}")
+            if localize_failed:
+                print(f"[KEEP] {video_name} retained because localization failed — retry with:")
+                print(f"       python modules/localization/localize.py --source_video_path \"{video_path}\" "
+                      f"--no-splat --no-aerial --frame-stride 20 --max-frames 600 --vo-segment 60:900")
+            else:
+                os.remove(video_path)
+                print(f"[OK] Deleted video {video_name}")
 
         processed += 1
 

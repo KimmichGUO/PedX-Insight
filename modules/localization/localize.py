@@ -174,9 +174,20 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
 
     def _write(row):
         with open(output_csv_path, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=fieldnames)
+            w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
             w.writeheader()
             w.writerow(row)
+
+    def _existing_row():
+        """The row already on disk, if any. Used to avoid destroying a good result."""
+        if not os.path.exists(output_csv_path):
+            return None
+        try:
+            with open(output_csv_path, encoding="utf-8") as f:
+                rows = list(csv.DictReader(f))
+            return rows[0] if rows else None
+        except Exception:
+            return None
 
     def _placeholder(status, error=""):
         return {
@@ -204,6 +215,21 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
             except OSError:
                 pass
         tail = " | ".join(line.strip() for line in text.splitlines()[-6:] if line.strip())
+
+        # NEVER overwrite a previously SUCCESSFUL localization with a failure placeholder.
+        # The usual failure here is a transient Overpass timeout, and clobbering turns
+        # "this retry failed" into "this video has no location" — silently destroying the
+        # lat/lon, candidates and route polyline of a result that took ~40 min to compute.
+        # (Observed: a retry of Ulm1/Ulm2 during an Overpass outage wiped both good rows.)
+        # The failure is still fully recorded in the .log next to the CSV.
+        prior = _existing_row()
+        if prior and (prior.get("status") or "").strip() == "ok":
+            print(f"[localize] {video_name}: {status} — KEEPING the previous successful "
+                  f"result; this attempt's output is in {log_path}")
+            if text:
+                print(text[-2000:])
+            return
+
         _write(_placeholder(status, tail[:1000]))
         if text:
             print(f"[localize] {video_name}: {status} — full output in {log_path}")

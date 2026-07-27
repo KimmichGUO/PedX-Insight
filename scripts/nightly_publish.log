@@ -5,3 +5,19 @@
 2026-07-25 11:00:56  ok   copied summary_data CSVs
 2026-07-25 11:04:22  ok   db:publish (aggregate + coordinates + views + insights)
 2026-07-25 11:04:22  ===== nightly publish done =====
+2026-07-26 03:00:01  ===== nightly publish start =====
+2026-07-26 03:00:07  ok   get_all_pede_info.py
+2026-07-26 03:00:12  ok   get_all_video_info.py
+2026-07-26 03:00:41  ok   statistics_with_pdf_save.py
+2026-07-26 03:00:44  ok   get_all_video_locations.py
+2026-07-26 03:00:44  ok   copied summary_data CSVs
+2026-07-26 03:04:40  ok   db:publish (aggregate + coordinates + views + insights)
+2026-07-26 03:04:40  ===== nightly publish done =====
+2026-07-27 03:00:02  ===== nightly publish start =====
+2026-07-27 03:00:16  ok   get_all_pede_info.py
+2026-07-27 03:00:20  ok   get_all_video_info.py
+2026-07-27 03:00:39  ok   statistics_with_pdf_save.py
+2026-07-27 03:00:43  ok   get_all_video_locations.py
+2026-07-27 03:00:43  ok   copied summary_data CSVs
+2026-07-27 03:04:31  ok   db:publish (aggregate + coordinates + views + insights)
+2026-07-27 03:04:31  ===== nightly publish done =====

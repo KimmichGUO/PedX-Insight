@@ -39,7 +39,7 @@ def _write_analysis_time(video_file_name, analysis_seconds):
 
 
 def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_each.csv",
-        localize: bool = False):
+        localize: bool = False, limit: int = 0, clip_seconds: int = 0):
     """
     Process videos: download, analyze, and delete.
 
@@ -52,6 +52,12 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
                          BEFORE deletion (localization needs the video file). Requires the
                          monocular_osm package (pip install -r requirements-localize.txt);
                          failures never block the run.
+        limit (int): Stop after processing this many videos (0 = no limit). Counts videos
+                         actually processed, not rows skipped as already-finished.
+        clip_seconds (int): Download only the first N seconds of each video (0 = whole
+                         video, the default). Analysis cost is 3.5-90x realtime and scales
+                         with pedestrian density, so an unbounded batch over dense cities
+                         can run for weeks; this bounds it. Needs ffmpeg on PATH.
     """
     # Read CSV
     df = pd.read_csv(csv_file)
@@ -68,7 +74,11 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
     video_folder = './videos'
     os.makedirs(video_folder, exist_ok=True)
 
+    processed = 0
     for i, (idx, row) in enumerate(df.iloc[start_row - 1:].iterrows()):
+        if limit and processed >= limit:
+            print(f"Reached --limit {limit}; stopping.")
+            break
         # start_step applies to the first processed row only (the resume point): 1=download,
         # 2=analysis, 3=deletion. Subsequent rows always run the full pipeline.
         effective_start_step = start_step if i == 0 else 1
@@ -101,8 +111,14 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
                 "--referer", "https://www.youtube.com/",
                 "-f", "bestvideo[height<=720]/bestvideo",
                 "-o", video_path,
-                url
             ]
+            if clip_seconds and clip_seconds > 0:
+                # Fetch only the opening window. yt-dlp needs ffmpeg for this, and
+                # --force-keyframes-at-cuts makes the cut frame-accurate so the analysis
+                # modules do not start on a partial GOP.
+                download_cmd += ["--download-sections", f"*0-{int(clip_seconds)}",
+                                 "--force-keyframes-at-cuts"]
+            download_cmd.append(url)
             print(f"Downloading video {video_name} ...")
             try:
                 subprocess.run(download_cmd, check=True)
@@ -158,6 +174,8 @@ def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_ea
             os.remove(video_path)
             print(f"[OK] Deleted video {video_name}")
 
+        processed += 1
+
     print("All videos processed!")
 
 
@@ -170,7 +188,14 @@ if __name__ == "__main__":
     parser.add_argument("--localize", action="store_true",
                         help="Also geolocate each video (--mode localize) after analysis, before deletion. "
                              "Requires the monocular_osm package (see README / requirements-localize.txt).")
+    parser.add_argument("--limit", type=int, default=0,
+                        help="Stop after processing this many videos (0 = no limit).")
+    parser.add_argument("--clip-seconds", dest="clip_seconds", type=int, default=0,
+                        help="Download only the first N seconds of each video (0 = whole video). "
+                             "Analysis runs 3.5-90x realtime and scales with pedestrian density, "
+                             "so this is how you bound a batch's cost. Requires ffmpeg on PATH.")
 
     args = parser.parse_args()
 
-    run(start_row=args.start_row, start_step=args.start_step, csv_file=args.csv, localize=args.localize)
+    run(start_row=args.start_row, start_step=args.start_step, csv_file=args.csv, localize=args.localize,
+        limit=args.limit, clip_seconds=args.clip_seconds)

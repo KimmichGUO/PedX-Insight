@@ -170,7 +170,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
 
     fieldnames = ["video_name", "city", "lat", "lon", "confidence_level", "confidence_spread_m",
                   "street_names", "source", "status", "result_json", "candidates",
-                  "route_latlon", "route_length_m", "trajectory_source"]
+                  "route_latlon", "route_length_m", "trajectory_source", "error"]
 
     def _write(row):
         with open(output_csv_path, "w", newline="", encoding="utf-8") as f:
@@ -178,14 +178,36 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
             w.writeheader()
             w.writerow(row)
 
-    def _placeholder(status):
+    def _placeholder(status, error=""):
         return {
             "video_name": video_name, "city": city, "lat": "", "lon": "",
             "confidence_level": "", "confidence_spread_m": "", "street_names": "",
             "source": "monocular_osm_localization", "status": status,
             "result_json": "", "candidates": "",
             "route_latlon": "", "route_length_m": "", "trajectory_source": "",
+            # Why it failed. Without this the CSV said only "subprocess_failed" and the
+            # reason was lost to the console, so diagnosing a batch run meant reproducing
+            # each failure by hand.
+            "error": error,
         }
+
+    # Failure output is written to a full log next to the CSV; `error` in the CSV holds a
+    # trimmed tail of it so the reason is visible without opening another file.
+    log_path = os.path.join(output_dir, "[L1]localization.log")
+
+    def _record_failure(status, output):
+        text = (output or "").strip()
+        if text:
+            try:
+                with open(log_path, "w", encoding="utf-8") as f:
+                    f.write(text)
+            except OSError:
+                pass
+        tail = " | ".join(line.strip() for line in text.splitlines()[-6:] if line.strip())
+        _write(_placeholder(status, tail[:1000]))
+        if text:
+            print(f"[localize] {video_name}: {status} — full output in {log_path}")
+            print(text[-2000:])
 
     # Resolve city.
     if not city:
@@ -235,13 +257,19 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
     run_started = time.time()
     # cwd = a stable, gitignored cache dir so the tool's default ./data cache and any
     # other relative writes never litter the repo root; imports resolve from the pkg.
+    # Capture the tool's output (merged stdout+stderr) instead of letting it stream to the
+    # console and vanish. It is still echoed on failure, but now it also lands in the CSV's
+    # `error` column and a per-video .log — otherwise a batch run reports only
+    # "subprocess_failed" and every diagnosis means reproducing the failure by hand.
     try:
-        subprocess.run(cmd, cwd=OSM_CACHE_DIR, check=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        _write(_placeholder("timeout"))
+        subprocess.run(cmd, cwd=OSM_CACHE_DIR, check=True, timeout=timeout,
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                       text=True, encoding="utf-8", errors="replace")
+    except subprocess.TimeoutExpired as e:
+        _record_failure("timeout", (e.output or "") + f"\n[timed out after {timeout}s]")
         raise
-    except subprocess.CalledProcessError:
-        _write(_placeholder("subprocess_failed"))
+    except subprocess.CalledProcessError as e:
+        _record_failure("subprocess_failed", e.output)
         raise
 
     result_files = sorted(
@@ -250,7 +278,8 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         key=os.path.getmtime,
     )
     if not result_files:
-        _write(_placeholder("no_result_json"))
+        _write(_placeholder("no_result_json",
+                            f"no fresh result.json under {osm_output_dir}"))
         raise RuntimeError(
             f"Localization ran but produced no fresh result.json under {osm_output_dir}. "
             "Check the tool's logs above."
@@ -276,6 +305,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         "route_latlon": json.dumps(pos["route_latlon"], ensure_ascii=False) if pos["route_latlon"] else "",
         "route_length_m": pos["route_length_m"] if pos["route_length_m"] is not None else "",
         "trajectory_source": pos["trajectory_source"] or "",
+        "error": "",
     }
     _write(row)
     print(f"[localize] {video_name}: lat={pos['lat']}, lon={pos['lon']}, "

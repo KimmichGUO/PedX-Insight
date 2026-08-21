@@ -23,3 +23,4 @@ yolo11*-pose.pt
 # YouTube cookie jar: yt-dlp rewrites it on every run (rotating anonymous consent/visitor
 # cookies), so tracking it dirties the repo after each batch. Keep it local per machine.
 www.youtube.com_cookies.txt
+/osm_localization_cache

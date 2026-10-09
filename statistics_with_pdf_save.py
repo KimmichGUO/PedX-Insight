@@ -47,10 +47,30 @@ save_csv(stats_minutes.reset_index(), "./summary_data/time_stats.csv")
 save_bar_chart_pdf(stats_minutes.reset_index(), "index", ["duration_minutes", "analysis_minutes"], "./summary_data/time_stats.pdf", "Video Duration vs Analysis Time (minutes)")
 
 
+def _rate_by_group(frame, key, metrics, min_n=10):
+    """Group means with their own denominators, published alongside the means.
+
+    groupby().mean() is skipna, so since risky_crossing became nullable (2026-09-07) each
+    metric's denominator differs from the group size and from the other metrics' -- an
+    invisible difference that made 'female 0.7442 / male 0.7442' look like a finding when
+    it was an artifact. Emit <metric>_n per cell and blank any group under min_n rather
+    than printing a confident percentage off a handful of observations.
+    """
+    out = []
+    for gval, grp in frame.groupby(key):
+        row = {key: gval}
+        for m in metrics:
+            vals = pd.to_numeric(grp[m], errors="coerce").dropna()
+            row[m] = vals.mean() if len(vals) >= min_n else None
+            row[f"{m}_n"] = len(vals)
+        out.append(row)
+    return pd.DataFrame(out)
+
+
 # ========== 2. gender ==========
 df = pd.read_csv("./summary_data/all_pedestrian_info.csv")
 df_gender = df.dropna(subset=["gender"])
-gender_stats = df_gender.groupby("gender")[["risky_crossing", "run_red_light"]].mean().reset_index()
+gender_stats = _rate_by_group(df_gender, "gender", ["risky_crossing", "run_red_light"])
 print(gender_stats)
 save_csv(gender_stats, "./summary_data/gender_stats.csv")
 save_bar_chart_pdf(gender_stats, "gender", ["risky_crossing", "run_red_light"], "./summary_data/gender_stats.pdf", "Risky Crossing & Red Light Violation Rate by Gender")
@@ -58,7 +78,7 @@ save_bar_chart_pdf(gender_stats, "gender", ["risky_crossing", "run_red_light"], 
 
 # ========== 3. age ==========
 df_age = df.dropna(subset=["age"])
-age_stats = df_age.groupby("age")[["risky_crossing", "run_red_light"]].mean().reset_index()
+age_stats = _rate_by_group(df_age, "age", ["risky_crossing", "run_red_light"])
 print(age_stats)
 save_csv(age_stats, "./summary_data/age_stats.csv")
 save_bar_chart_pdf(age_stats, "age", ["risky_crossing", "run_red_light"], "./summary_data/age_stats.pdf", "Risky Crossing & Red Light Violation Rate by Age")
@@ -177,8 +197,13 @@ save_bar_chart_pdf(results_df, "vehicle_type", ["risky_crossing_rate(%)", "run_r
 
 
 # ========== 9. traffic condition ==========
-subset = df[["avg_vehicle_total", "avg_road_width", "risky_crossing", "run_red_light"]].dropna()
-results_df = subset.corr()[["risky_crossing", "run_red_light"]].loc[["avg_vehicle_total", "avg_road_width"]]
+# PAIRWISE, not listwise. risky_crossing is NA for ~64% of rows, and a listwise dropna
+# here also deleted those rows from the run_red_light correlations -- flipping signs on a
+# metric that has nothing to do with the risky-crossing change.
+subset = df[["avg_vehicle_total", "avg_road_width", "risky_crossing", "run_red_light"]].apply(
+    pd.to_numeric, errors="coerce")
+results_df = subset.corr(min_periods=30)[["risky_crossing", "run_red_light"]].loc[
+    ["avg_vehicle_total", "avg_road_width"]]
 print(results_df)
 save_csv(results_df.reset_index(), "./summary_data/road_corr.csv")
 save_bar_chart_pdf(results_df.reset_index(), "index", ["risky_crossing", "run_red_light"], "./summary_data/road_corr.pdf", "Correlation with Risky Crossing & Red Light Violation Rate")
@@ -186,19 +211,30 @@ save_bar_chart_pdf(results_df.reset_index(), "index", ["risky_crossing", "run_re
 
 # ========== 10. time of day and weather ==========
 df = pd.read_csv("./summary_data/all_pedestrian_info.csv", encoding='utf-8')
-df_filtered = df.dropna(subset=["weather", "daytime", "run_red_light", "risky_crossing"])
+# Drop only on the grouping keys. risky_crossing is NA for ~64% of rows since the
+# 2026-09-07 evidence-positive change, and listwise-deleting on it silently re-based
+# run_red_light_prob -- a metric this file's other sections compute over a different,
+# larger population -- moving it from 14.5% to 41.0%. Each rate is now computed with
+# skipna over its OWN valid subset, and each carries its own n so a cell resting on a
+# handful of observations is visible rather than plotted as a confident percentage.
+df_filtered = df.dropna(subset=["weather", "daytime"])
 weathers = df_filtered["weather"].unique()
 daytimes = df_filtered["daytime"].unique()
 combinations = list(itertools.product(weathers, daytimes))
+MIN_N = 10
 results = []
 for weather, daytime in combinations:
     subset = df_filtered[(df_filtered["weather"] == weather) & (df_filtered["daytime"] == daytime)]
     if len(subset) == 0: continue
+    rr = pd.to_numeric(subset["run_red_light"], errors="coerce").dropna()
+    rc = pd.to_numeric(subset["risky_crossing"], errors="coerce").dropna()
     results.append({
         "weather": weather,
         "daytime": daytime,
-        "run_red_light_prob": subset["run_red_light"].mean() * 100,
-        "risky_crossing_prob": subset["risky_crossing"].mean() * 100,
+        "run_red_light_prob": rr.mean() * 100 if len(rr) >= MIN_N else None,
+        "run_red_light_n": len(rr),
+        "risky_crossing_prob": rc.mean() * 100 if len(rc) >= MIN_N else None,
+        "risky_crossing_n": len(rc),
     })
 result_df = pd.DataFrame(results)
 print(result_df)
@@ -264,8 +300,10 @@ save_bar_chart_pdf(results_df, "continent", ["avg_decision_time", "avg_crossing_
 # ========== 13. others ==========
 df = pd.read_csv("./summary_data/all_video_info.csv")
 cols = ["population_city", "population_country", "traffic_mortality", "literacy_rate", "avg_height", "med_age", "gini","crossing_time", "crossing_speed", "risky_crossing_ratio", "run_red_light_ratio"]
-subset = df[cols].dropna()
-corr = subset.corr()
+# Pairwise: a listwise dropna across 11 columns lets one sparse column (risky_crossing_ratio
+# is NULL for 9 of 28 videos) decide which rows every OTHER pair is computed on.
+subset = df[cols].apply(pd.to_numeric, errors="coerce")
+corr = subset.corr(min_periods=8)
 plt.figure(figsize=(10, 8))
 sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", cbar=True)
 plt.tight_layout()

@@ -151,11 +151,55 @@ def generate_video_env_stats(video_path,
     speed_csv_path = speed_csv_path or os.path.join(output_dir, "[S1]pedestrian_speed.csv")
     output_csv_path = output_csv_path or os.path.join(output_dir, "[A1]video_info.csv")
 
+    # Exposure denominator. run.py deletes the source video after analysis, so a
+    # re-run of the summary modes (or any regeneration of [A1]) opens nothing and
+    # CAP_PROP_FRAME_COUNT returns 0 -- which is how duration_seconds ended up NULL
+    # in 26 of 28 published rows while total_frames read 0. new_track_id_with_imgs.py
+    # writes [B0]video_meta.csv at tracking time for exactly this case; consult it
+    # rather than emitting blanks. duration_source records which path was taken.
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
     duration = total_frames / fps if fps > 0 else None
     cap.release()
+    # cv2 returns -1 (not 0) for FRAME_COUNT on a file it cannot open, and run.py has
+    # already deleted the video by the time the summary modes run. Normalise the sentinel
+    # here so a negative frame count can never be published as data.
+    if total_frames is None or total_frames <= 0:
+        total_frames = None
+    duration_source = "video" if (total_frames and duration) else None
+
+    if not duration or not total_frames:
+        meta_path = os.path.join(output_dir, "[B0]video_meta.csv")
+        if os.path.exists(meta_path):
+            try:
+                meta_df = pd.read_csv(meta_path)
+                # [B0] is a single wide row: video_name,fps,width,height,total_frames
+                if not meta_df.empty:
+                    meta = meta_df.iloc[0]
+                    meta_frames = pd.to_numeric(meta.get("total_frames"), errors="coerce")
+                    meta_fps = pd.to_numeric(meta.get("fps"), errors="coerce")
+                    if pd.notna(meta_frames) and meta_frames > 0:
+                        total_frames = int(meta_frames)
+                        if pd.notna(meta_fps) and meta_fps > 0:
+                            duration = float(meta_frames) / float(meta_fps)
+                            duration_source = "video_meta"
+            except Exception as e:
+                print(f"[warn] could not read {meta_path}: {e}")
+
+    if not duration:
+        # Last resort: run.py's own record of the download, written before deletion.
+        at_path = os.path.join(output_dir, "[A3]analysis_time.csv")
+        if os.path.exists(at_path):
+            try:
+                at_df = pd.read_csv(at_path)
+                if not at_df.empty:
+                    at_duration = pd.to_numeric(at_df.iloc[0].get("duration_seconds"), errors="coerce")
+                    if pd.notna(at_duration) and at_duration > 0:
+                        duration = float(at_duration)
+                        duration_source = "analysis_time"
+            except Exception as e:
+                print(f"[warn] could not read {at_path}: {e}")
 
     def safe_read_csv(path):
         if os.path.exists(path):
@@ -223,16 +267,35 @@ def generate_video_env_stats(video_path,
                     measured_crossing_speed = round(float(cs.median()), 3)
                     measured_speed_n = int(len(cs))
 
+    # risky_crossing_ratio is EVIDENCE-POSITIVE as of 2026-09-07: it is computed over
+    # the crossings whose signal state was actually observed, NOT over all crossings.
+    # See modules/risky_crossing/risky_crossing.py for why. A video where no crossing
+    # had an observed signal yields None, not 0.0 and not 1.0.
+    #
+    # risky_crossing_coverage is the share of crossings that were determinable. It must
+    # be published with the ratio and used to gate it -- coverage correlates +0.580
+    # (p = 0.003) with traffic_light_prob, so a low-coverage city's ratio rests on a
+    # biased subsample, and within the dense_v2 tier the residual confound is still
+    # significant (rho -0.650, p = 0.022).
     risky_crossing_ratio = None
+    risky_crossing_coverage = None
+    unsignalled_crossing_ratio = None
     if risky_df is not None and 'track_id' in risky_df.columns and 'risk' in risky_df.columns:
-        crossed_ids = risky_df['track_id'].unique()
-        risky_count = 0
-        for tid in crossed_ids:
-            person_df = risky_df[risky_df['track_id'] == tid]
-            risky_ratio = (person_df['risk'].str.lower() == 'risky').sum() / len(person_df)
-            if risky_ratio > 0.3:
-                risky_count += 1
-        risky_crossing_ratio = risky_count / len(crossed_ids) if len(crossed_ids) > 0 else None
+        per_track = risky_df.drop_duplicates(subset='track_id')
+        n_crossed = len(per_track)
+        determined = per_track[per_track['risk'].notna()]
+        if n_crossed > 0:
+            risky_crossing_coverage = round(len(determined) / n_crossed, 4)
+        if len(determined) > 0:
+            n_risky = (determined['risk'].astype(str).str.lower() == 'risky').sum()
+            risky_crossing_ratio = n_risky / len(determined)
+        # The pre-2026-09 construct, retained under an honest name so the historical
+        # series stays reconstructible. This is an environment-characterisation
+        # descriptor dominated by detector recall -- not behaviour.
+        if 'unsignalled_ratio' in per_track.columns:
+            uns = pd.to_numeric(per_track['unsignalled_ratio'], errors='coerce').dropna()
+            if not uns.empty:
+                unsignalled_crossing_ratio = round(float(uns.mean()), 4)
 
     runred_ratio = None
     if runred_df is not None and 'track_id' in runred_df.columns and 'ran_red_light' in runred_df.columns:
@@ -321,6 +384,7 @@ def generate_video_env_stats(video_path,
     data = [
         ["video_name", video_name],
         ["duration_seconds", duration],
+        ["duration_source", duration_source],
         ["total_frames", total_frames],
         ["total_pedestrians", total_pedestrians],
         ["total_crossed_pedestrians", total_crossed_pedestrians],
@@ -336,6 +400,8 @@ def generate_video_env_stats(video_path,
         ["average_age", age_mode],
         ["phone_usage_ratio", phone_usage_ratio],
         ["risky_crossing_ratio", risky_crossing_ratio],
+        ["risky_crossing_coverage", risky_crossing_coverage],
+        ["unsignalled_crossing_ratio", unsignalled_crossing_ratio],
         ["run_red_light_ratio", runred_ratio],
         ["crosswalk_usage_ratio", crosswalk_ratio],
         ["traffic_signs_ratio", signs_rate],

@@ -115,8 +115,16 @@ def extract_pedestrian_info(
 
         risky = risky_crossing_df[risky_crossing_df['track_id'] == pid] if not risky_crossing_df.empty else pd.DataFrame()
         if not risky.empty:
-            risky_ratio = risky['risk'].astype(str).str.lower().eq("risky").sum() / len(risky)
-            risky_or_not = 1 if risky_ratio >= 0.2 else 0
+            # [C1].risk is NA when no signal state was observed during the crossing
+            # (see modules/risky_crossing/risky_crossing.py). Such a crossing is
+            # UNDETERMINED, not safe -- scoring it 0 here is what fed the degenerate
+            # per-gender/per-age rates in statistics_with_pdf_save.py.
+            determined = risky[risky['risk'].notna()]
+            if determined.empty:
+                risky_or_not = 'None'
+            else:
+                risky_ratio = determined['risk'].astype(str).str.lower().eq("risky").sum() / len(determined)
+                risky_or_not = 1 if risky_ratio >= 0.2 else 0
         else:
             risky_or_not = 'None'
 

@@ -3,6 +3,7 @@ import re
 import pandas as pd
 import ast
 from pathlib import Path
+from modules.completeness import missing_outputs
 
 
 def find_city_in_mapping(city, link, mapping_df):
@@ -104,6 +105,17 @@ def main():
 
         print(f"  City: {city}, Link: {link}")
 
+        # Same completeness gate get_all_video_info.py applies. Without it, a folder from a
+        # run that died mid-pipeline can still contribute person-level rows -- inferred age
+        # and gender for a city that has no behavioural data -- as soon as anything
+        # regenerates its [A2]. Luanda_z3Gx2hp3Vo8 is excluded today only by the accident of
+        # an empty [A2]; one re-run of the crossing modes would let it through.
+        missing = missing_outputs(folder_path)
+        if missing:
+            print(f"  SKIPPED (incomplete analysis): {folder_name} is missing "
+                  f"{len(missing)} required output(s): {', '.join(missing)}")
+            continue
+
         # Read [A2]pedestrian_info.csv
         pedestrian_info_path = folder_path / '[A2]pedestrian_info.csv'
         if not pedestrian_info_path.exists():
@@ -194,6 +206,16 @@ def main():
 
         columns_order = ['city', 'link', 'city_link'] + pedestrian_columns + mapping_columns
         result_df = result_df.reindex(columns=columns_order)
+
+        # Keep the 0/1 flag columns INTEGRAL across the CSV boundary. These columns are
+        # nullable now (an undetermined observation is NA, not 0), and pandas widens an
+        # int column to float64 as soon as one NA appears -- so to_csv would write '1.0'
+        # instead of '1'. The Visualizer's importer parses these with a strict
+        # `value === '1'` boolean check, so on 2026-09-07 that widening silently published
+        # 156 risky pedestrians as NOT risky. Int64 keeps the tokens 1 / 0 / '' (empty).
+        for _flag in ('risky_crossing', 'run_red_light', 'crosswalk_use_or_not', 'phone_using'):
+            if _flag in result_df.columns:
+                result_df[_flag] = pd.to_numeric(result_df[_flag], errors='coerce').astype('Int64')
 
         # Ensure the output directory exists (./summary_data is not tracked in the repo).
         output_csv_path.parent.mkdir(parents=True, exist_ok=True)

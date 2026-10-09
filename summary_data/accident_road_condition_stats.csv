@@ -1,5 +1,5 @@
 environment_factor,risky_crossing_rate(%),run_red_light_rate(%)
-arrow_board,100.0,0.0
-cones,100.0,0.0
-crack,68.75,8.333333333333332
-potholes,75.0,0.0
+arrow_board,,0.0
+cones,0.0,0.0
+crack,11.11111111111111,8.333333333333332
+potholes,0.0,0.0

@@ -3,6 +3,7 @@ import re
 import pandas as pd
 import ast
 from pathlib import Path
+from modules.completeness import missing_outputs
 
 
 def find_city_in_mapping(city, link, mapping_df):
@@ -134,11 +135,14 @@ def main():
 
     # Define required columns
     video_info_columns = [
-        'video_name', 'duration_seconds', 'total_frames', 'total_pedestrians',
+        'video_name', 'duration_seconds', 'duration_source', 'total_frames', 'total_pedestrians',
         'total_crossed_pedestrians', 'measured_avg_walking_speed_mps',
         'measured_crossing_speed_mps', 'measured_crossing_speed_n', 'pipeline_version',
         'average_age', 'phone_usage_ratio',
-        'risky_crossing_ratio', 'run_red_light_ratio', 'crosswalk_usage_ratio',
+        # risky_crossing_ratio is evidence-positive and MUST be read with its coverage;
+        # unsignalled_crossing_ratio is the pre-2026-09 construct, kept for continuity.
+        'risky_crossing_ratio', 'risky_crossing_coverage', 'unsignalled_crossing_ratio',
+        'run_red_light_ratio', 'crosswalk_usage_ratio',
         'traffic_signs_ratio', 'total_vehicles', 'top3_vehicles', 'main_weather',
         'sidewalk_prob', 'crosswalk_prob', 'traffic_light_prob', 'avg_road_width',
         'Crack_prob', 'Potholes_prob', 'police_car_prob', 'Arrow Board_prob',
@@ -161,6 +165,9 @@ def main():
 
     aggregated_data = []
     time_info_rows = []
+    # Folders skipped by the completeness gate below; written out so a partial run is
+    # visible rather than silently absent from the dataset.
+    incomplete_videos = []
 
     for folder_path in final_results_path.iterdir():
         if not folder_path.is_dir():
@@ -185,6 +192,21 @@ def main():
         video_info_path = folder_path / '[A1]video_info.csv'
         if not video_info_path.exists():
             print(f"  Warning: {video_info_path} does not exist, skipped")
+            continue
+
+        # Completeness gate. A run that dies mid-pipeline still leaves a folder, and
+        # the summary modes will happily write an [A1] over its partial inputs -- so
+        # presence of [A1] is NOT evidence the video was analysed. Luanda_z3Gx2hp3Vo8
+        # is the live example: the 2026-07-27 batch died at lane_detection with ~29 of
+        # 40 modes never run, leaving person crops and inferred demographics for a city
+        # with no behavioural data. Require the inputs every published column depends
+        # on, so a partial video is skipped loudly instead of entering the dataset with
+        # silent nulls.
+        missing = missing_outputs(folder_path)
+        if missing:
+            print(f"  SKIPPED (incomplete analysis): {folder_name} is missing {len(missing)} "
+                  f"required output(s): {', '.join(missing)}")
+            incomplete_videos.append({'video_name': folder_name, 'missing': ';'.join(missing)})
             continue
 
         video_data = parse_video_info_csv(video_info_path)
@@ -237,6 +259,41 @@ def main():
         for col in video_info_columns:
             row_data[col] = video_data.get(col, None)
 
+        # Exposure denominator, second line of defence. [A1] rows written before
+        # 2026-09-07 carry a blank duration_seconds and total_frames = 0, because the
+        # summary mode reopened a video run.py had already deleted. The value survives
+        # in [A3] (run.py's own record) and [B0] (written at tracking time), so recover
+        # it here too rather than publishing a rate with no denominator. Re-running
+        # `sum_video` fixes [A1] at source; this keeps stale folders usable meanwhile.
+        _dur = pd.to_numeric(row_data.get('duration_seconds'), errors='coerce')
+        if pd.isna(_dur) or _dur <= 0:
+            _meta_path = folder_path / '[B0]video_meta.csv'
+            if _meta_path.exists():
+                try:
+                    _m = pd.read_csv(_meta_path)
+                    if not _m.empty:
+                        _f = pd.to_numeric(_m.iloc[0].get('total_frames'), errors='coerce')
+                        _fp = pd.to_numeric(_m.iloc[0].get('fps'), errors='coerce')
+                        if pd.notna(_f) and _f > 0 and pd.notna(_fp) and _fp > 0:
+                            row_data['duration_seconds'] = float(_f) / float(_fp)
+                            row_data['duration_source'] = 'video_meta'
+                            _tf = pd.to_numeric(row_data.get('total_frames'), errors='coerce')
+                            if pd.isna(_tf) or _tf <= 0:
+                                row_data['total_frames'] = int(_f)
+                except Exception as e:
+                    print(f"  Warning: could not read {_meta_path}: {e}")
+        _dur = pd.to_numeric(row_data.get('duration_seconds'), errors='coerce')
+        if (pd.isna(_dur) or _dur <= 0) and analysis_time_path.exists():
+            try:
+                _at = pd.read_csv(analysis_time_path)
+                if not _at.empty:
+                    _d = pd.to_numeric(_at.iloc[0].get('duration_seconds'), errors='coerce')
+                    if pd.notna(_d) and _d > 0:
+                        row_data['duration_seconds'] = float(_d)
+                        row_data['duration_source'] = 'analysis_time'
+            except Exception as e:
+                print(f"  Warning: could not read {analysis_time_path}: {e}")
+
         row_data['crossing_time'] = crossing_time
         row_data['crossing_speed'] = crossing_speed
         row_data['data_collected_date'] = data_collected_date
@@ -255,6 +312,14 @@ def main():
 
         aggregated_data.append(row_data)
         print(f"  Successfully processed folder {folder_name}")
+
+    # Written unconditionally (header-only when nothing was skipped): a report that is only
+    # created on failure leaves a stale exclusion list on disk after the next clean run.
+    inc_path = output_csv_path.parent / 'incomplete_videos.csv'
+    inc_path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(incomplete_videos, columns=['video_name', 'missing']).to_csv(inc_path, index=False)
+    if incomplete_videos:
+        print(f"\n{len(incomplete_videos)} folder(s) skipped as incomplete -> {inc_path}")
 
     if aggregated_data:
         result_df = pd.DataFrame(aggregated_data)

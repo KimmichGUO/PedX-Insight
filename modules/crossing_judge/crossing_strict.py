@@ -2,6 +2,7 @@ import os
 import cv2
 import pandas as pd
 from shapely.geometry import Point, Polygon
+from modules.paths import RESULTS_ROOT
 
 def get_video_mid_x(video_path):
     cap = cv2.VideoCapture(video_path)
@@ -36,9 +37,9 @@ def detect_crossing_strict(video_path, tracked_csv_path=None, sidewalk_csv_path=
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if tracked_csv_path is None:
-        tracked_csv_path = os.path.join(".", "analysis_results", video_name, "[B1]tracked_pedestrians.csv")
+        tracked_csv_path = os.path.join(RESULTS_ROOT, video_name, "[B1]tracked_pedestrians.csv")
     if sidewalk_csv_path is None:
-        sidewalk_csv_path = os.path.join(".", "analysis_results", video_name, "[E9]sidewalk_detection.csv")
+        sidewalk_csv_path = os.path.join(RESULTS_ROOT, video_name, "[E9]sidewalk_detection.csv")
 
     df_tracks = pd.read_csv(tracked_csv_path)
     df_polygons = pd.read_csv(sidewalk_csv_path)

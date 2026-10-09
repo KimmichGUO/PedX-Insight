@@ -2,6 +2,7 @@ import os
 import bisect
 import pandas as pd
 import numpy as np
+from modules.paths import RESULTS_ROOT
 
 
 def load_traffic_light_status(traffic_light_csv_path):
@@ -27,11 +28,11 @@ def determine_red_light_violation(
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if crossing_csv_path is None:
-        crossing_csv_path = os.path.join("analysis_results", video_name, "[C3]crossing_judge.csv")
+        crossing_csv_path = os.path.join(RESULTS_ROOT, video_name, "[C3]crossing_judge.csv")
     if traffic_light_csv_path is None:
-        traffic_light_csv_path = os.path.join("analysis_results", video_name, "[E2]traffic_light.csv")
+        traffic_light_csv_path = os.path.join(RESULTS_ROOT, video_name, "[E2]traffic_light.csv")
     if output_csv_path is None:
-        output_csv_path = os.path.join("analysis_results", video_name, "[C5]red_light_runner.csv")
+        output_csv_path = os.path.join(RESULTS_ROOT, video_name, "[C5]red_light_runner.csv")
 
     columns = [
         "track_id",

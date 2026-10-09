@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from shapely.geometry import Polygon, Point
 import os
+from modules.paths import RESULTS_ROOT
 
 def build_lane_polygon(lane_row):
     polygon_coords = [
@@ -16,7 +17,7 @@ def pedestrian_on_lane(video_path, tracking_csv_path=None, lane_csv_path=None, o
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     # Compute output_dir unconditionally so passing output_csv_path while leaving the other
     # csv paths as None does not raise NameError on the default-path derivations below.
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if output_csv_path is None:
         output_csv_path = os.path.join(output_dir, "[C8]pedestrian_on_lane.csv")

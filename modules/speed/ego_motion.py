@@ -20,6 +20,7 @@ video is unavailable, an empty file is written and consumers assume a static cam
 import os
 import numpy as np
 import pandas as pd
+from modules.paths import RESULTS_ROOT
 
 try:
     import cv2
@@ -60,7 +61,7 @@ def estimate_step(prev_gray, cur_gray, boxes, min_points=8, pad_frac=0.12):
 def run_ego_motion(video_path, dense_csv=None, output_csv=None, moving_threshold_px=1.0,
                    sample_fps=15.0):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if dense_csv is None:
         dense_csv = os.path.join(output_dir, "[B2]dense_tracks.csv")

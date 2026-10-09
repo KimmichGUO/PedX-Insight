@@ -103,6 +103,7 @@ from modules.speed.speed_estimation import (
     _rolling_median,
     estimate_ego_expansion,
 )
+from modules.paths import RESULTS_ROOT
 
 CAR_LENGTH_M = 4.5
 LENGTH_PRIOR_TYPES = {"car", "taxi"}
@@ -606,7 +607,7 @@ def run_vehicle_speed(video_path, vehicle_tracks_csv=None, output_csv=None,
                       mapping_csv="mapping.csv"):
     """Entry point (CSV-only; the video file itself is never opened)."""
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if output_csv is None:
         output_csv = os.path.join(output_dir, "[V8]vehicle_speed.csv")

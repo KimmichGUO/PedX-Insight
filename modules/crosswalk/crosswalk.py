@@ -4,6 +4,7 @@ import pandas as pd
 from ultralytics import YOLO
 import math
 import torch
+from modules.paths import RESULTS_ROOT
 
 # Minimum plausible on-screen size for a crosswalk detection. A live run showed
 # tiny (e.g. 27x42 px) false positives being accepted and poisoning the downstream
@@ -19,7 +20,7 @@ def run_crosswalk_detection(video_path, analyze_interval_sec=1.0, output_csv_pat
 
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
+        output_dir = os.path.join(RESULTS_ROOT, video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[E7]crosswalk_detection.csv")
 

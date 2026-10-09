@@ -1,6 +1,7 @@
 import os
 import cv2
 import pandas as pd
+from modules.paths import RESULTS_ROOT
 
 def get_video_mid_x(video_path):
     cap = cv2.VideoCapture(video_path)
@@ -14,7 +15,7 @@ def detect_crossing(video_path, tracked_csv_path=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if tracked_csv_path is None:
-        tracked_csv_path = os.path.join(".", "analysis_results", video_name, "[B1]tracked_pedestrians.csv")
+        tracked_csv_path = os.path.join(RESULTS_ROOT, video_name, "[B1]tracked_pedestrians.csv")
 
     if os.path.exists(tracked_csv_path):
         df_tracks = pd.read_csv(tracked_csv_path)

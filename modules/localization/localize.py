@@ -31,6 +31,7 @@ import json
 import time
 import subprocess
 import importlib.util
+from modules.paths import RESULTS_ROOT
 
 # The companion tool as a pip package: import name (find_spec / -m target) and the
 # one-line install hint surfaced when it is missing. Not on PyPI yet, so install is
@@ -163,7 +164,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         raise FileNotFoundError(f"Video not found: {video_path} (localization needs the video file present)")
 
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if output_csv_path is None:
         output_csv_path = os.path.join(output_dir, "[L1]localization.csv")

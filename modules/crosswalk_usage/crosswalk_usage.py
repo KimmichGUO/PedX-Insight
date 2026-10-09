@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import ast
 from shapely.geometry import box, Point
+from modules.paths import RESULTS_ROOT
 
 def load_crosswalk_boxes(crosswalk_csv_path):
     df = pd.read_csv(crosswalk_csv_path)
@@ -28,13 +29,13 @@ def circle_overlaps_crosswalk(circle_center, radius, crosswalk_boxes):
 def determine_crosswalk_usage(video_path, crossing_csv_path=None, track_csv_path=None, crosswalk_csv_path=None, output_csv_path=None, frame_window=30):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if crossing_csv_path is None:
-        crossing_csv_path = os.path.join("analysis_results", video_name, "[C3]crossing_judge.csv")
+        crossing_csv_path = os.path.join(RESULTS_ROOT, video_name, "[C3]crossing_judge.csv")
     if track_csv_path is None:
-        track_csv_path = os.path.join("analysis_results", video_name, "[B1]tracked_pedestrians.csv")
+        track_csv_path = os.path.join(RESULTS_ROOT, video_name, "[B1]tracked_pedestrians.csv")
     if crosswalk_csv_path is None:
-        crosswalk_csv_path = os.path.join("analysis_results", video_name, "[E7]crosswalk_detection.csv")
+        crosswalk_csv_path = os.path.join(RESULTS_ROOT, video_name, "[E7]crosswalk_detection.csv")
     if output_csv_path is None:
-        output_csv_path = os.path.join("analysis_results", video_name, "[C4]crosswalk_usage.csv")
+        output_csv_path = os.path.join(RESULTS_ROOT, video_name, "[C4]crosswalk_usage.csv")
 
     crossing_df = pd.read_csv(crossing_csv_path)
     tracked_df = pd.read_csv(track_csv_path)

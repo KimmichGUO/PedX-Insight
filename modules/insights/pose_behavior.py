@@ -74,6 +74,7 @@ import math
 
 import numpy as np
 import pandas as pd
+from modules.paths import RESULTS_ROOT
 
 # --- COCO-17 keypoint indices --------------------------------------------------
 KP_NOSE = 0
@@ -523,7 +524,7 @@ def run_pose_behavior(video_path, output_csv=None, target_hz=TARGET_HZ,
     for every archived folder; the module activates on future batch runs.
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if output_csv is None:
         output_csv = os.path.join(output_dir, "[P12]pose_behavior.csv")

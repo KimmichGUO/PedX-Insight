@@ -9,6 +9,7 @@ from elements.SGD import SGDepth_Model
 from elements.asset import apply_mask
 from SGDepth.arguments import InferenceEvaluationArguments
 import math
+RESULTS_ROOT = os.environ.get("PEDX_RESULTS_ROOT") or "analysis_results"
 
 # Parse original arguments (now includes analyze_interval_sec)
 opt = InferenceEvaluationArguments().parse()
@@ -30,7 +31,7 @@ w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 video_name = os.path.splitext(os.path.basename(opt.video))[0]
-sidewalk_csv_path = os.path.join('./analysis_results', video_name, '[E9]sidewalk_detection.csv')
+sidewalk_csv_path = os.path.join(RESULTS_ROOT, video_name, '[E9]sidewalk_detection.csv')
 os.makedirs(os.path.dirname(sidewalk_csv_path), exist_ok=True)
 
 csvfile = open(sidewalk_csv_path, 'w', newline='')

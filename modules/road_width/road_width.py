@@ -4,6 +4,7 @@ from collections import deque
 import csv
 import os
 import math
+from modules.paths import RESULTS_ROOT
 
 ASSUMED_LANE_WIDTH_M = 3.5
 
@@ -43,7 +44,7 @@ def run_road_width_analysis(video_path, analyze_interval_sec=1.0, output_csv_pat
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if output_csv_path is None:
-        output_dir = os.path.join(".", "analysis_results", video_name)
+        output_dir = os.path.join(RESULTS_ROOT, video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[E5]road_width.csv")
     else:

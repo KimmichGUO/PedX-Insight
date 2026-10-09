@@ -4,6 +4,7 @@ import pandas as pd
 import math
 from ultralytics import YOLO
 import torch
+from modules.paths import RESULTS_ROOT
 
 CLASS_NAMES = {0: 'police_car', 1: 'Arrow Board', 2: 'cones', 3: 'accident'}
 
@@ -15,7 +16,7 @@ def run_accident_scene_detection(
 ):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
+        output_dir = os.path.join(RESULTS_ROOT, video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[E8]accident_detection.csv")
 

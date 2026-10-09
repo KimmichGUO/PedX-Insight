@@ -67,6 +67,7 @@ from modules.speed.speed_estimation import (EGO_SMOOTH_SAMPLES,
                                             _resolve_assumed_height_m,
                                             _rolling_median,
                                             estimate_ego_expansion)
+from modules.paths import RESULTS_ROOT
 
 OUTPUT_COLUMNS = [
     "track_id", "veh_track_id", "veh_type", "min_pet_s", "first_agent",
@@ -362,7 +363,7 @@ def run_pet_conflicts(video_path, tracks_csv=None, vehicle_csv=None, crossing_cs
     contributes to `reliable` only.
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     if output_csv is None:
         os.makedirs(output_dir, exist_ok=True)
         output_csv = os.path.join(output_dir, "[I1]pet_conflicts.csv")

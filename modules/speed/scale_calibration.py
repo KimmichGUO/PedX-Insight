@@ -31,6 +31,7 @@ import ast
 import os
 import numpy as np
 import pandas as pd
+from modules.paths import RESULTS_ROOT
 
 try:
     import cv2
@@ -109,7 +110,7 @@ def _parse_boxes(cell):
 def run_scale_calibration(video_path, crosswalk_csv=None, output_csv=None,
                           stripe_period_m=DEFAULT_STRIPE_PERIOD_M, max_frames=60):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if crosswalk_csv is None:
         crosswalk_csv = os.path.join(output_dir, "[E7]crosswalk_detection.csv")

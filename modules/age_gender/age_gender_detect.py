@@ -35,6 +35,7 @@ from collections import Counter
 
 import numpy as np
 import cv2
+from modules.paths import RESULTS_ROOT
 
 WEIGHTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "weights")
 YUNET_PATH = os.path.join(WEIGHTS_DIR, "face_detection_yunet_2023mar.onnx")
@@ -228,9 +229,9 @@ def run_age_gender(video_path, img_root=None, output_csv_path=None):
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if img_root is None:
-        img_root = os.path.join("./analysis_results", video_name, "pedestrian_img")
+        img_root = os.path.join(RESULTS_ROOT, video_name, "pedestrian_img")
     if output_csv_path is None:
-        output_csv_path = os.path.join("./analysis_results", video_name,
+        output_csv_path = os.path.join(RESULTS_ROOT, video_name,
                                        "[P6]age_gender.csv")
 
     final_results = {}

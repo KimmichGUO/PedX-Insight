@@ -38,6 +38,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from modules.paths import RESULTS_ROOT
 
 OUTPUT_COLUMNS = [
     "track_id",
@@ -328,7 +329,7 @@ def run_signal_timing(video_path,
     light_available=False and NaN timing metrics.
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
 
     if crossing_csv_path is None:
         crossing_csv_path = os.path.join(output_dir, "[C3]crossing_judge.csv")

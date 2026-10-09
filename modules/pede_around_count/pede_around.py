@@ -2,10 +2,11 @@ import pandas as pd
 import numpy as np
 import os
 import math
+from modules.paths import RESULTS_ROOT
 
 def calculate_nearby_count(video_path, crossing_csv=None, tracked_pede_csv=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     if output_csv_path is None:
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[C10]nearby_count.csv")

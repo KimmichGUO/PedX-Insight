@@ -30,6 +30,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from modules.paths import RESULTS_ROOT
 
 OUTPUT_COLUMNS = [
     "direction",
@@ -206,7 +207,7 @@ def run_headway_stats(
     [V10]line_crossing_events.csv yields a valid header-only output CSV.
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
 
     if line_crossing_csv_path is None:
         line_crossing_csv_path = os.path.join(output_dir, "[V10]line_crossing_events.csv")

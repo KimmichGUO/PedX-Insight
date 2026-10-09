@@ -38,6 +38,7 @@ The pre-2026-09 construct is retained as `unsignalled_ratio`. It correlates -0.8
 import os
 import bisect
 import pandas as pd
+from modules.paths import RESULTS_ROOT
 
 
 def _read_csv_or_empty(csv_path, columns):
@@ -78,7 +79,7 @@ def detect_crossing_risk(
         tracked_csv=None
 ):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
 
     if output_csv_path is None:

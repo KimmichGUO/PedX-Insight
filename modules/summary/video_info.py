@@ -2,6 +2,7 @@ import os
 import math
 import pandas as pd
 import cv2
+from modules.paths import RESULTS_ROOT
 
 def _insight_rollup(output_dir):
     """Roll the per-video novel-insight CSVs up into scalar metrics for [A1].
@@ -130,7 +131,7 @@ def generate_video_env_stats(video_path,
                              ):
 
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
 
     tracked_pedestrian_csv = tracked_pedestrian_csv or os.path.join(output_dir, "[B1]tracked_pedestrians.csv")

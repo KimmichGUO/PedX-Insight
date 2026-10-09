@@ -1,9 +1,10 @@
 import pandas as pd
 import os
+from modules.paths import RESULTS_ROOT
 
 def summary_all_info(video_path, personal_info_csv=None, env_info_csv=None, output_csv_path=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
 
     if output_csv_path is None:

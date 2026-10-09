@@ -4,6 +4,7 @@ import pandas as pd
 from ultralytics import YOLO
 import torch
 from collections import defaultdict, Counter
+from modules.paths import RESULTS_ROOT
 
 # Output-schema vehicle types (kept identical so [V6]vehicle_count.csv rows never change).
 id2name = {
@@ -97,7 +98,7 @@ def vehicle_count(
 
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
+        output_dir = os.path.join(RESULTS_ROOT, video_name)
     else:
         output_dir = os.path.dirname(output_csv_path) or "."
     os.makedirs(output_dir, exist_ok=True)

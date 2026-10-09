@@ -4,11 +4,12 @@ import pandas as pd
 from ultralytics import YOLO
 import math
 import torch
+from modules.paths import RESULTS_ROOT
 
 def run_traffic_sign(video_path, analyze_interval_sec=1.0, output_csv_path=None, conf=0.25):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
+        output_dir = os.path.join(RESULTS_ROOT, video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[E3]traffic_sign.csv")
 

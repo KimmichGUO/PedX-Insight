@@ -6,6 +6,7 @@ import pandas as pd
 import math
 from datetime import datetime
 from collections import Counter
+from modules.paths import RESULTS_ROOT
 
 
 def _solar_noon_elevation(video_name, analyze_date=None):
@@ -55,7 +56,7 @@ def run_daytime_detection(video_path, brightness_threshold=100, analyze_interval
     video_name = os.path.splitext(os.path.basename(video_path))[0]
 
     if output_csv_path is None:
-        output_dir = os.path.join("analysis_results", video_name)
+        output_dir = os.path.join(RESULTS_ROOT, video_name)
         os.makedirs(output_dir, exist_ok=True)
         output_csv_path = os.path.join(output_dir, "[E6]daytime.csv")
 

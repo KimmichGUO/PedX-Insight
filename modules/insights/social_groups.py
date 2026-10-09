@@ -57,6 +57,7 @@ import numpy as np
 import pandas as pd
 
 from modules.speed.speed_estimation import _rolling_median, _resolve_assumed_height_m
+from modules.paths import RESULTS_ROOT
 
 GROUPS_COLUMNS = [
     "group_id", "track_id", "n_members", "mean_gap_m", "gap_std_m",
@@ -435,7 +436,7 @@ def run_social_groups(video_path, tracks_csv=None, ego_csv=None, scale_csv=None,
     header-only outputs.
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if output_groups_csv is None:
         output_groups_csv = os.path.join(output_dir, "[I2]pedestrian_groups.csv")

@@ -2,6 +2,7 @@ import os
 import cv2
 import pandas as pd
 from collections import defaultdict, Counter
+from modules.paths import RESULTS_ROOT
 
 # Output-schema vehicle types (kept identical so [C6]crossing_ve_count.csv columns never change).
 id2name = {
@@ -82,7 +83,7 @@ def analyze_vehicle_during_crossing(
     writes, re-running its own tracking pass only when the sidecar is missing.
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if output_csv_path is None:
         output_csv_path = os.path.join(output_dir, "[C6]crossing_ve_count.csv")

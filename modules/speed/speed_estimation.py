@@ -26,6 +26,7 @@ import re
 import math
 import numpy as np
 import pandas as pd
+from modules.paths import RESULTS_ROOT
 
 DEFAULT_HEIGHT_M = 1.70
 MIN_PLAUSIBLE_HEIGHT_M = 1.2
@@ -181,7 +182,7 @@ def run_speed_estimation(video_path, trajectory_csv=None, mapping_csv="mapping.c
                          output_csv=None, assumed_height_m=None, min_samples=3,
                          max_step_speed_mps=8.0, smooth_window=3):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if output_csv is None:
         output_csv = os.path.join(output_dir, "[S1]pedestrian_speed.csv")

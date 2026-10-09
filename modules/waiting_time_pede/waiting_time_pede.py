@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 
 from modules.speed.speed_estimation import _resolve_assumed_height_m, _rolling_median
+from modules.paths import RESULTS_ROOT
 
 WAIT_SPEED_MPS = 0.3
 MIN_WAIT_SECONDS = 1.0
@@ -32,7 +33,7 @@ def run_waiting_time_analysis(video_path, csv_path=None, output_csv=None,
                               # accepted for backward compatibility; no longer used
                               move_thresh=None, frame_thresh=None, min_good_points=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if output_csv is None:
         output_csv = os.path.join(output_dir, "[P3]waiting_time.csv")

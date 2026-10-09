@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from modules.paths import RESULTS_ROOT
 
 def merge_env_info(video_path,
                    crossing_csv_path=None, weather_csv_path=None, road_defect_csv_path=None,
@@ -9,7 +10,7 @@ def merge_env_info(video_path,
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     # Compute output_dir unconditionally so passing output_csv_path while leaving the other
     # csv paths as None does not raise NameError on the default-path derivations below.
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if output_csv_path is None:
         output_csv_path = os.path.join(output_dir, "[C9]crossing_env_info.csv")

@@ -2,6 +2,7 @@ import os
 import cv2
 import pandas as pd
 from shapely.geometry import Point, Polygon
+from modules.paths import RESULTS_ROOT
 
 OUTPUT_COLUMNS = ['track_id', 'crossed', 'started_frame', 'ended_frame', 'movement_type']
 
@@ -53,7 +54,7 @@ def detect_crossing(video_path, tracked_csv_path=None, sidewalk_csv_path=None, o
     movement_type column that downstream consumers ignore).
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join(".", "analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
 
     if tracked_csv_path is None:
         tracked_csv_path = os.path.join(output_dir, "[B1]tracked_pedestrians.csv")

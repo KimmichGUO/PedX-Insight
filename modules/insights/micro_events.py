@@ -47,6 +47,7 @@ from modules.speed.speed_estimation import (
     _resolve_assumed_height_m,
     WAIT_SPEED_MPS,
 )
+from modules.paths import RESULTS_ROOT
 
 # --- segmentation thresholds -------------------------------------------------
 STOP_SPEED_MPS = WAIT_SPEED_MPS      # v <  0.3 m/s -> STOP   (strict <)
@@ -360,7 +361,7 @@ def run_micro_events(video_path, trajectory_csv=None, mapping_csv="mapping.csv",
     may be missing (a missing trajectory yields a header-only output CSV).
     """
     video_name = os.path.splitext(os.path.basename(video_path))[0]
-    output_dir = os.path.join("analysis_results", video_name)
+    output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
     if output_csv is None:
         output_csv = os.path.join(output_dir, "[P11]micro_events.csv")

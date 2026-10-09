@@ -24,3 +24,11 @@ yolo11*-pose.pt
 # cookies), so tracking it dirties the repo after each batch. Keep it local per machine.
 www.youtube.com_cookies.txt
 /osm_localization_cache
+
+# Nightly publish log: appended by scripts/nightly_publish.ps1 every night, so tracking it
+# dirties the tree daily. It is an operational log, not a research artifact.
+scripts/nightly_publish.log
+
+# Local checkout of the separate Monocular-OSM-Localization repo (consumed as the
+# `monocular_osm` pip package; see requirements-localize.txt). Not part of this repo.
+/external/

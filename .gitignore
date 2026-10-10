@@ -32,3 +32,6 @@ scripts/nightly_publish.log
 # Local checkout of the separate Monocular-OSM-Localization repo (consumed as the
 # `monocular_osm` pip package; see requirements-localize.txt). Not part of this repo.
 /external/
+
+# Provenance hash cache (modules/provenance.py): sha256 of weight files keyed by size+mtime.
+.weights_sha256_cache.json

@@ -20,6 +20,9 @@ warnings.filterwarnings("ignore", category=UserWarning, module='pkg_resources')
 # 'ag' left this set 2026-07-16 (reimplemented on YuNet + genderage.onnx).
 OPTIONAL_MODES = set()
 
+# Modes that only dispatch other modes as subprocesses.
+ORCHESTRATOR_MODES = {"mul_all", "single_all", "pedestrian", "vehicle", "environment"}
+
 
 def main():
     failed_modes = []
@@ -47,7 +50,7 @@ def main():
         choices=["id_img", "waiting", "speed", "ego", "scale", "clothing", "phone", "belongings", "ag",
                  "vehicle_type", "lane", "count_vehicle",
                  "weather", "traffic_sign", "width", "light", "road_condition", "daytime", "crosswalk", "accident",
-                 "sidewalk",
+                 "sidewalk", "scene_seg",
                  "risky", "cross_pede", "crosswalk_usage", "run_red", "crossing_vehicle_count", "on_lane", "nearby",
                  "pedestrian", "vehicle", "environment",
                  "pet", "vehicle_speed", "headway", "signal_timing", "micro_events", "groups", "pose",
@@ -88,6 +91,9 @@ def main():
         help="Interpreter of the Monocular-OSM-Localization env (for --mode localize)",
     )
     args = parser.parse_args()
+
+    from modules.provenance import utc_now
+    started_utc = utc_now()
 
     if args.mode == "id_img":
         from new_track_id_with_imgs import ultralytics_pedestrian_tracking_with_imgsave
@@ -166,12 +172,25 @@ def main():
             analyze_interval_sec=args.analysis_interval
         )
     elif args.mode == "sidewalk":
+        # sys.executable, and propagate the exit code: it used to be discarded, so a failed
+        # sidewalk run exited 0 even after 'sidewalk' was promoted out of OPTIONAL_MODES.
         cmd = [
-            "python", "modules/sidewalk/sidewalk_detect.py",
+            sys.executable, "modules/sidewalk/sidewalk_detect.py",
             "--video", args.source_video_path,
             "--analyze_interval_sec", str(args.analysis_interval)
         ]
-        subprocess.run(cmd)
+        result = subprocess.run(cmd)
+        if result.returncode != 0:
+            sys.exit(result.returncode)
+    elif args.mode == "scene_seg":
+        # [E10] Mask2Former (Mapillary Vistas) scene segmentation. Standalone mode, NOT in
+        # single_all: it is a candidate replacement for the crosswalk/sidewalk detectors and
+        # stays out of the production pipeline until the JAAD benchmark (validation/) says so.
+        from modules.scene_seg.scene_seg import run_scene_segmentation
+        run_scene_segmentation(
+            video_path=args.source_video_path,
+            analyze_interval_sec=args.analysis_interval,
+        )
     elif args.mode == "crosswalk":
         from modules.crosswalk.crosswalk import run_crosswalk_detection
         run_crosswalk_detection(
@@ -464,6 +483,13 @@ def main():
 
     else:
         print(f"Unknown mode: {args.mode}")
+
+    # Provenance ([A0]): which code revision and weights produced this mode's outputs.
+    # Orchestrator modes are skipped -- each sub-mode they spawn records itself. Reached
+    # only when the mode returned normally (a raised exception exits before this line).
+    if args.mode not in ORCHESTRATOR_MODES:
+        from modules.provenance import record_mode_run
+        record_mode_run(args.source_video_path, args.mode, started_utc)
 
     if failed_modes:
         hard = [m for m in failed_modes if m not in OPTIONAL_MODES]

@@ -4,6 +4,7 @@ import pandas as pd
 import ast
 from pathlib import Path
 from modules.completeness import missing_outputs
+from modules.provenance import summarize as summarize_provenance
 
 
 def find_city_in_mapping(city, link, mapping_df):
@@ -302,6 +303,10 @@ def main():
         row_data['top_vehicle1'] = top_vehicle1
         row_data['top_vehicle2'] = top_vehicle2
         row_data['top_vehicle3'] = top_vehicle3
+        # Provenance: git revision of the most recent mode run ('+dirty' when it ran on
+        # modified tracked files) and whether outputs mix revisions. Blank for folders
+        # analysed before [A0] existed. Imported verbatim as videos.code_version.
+        row_data['code_version'], row_data['code_version_mixed'] = summarize_provenance(folder_path)
 
         if city_info is not None:
             for col in mapping_columns:
@@ -326,7 +331,8 @@ def main():
 
         columns_order = ['city', 'link'] + video_info_columns + [
             'top_vehicle1', 'top_vehicle2', 'top_vehicle3',
-            'crossing_time', 'crossing_speed', 'data_collected_date'
+            'crossing_time', 'crossing_speed', 'data_collected_date',
+            'code_version', 'code_version_mixed'
         ] + mapping_columns
         result_df = result_df.reindex(columns=columns_order)
 

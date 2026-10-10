@@ -1,5 +1,5 @@
-continent,crosswalk_usage_ratio,crosswalk_usage_ratio_n,crosswalk_usage_ratio_n_clusters,crosswalk_usage_ratio_ci_low,crosswalk_usage_ratio_ci_high,crosswalk_prob,crosswalk_prob_n,crosswalk_prob_n_clusters,crosswalk_prob_ci_low,crosswalk_prob_ci_high,crosswalk_coeff
-Asia,0.0,8,6,0.0,0.0,0.000813037917441325,8,6,0.0,0.0016815458208632415,
-Europe,0.2,5,5,0.0,0.6,0.026057243251786058,9,6,0.00176462284127805,0.06420073899205105,
-North America,0.0,8,6,0.0,0.0,0.013212314831946173,8,6,0.0,0.029897520616150836,
-Oceania,0.0,3,3,,,0.0,3,3,,,
+continent,crosswalk_usage_ratio,crosswalk_usage_ratio_n,crosswalk_usage_ratio_n_clusters,crosswalk_usage_ratio_ci_low,crosswalk_usage_ratio_ci_high,crosswalk_prob,crosswalk_prob_n,crosswalk_prob_n_clusters,crosswalk_prob_ci_low,crosswalk_prob_ci_high,validity_note,crosswalk_coeff
+Asia,0.0,8,6,0.0,0.0,0.000813037917441325,8,6,0.0,0.0016815458208632415,"NOT VALID for cross-city claims: crosswalk detector at chance on JAAD (ROC-AUC 0.50, 346 clips); see validation/results/JAAD_REPORT.md",
+Europe,0.2,5,5,0.0,0.6,0.026057243251786058,9,6,0.00176462284127805,0.06420073899205105,"NOT VALID for cross-city claims: crosswalk detector at chance on JAAD (ROC-AUC 0.50, 346 clips); see validation/results/JAAD_REPORT.md",
+North America,0.0,8,6,0.0,0.0,0.013212314831946173,8,6,0.0,0.029897520616150836,"NOT VALID for cross-city claims: crosswalk detector at chance on JAAD (ROC-AUC 0.50, 346 clips); see validation/results/JAAD_REPORT.md",
+Oceania,0.0,3,3,,,0.0,3,3,,,"NOT VALID for cross-city claims: crosswalk detector at chance on JAAD (ROC-AUC 0.50, 346 clips); see validation/results/JAAD_REPORT.md",

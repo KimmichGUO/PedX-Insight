@@ -57,6 +57,8 @@ MIN_RISKY_COVERAGE = 0.25
 MIN_CITY_N = 5
 # City-level correlations need at least this many cities with both values.
 MIN_CITIES_CORR = 8
+CROSSWALK_VALIDITY_NOTE = ("NOT VALID for cross-city claims: crosswalk detector at chance on JAAD "
+                           "(ROC-AUC 0.50, 346 clips); see validation/results/JAAD_REPORT.md")
 
 
 def save_csv(df, filename):
@@ -349,10 +351,15 @@ def main():
     # on the outcome. The coefficient (usage / presence) is published only where presence
     # is high enough to divide by -- with crosswalk_prob at most 0.18 in this dataset, a
     # ratio of two near-zero numbers is noise.
+    # VALIDITY: the detector behind crosswalk_prob / crosswalk_usage_ratio is at chance against
+    # JAAD ground truth (ROC-AUC 0.50 on 346 clips; it keys on a class the shipped weights name
+    # 'Flexible_delineator_post'). The values are published for continuity but flagged so no
+    # consumer reads them as cross-city behaviour. See validation/results/JAAD_REPORT.md.
     rows = []
     for cont, grp in vid.dropna(subset=["continent"]).groupby("continent"):
         row = {"continent": cont}
         row.update(city_weighted_row(grp, ["crosswalk_usage_ratio", "crosswalk_prob"], min_city_n=1))
+        row["validity_note"] = CROSSWALK_VALIDITY_NOTE
         prob, usage = row.get("crosswalk_prob"), row.get("crosswalk_usage_ratio")
         row["crosswalk_coeff"] = (usage / prob if prob is not None and usage is not None
                                   and prob >= 0.05 else None)
@@ -363,8 +370,9 @@ def main():
     print(continent_stats)
     save_csv(continent_stats, f"{OUT}/crosswalk_coeff.csv")
     save_bar_chart_pdf(continent_stats, "continent", ["crosswalk_usage_ratio", "crosswalk_prob"],
-                       f"{OUT}/crosswalk_coeff.pdf", "Crosswalk Usage and Presence by Continent (city-weighted)",
-                       "ratio")
+                       f"{OUT}/crosswalk_coeff.pdf",
+                       "Crosswalk Usage and Presence by Continent (city-weighted)\n"
+                       "NOT VALID: crosswalk detector is at chance on JAAD (see validation/)", "ratio")
 
     # ========== 13. continent speed and decision time ==========
     # avg_crossing_speed is MEASURED ([S1] crossing speed, videos with >= MIN_SPEED_CROSSERS

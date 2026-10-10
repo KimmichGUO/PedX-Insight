@@ -260,10 +260,9 @@ def test_city_level_counts_each_city_once():
 
 def test_stats_cluster_id_survives_missing_country():
     """str + NA is NA under pandas 3; the cluster id must not drop such rows."""
-    import importlib
-    stats_mod = importlib.import_module("statistics_with_pdf_save")
+    from modules.stats_utils import city_cluster_id
     df = pd.DataFrame({"city": ["Ulm", "Paris"], "country": [None, "France"]})
-    out = stats_mod._with_cluster(df)
+    out = city_cluster_id(df)
     assert out["cluster"].notna().all() and out["cluster"].nunique() == 2
 
 
@@ -294,6 +293,50 @@ def test_provenance_records_and_summarises():
     finally:
         _restore_env(old)
         shutil.rmtree(d, ignore_errors=True)
+
+
+def test_inferential_runs_on_synthetic_data():
+    """statistics_inferential must produce both tables on a small clustered dataset."""
+    import statistics_inferential as si
+    rng = np.random.default_rng(0)
+    rows, vids = [], []
+    for c in range(12):
+        city_effect = rng.normal(0, 0.6)
+        for v in range(2 if c < 4 else 1):
+            link = f"L{c}_{v}"
+            vids.append({"link": link, "pipeline_version": "dense_v2",
+                         "traffic_light_prob": rng.uniform(0, 1),
+                         "risky_crossing_coverage": rng.uniform(0.3, 1)})
+            for i in range(40):
+                p = 1 / (1 + np.exp(-(-1.5 + city_effect)))
+                rows.append({"city": f"C{c}", "country": "X", "link": link, "track_id": i,
+                             "run_red_light": int(rng.random() < p),
+                             "risky_crossing": int(rng.random() < p) if i % 2 else None,
+                             "crossing_speed_mps": 1.35 + 0.1 * city_effect + rng.normal(0, 0.3),
+                             "gender": rng.choice(["male", "female"]), "age": rng.integers(18, 70),
+                             "phone_using": int(rng.random() < 0.1),
+                             "nearby_count_beginning": rng.integers(0, 5),
+                             "daytime": "Day", "weather": rng.choice(["shine", "rain"]),
+                             "avg_vehicle_total": rng.uniform(0, 10)})
+    root = _tmpdir()
+    cwd = os.getcwd()
+    try:
+        os.makedirs(os.path.join(root, "summary_data"))
+        pd.DataFrame(rows).to_csv(os.path.join(root, "summary_data", "all_pedestrian_info.csv"), index=False)
+        pd.DataFrame(vids).to_csv(os.path.join(root, "summary_data", "all_video_info.csv"), index=False)
+        os.chdir(root)
+        si.main()
+        vp = pd.read_csv("summary_data/inferential_variance_partition.csv")
+        assoc = pd.read_csv("summary_data/inferential_associations.csv")
+        assert set(vp["outcome"].str.split().str[0]) == {"crossing_speed_mps", "run_red_light", "risky_crossing"}
+        assert vp["icc_city_or_video"].between(0, 1).all()
+        est = assoc.dropna(subset=["estimate"])
+        assert {"run_red_light", "risky_crossing", "crossing_speed_mps"} <= set(est["outcome"])
+        assert (est["ci_low"] <= est["estimate"]).all() and (est["estimate"] <= est["ci_high"]).all()
+        assert est["q_value_bh"].between(0, 1).all()
+    finally:
+        os.chdir(cwd)
+        shutil.rmtree(root, ignore_errors=True)
 
 
 if __name__ == "__main__":

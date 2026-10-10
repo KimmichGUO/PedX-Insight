@@ -39,8 +39,8 @@ from scipy import stats
 
 from modules.provenance import git_state, utc_now
 from modules.stats_utils import (AGE_LABELS, MIN_CLUSTERS, MIN_N, age_band, bh_fdr,
-                                 cluster_bootstrap_ci, city_level, rate_columns,
-                                 rate_with_ci)
+                                 city_cluster_id, cluster_bootstrap_ci, city_level,
+                                 rate_columns, rate_with_ci)
 
 OUT = "./summary_data"
 # A video's measured crossing speed is used only when it rests on at least this many
@@ -103,7 +103,7 @@ def save_bar_chart_pdf(df, x_col, y_cols, filename, title="Bar Chart", ylabel="R
                         xytext=(0, 2), textcoords="offset points")
     ax.set_xticks(x)
     ax.set_xticklabels(df[x_col].astype(str), rotation=45, ha="right")
-    ax.set_title(title + "\n(error bars: 95% CI, cities resampled)")
+    ax.set_title(title + "\n(error bars: 95% CI, cities resampled; none when k < 5 cities)")
     ax.set_ylabel(ylabel)
     ax.legend()
     fig.tight_layout()
@@ -113,16 +113,7 @@ def save_bar_chart_pdf(df, x_col, y_cols, filename, title="Bar Chart", ylabel="R
     print(f"PDF saved: {filename}")
 
 
-def _with_cluster(df):
-    """City cluster id. City names alone collide across countries (two Londons).
-
-    fillna BEFORE concatenating: under pandas 3, str + NA is NA, and a NA cluster id
-    silently drops the row from every clustered computation.
-    """
-    df = df.copy()
-    country = df["country"].fillna("").astype(str) if "country" in df.columns else ""
-    df["cluster"] = df["city"].fillna("").astype(str) + "|" + country
-    return df
+_with_cluster = city_cluster_id  # shared with statistics_inferential.py
 
 
 RATE_METRICS = ["risky_crossing", "run_red_light"]

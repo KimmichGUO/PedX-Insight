@@ -143,6 +143,18 @@ def city_level(video_df, value_cols, *, city_col="city", constant_cols=()):
     return out.reset_index()
 
 
+def city_cluster_id(df, city_col="city", country_col="country"):
+    """Add a `cluster` column identifying the city (city names collide across countries).
+
+    fillna BEFORE concatenating: under pandas 3, str + NA is NA, and a NA cluster id
+    silently drops the row from every clustered computation.
+    """
+    df = df.copy()
+    country = df[country_col].fillna("").astype(str) if country_col in df.columns else ""
+    df["cluster"] = df[city_col].fillna("").astype(str) + "|" + country
+    return df
+
+
 AGE_BINS = [0, 18, 30, 45, 65, 200]
 AGE_LABELS = ["<18", "18-29", "30-44", "45-64", "65+"]
 

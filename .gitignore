@@ -35,3 +35,6 @@ scripts/nightly_publish.log
 
 # Provenance hash cache (modules/provenance.py): sha256 of weight files keyed by size+mtime.
 .weights_sha256_cache.json
+
+# Legacy 1 Hz analysis folders moved aside by scripts/prepare_legacy_rerun.py --archive
+/analysis_results_legacy_archive/

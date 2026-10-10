@@ -12,13 +12,17 @@ Dependencies are pinned to their **newest** releases (July 2026), including the 
 OpenCV 5.x majors. Install CUDA builds of `torch`/`torchvision` from the appropriate PyTorch
 index for your platform if you want GPU inference.
 
-> ⚠️ **Age/gender (`--mode ag`) is currently disabled.** It relies on
-> [paddlex](https://github.com/PaddlePaddle/PaddleX), which hard-caps `numpy<2.4` and pins
-> `opencv-contrib-python==4.10.0.84` — incompatible with the newest numpy/OpenCV. paddlex was
-> therefore removed from `requirements.txt`. `main.py` and every other mode still work; invoking
-> `--mode ag` raises a clear, actionable error. To re-enable it, install paddlex in a **separate**
-> environment (with `numpy<2.4` and `opencv-contrib-python==4.10.0.84`) and point that module at
-> it, or reimplement the module on another model. See [`AGENTS.md`](AGENTS.md).
+`paddlex` was removed (it caps `numpy<2.4`); age/gender (`--mode ag`) now runs on OpenCV's
+YuNet face detector + InsightFace `genderage.onnx` instead, with weights auto-downloaded on first
+use. See [`AGENTS.md`](AGENTS.md) for the dependency policy.
+
+**Output location.** Every module writes to `analysis_results/<video_name>/`. Set the
+environment variable `PEDX_RESULTS_ROOT` to send a run elsewhere (the JAAD benchmark in
+[`validation/`](validation/) does this so benchmark clips never reach the aggregators).
+
+**Provenance.** After each successful mode, `main.py` appends a row to
+`[A0]provenance.csv` (git commit, dirty flag, a digest of all model-weight hashes, package
+versions); `get_all_video_info.py` publishes it as `code_version`.
 
 ## Toolkit:
 | Argument              | Description                                       | Required     | Default        |
@@ -99,7 +103,9 @@ Result: [P5]phone_usage.csv
 python main.py --mode ag --source_video_path PATH/TO/VIDEO
 ```
 Result: [P6]age_gender.csv  
-> ⚠️ Requires `paddlex`, which is **not** installed by default (see [Installation & Environment](#installation--environment)). This mode is disabled until paddlex is provided in a compatible environment.
+Face detection (YuNet) on each archived pedestrian crop, then age/gender from InsightFace
+`genderage.onnx`. Tracks without a detectable face are skipped. Ages are model estimates;
+the statistics group them into life-stage bands.
 
 #### (4) Clothing type analysis 
 ```bash
@@ -187,13 +193,30 @@ python main.py --mode sidewalk --source_video_path PATH/TO/VIDEO --analysis_inte
 Result: [E9]sidewalk_detection.csv  
 Weights should be downloaded from https://drive.usercontent.google.com/download?id=1X1uKaGENEBZamF6tOfx9eKLTIQLsBN5h&export=download&authuser=0
 
+#### (10) Scene segmentation (candidate detector, not in `single_all`)
+```bash
+python main.py --mode scene_seg --source_video_path PATH/TO/VIDEO --analysis_interval 1.0
+```
+Result: [E10]scene_segmentation.csv -- per analysed frame, the pixel fraction of crosswalk,
+sidewalk, curb, road, traffic light, traffic sign, pothole, manhole and person from
+Mask2Former trained on Mapillary Vistas (`facebook/mask2former-swin-large-mapillary-vistas-semantic`,
+~0.15 s/frame on an RTX 4090), plus thresholded `*_present` flags. It is a candidate
+replacement for the crosswalk and sidewalk detectors and is benchmarked against them in
+[`validation/`](validation/); it joins the production pipeline only if it wins there.
+Weights load from `$PEDX_HF_CACHE` (else the default Hugging Face cache).
+
 ### 4. Advanced Funtions
 #### (1) Risky crossing analysis 
 ```bash
 python main.py --mode risky --source_video_path PATH/TO/VIDEO
 ```
 Result: [C1]risky_crossing.csv  
-This function is used to detect whether pedestrians cross the street in a risky way based on the detection of the traffic light, the traffic sign, and the crosswalk.
+A crossing is scored only on frames where the signal state was actually observed (a real
+light colour or an unambiguous sign); `risky` means crossing while the vehicle light is green.
+Crossings with no observed signal are `NA` (undetermined), never "not risky" or "risky", and
+`signal_coverage` says how much of each crossing was determinable. Always read the video-level
+`risky_crossing_ratio` together with `risky_crossing_coverage`: the metric is still partly
+confounded with traffic-light detector recall (see `statistics_inferential.py` output).
 #### (2) Determine whether a pedestrian has crossed the road 
 ```bash
 python main.py --mode cross_pede --source_video_path PATH/TO/VIDEO
@@ -402,5 +425,37 @@ python main.py --mode emotion --source_video_path PATH/TO/VIDEO --analysis_inter
 ``` bash
 python get_all_pede_info.py
 python get_all_video_info.py
-python statistics_with_pdf_save.py
+python statistics_with_pdf_save.py   # descriptive tables + PDFs
+python statistics_inferential.py     # variance partition + adjusted associations
 ```
+
+Both aggregators skip incomplete analysis folders (listed in
+`summary_data/incomplete_videos.csv`) and join cities to `mapping.csv` by a normalised name,
+so crawler slugs like `NewYork1` resolve to "New York".
+
+**Descriptive statistics** (`statistics_with_pdf_save.py`). Pedestrians are clustered in
+cities, so every group rate is published with its `n`, its number of cities, and a
+cluster-bootstrap 95% CI (cities resampled). Cells resting on fewer than 10 observations or
+2 cities are left blank. Continent tables weight cities equally. `crossing_stats.csv`
+separates the measured crossing speed from the externally imported city constants.
+City-level correlations are computed on one row per city (`city_correlations.csv`, with
+BH-FDR q-values).
+
+**Inferential statistics** (`statistics_inferential.py`):
+- `inferential_variance_partition.csv` -- how much of each behaviour varies between cities
+  (mixed models; latent-scale ICC for 0/1 outcomes), unadjusted and adjusted for the design
+  covariates (tracking era, traffic-light detector recall).
+- `inferential_associations.csv` / `inferential_forest.pdf` -- adjusted associations of
+  pedestrian and scene attributes with red-light running, risky crossing and crossing speed
+  (GEE with city clusters and bias-reduced SEs; linear mixed model for speed), with
+  BH-FDR q-values.
+
+`summary_data/provenance.json` records the git state, thresholds and sample sizes of each
+aggregation run.
+
+## Validation against ground truth
+
+[`validation/`](validation/) benchmarks the detectors against the JAAD dataset (346
+labelled dashcam clips): weather, day/night, traffic light, crosswalk (current detector vs
+Mask2Former), pedestrian detection, crossing, ego-motion, looking behaviour and age/gender.
+See [`validation/README.md`](validation/README.md) and `validation/results/JAAD_REPORT.md`.

@@ -32,16 +32,30 @@ dataset*.py, update_dataset.py   dataset/mapping helpers
 get_all_*.py, statistics_with_pdf_save.py   cross-video aggregation + stats
 modules/<name>/<name>.py    one analysis module each; exposes a run_*/detect_*/… function
 modules/localization/localize.py   video→lat/lon via the `monocular_osm` pip pkg, see "Localization"
+modules/scene_seg/scene_seg.py     [E10] Mask2Former/Vistas segmentation (candidate, not in single_all)
+modules/paths.py            RESULTS_ROOT (env PEDX_RESULTS_ROOT, default analysis_results)
+modules/provenance.py       [A0] per-mode provenance (git sha, weights digest, packages)
+modules/completeness.py     shared "is this folder fully analysed" gate for both aggregators
+modules/mapping_utils.py    shared city join to mapping.csv (normalised names, 0-as-missing)
+modules/stats_utils.py      cluster bootstrap CIs, BH-FDR, city-level collapse, age bands
+statistics_inferential.py   variance partition + adjusted associations (statsmodels)
+validation/                 JAAD ground-truth benchmark of the detectors (see validation/README.md)
+tests/                      pytest suite (plain asserts; also runnable as scripts)
 analysis_results/<video_name>/   per-video outputs (NOT tracked)
-summary_data/               aggregated outputs (NOT tracked; created by get_all_*.py)
+summary_data/               aggregated outputs (TRACKED: the published dataset's history)
 ```
 
 ## Pipeline data-flow conventions
 
-- Each module resolves its own paths as `analysis_results/<video_name>/[CODE]name.csv`, where
-  `<video_name>` is the video filename without extension. Output codes: `[B1]` tracking,
-  `[P*]` pedestrian attrs, `[V*]` vehicle, `[E*]` environment, `[C*]` crossing/advanced,
-  `[A1]`/`[A2]` video/pedestrian summaries, `[L1]` localization.
+- Each module resolves its own paths as `<RESULTS_ROOT>/<video_name>/[CODE]name.csv`, where
+  `<video_name>` is the video filename without extension and `RESULTS_ROOT` comes from
+  `modules/paths.py` (env `PEDX_RESULTS_ROOT`, default `analysis_results`). **New modules must
+  use `RESULTS_ROOT`, never a literal `"analysis_results"`** -- benchmark runs rely on the
+  redirect to stay out of the published dataset. It is bound at import time: tests must patch
+  the module constant, not set the env var mid-process. Output codes: `[A0]` provenance,
+  `[B1]` tracking, `[P*]` pedestrian attrs, `[V*]` vehicle, `[E*]` environment (`[E10]` scene
+  segmentation), `[C*]` crossing/advanced, `[A1]`/`[A2]` video/pedestrian summaries,
+  `[L1]` localization.
 - Modules read the CSVs of upstream modules (e.g. crossing/risky/summary all consume
   `[B1]tracked_pedestrians.csv` and `[C3]crossing_judge.csv`). **When you change a producer's
   columns, grep for every consumer.** Producer/consumer column mismatches are the most common bug
@@ -66,13 +80,14 @@ included**. To make that installable, **`paddlex` was removed** (Option B):
 - paddlex 3.7.2 has a **core** cap `numpy<2.4` and its extras pin
   `opencv-contrib-python==4.10.0.84`. With the newest numpy/OpenCV, `pip install -r
   requirements.txt` is `ResolutionImpossible`. Removing paddlex resolves it cleanly.
-- **Consequence:** `modules/age_gender` (`--mode ag`, age/gender/race) needs paddlex and is
-  **disabled**. The paddlex import is **lazy** (inside `run_age_gender`), so `main.py` and all
-  other modes still import/run; invoking `--mode ag` raises a clear, actionable `ImportError`.
-- **To re-enable age/gender:** install paddlex in a *separate* environment (`numpy<2.4`,
-  `opencv-contrib-python==4.10.0.84`) and run that mode there, or reimplement the module on
-  another model. Do **not** add paddlex back to `requirements.txt` without re-capping numpy/OpenCV
-  (it will break the install).
+- **Age/gender was reimplemented without paddlex (2026-07-16):** OpenCV YuNet face detection
+  + InsightFace `genderage.onnx` via `cv2.dnn` (weights auto-download, <2 MB). Do **not** add
+  paddlex back to `requirements.txt`: it would re-cap numpy/OpenCV and break the install.
+- `statsmodels` (stats scripts), `transformers` (`scene_seg`) and `scikit-learn` (JAAD parser)
+  are core requirements. Known local-env damage (not a requirements problem): statsmodels'
+  pip metadata reports version `None`, torchaudio is built for a different CUDA than torch
+  (scene_seg hides it before importing transformers), and site-packages holds leftover
+  `~orch`/`~ransformers` partial installs. Verify installs in a fresh venv.
 - When bumping deps, re-run a resolver check: `python -m pip install --dry-run -r requirements.txt`
   (or a focused subset) and watch for `ResolutionImpossible`. `paddlex` and `ultralytics` export
   extras are the usual sources of `numpy<2` caps.
@@ -124,7 +139,9 @@ tool (video + city → lat/lon on OpenStreetMap), now a pip package (distributio
 
 ## Testing / verification conventions
 
-There is no formal test suite. Verify changes by:
+`python -m pytest -q tests` runs the suite (plain asserts; each file also runs as a script).
+`tests/test_aggregation_integrity.py` pins bugs that reached published data (risky-crossing
+evidence rule, completeness gate, `'1.0'` flag tokens, city join, NA cluster ids). Also:
 
 1. **Byte-compile** touched files: `python -m compileall -q <files>`.
 2. **Exercise CSV-driven logic end-to-end** with synthetic inputs — build a tiny video with
@@ -136,8 +153,25 @@ There is no formal test suite. Verify changes by:
 
 ## Gotchas / known rough edges
 
-- `summary_data/` and `analysis_results/` are created at runtime and are not tracked. Aggregators
-  now `mkdir` them; keep that if you add outputs.
+- `analysis_results/` is runtime-only and untracked. `summary_data/` IS tracked: its history is
+  the history of the published numbers. Aggregators `mkdir` both; keep that if you add outputs.
+- **A scheduled task ("PedX Nightly Publish", 03:00, `scripts/nightly_publish.ps1`) runs the
+  aggregators + stats on the CURRENT WORKING TREE and publishes to the live Visualizer DB.**
+  Whatever branch is checked out at 03:00 goes live, so never leave the tree in a broken state
+  overnight. The Visualizer importer keys on the exact column names of the `summary_data`
+  CSVs; adding columns is safe, renaming is not (coordinate with whoever owns PedX-Visualizer).
+- **Statistics rules** (see the docstrings of `statistics_with_pdf_save.py` and
+  `modules/stats_utils.py`): rows are clustered in cities, so publish n, number of cities and
+  a cluster-bootstrap CI with every rate and blank under-powered cells; NA is not 0 (never
+  listwise-delete on one metric to compute another); weight cities equally across cities;
+  never mix measured values with the imported city constants (`crossing_time`/`crossing_speed`
+  come from an external study); correlate city-level covariates on one row per city.
+- pandas 3: `str + NA` is NA (fillna before building ids), `.values` can be read-only under
+  copy-on-write, and an int column gains NA -> float -> `'1.0'` in CSVs (use `Int64`).
+- **City attribution is unverified.** The crawler files a video under the city it searched
+  for; titles show some do not depict that city (e.g. Paris2 "How does a blind girl cross the
+  road in the UK?", NewYork3 a campaign video). Localization (`--mode localize`) or a manual
+  eligibility check is needed before city-level claims.
 - `summary_data/all_time_info.csv` (used by `statistics_with_pdf_save.py` section 1 and the
   Visualizer's `analysis_seconds`) is produced by `get_all_video_info.py` from the per-video
   `[A3]analysis_time.csv` files that `run.py` writes — videos analyzed via bare `main.py`

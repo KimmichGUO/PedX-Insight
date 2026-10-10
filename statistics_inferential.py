@@ -49,6 +49,9 @@ from scipy import stats
 from modules.stats_utils import SEED, age_band, bh_fdr, city_cluster_id
 
 OUT = "./summary_data"
+# No CreationDate: identical results give byte-identical PDFs, so the tracked summary_data/
+# history only changes when the numbers do.
+PDF_METADATA = {"CreationDate": None}
 SPEED_RANGE_MPS = (0.3, 3.0)
 MIN_OBS = 50          # per model
 MIN_EVENTS = 10       # per 0/1 model (fewer and the logit is not estimable)
@@ -311,7 +314,7 @@ def forest_plot(assoc, path):
     if est.empty:
         print(f"PDF skipped (no estimates): {path}")
         return
-    with PdfPages(path) as pdf:
+    with PdfPages(path, metadata=PDF_METADATA) as pdf:
         for y, grp in est.groupby("outcome", sort=False):
             grp = grp.iloc[::-1]
             fig, ax = plt.subplots(figsize=(9, 0.42 * len(grp) + 1.8))

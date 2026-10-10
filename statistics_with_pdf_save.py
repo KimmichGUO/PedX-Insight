@@ -43,6 +43,9 @@ from modules.stats_utils import (AGE_LABELS, MIN_CLUSTERS, MIN_N, age_band, bh_f
                                  rate_columns, rate_with_ci)
 
 OUT = "./summary_data"
+# No CreationDate: identical results give byte-identical PDFs, so the tracked summary_data/
+# history only changes when the numbers do.
+PDF_METADATA = {"CreationDate": None}
 # A video's measured crossing speed is used only when it rests on at least this many
 # crossers (Milan's 4.19 m/s rests on 3).
 MIN_SPEED_CROSSERS = 5
@@ -107,7 +110,7 @@ def save_bar_chart_pdf(df, x_col, y_cols, filename, title="Bar Chart", ylabel="R
     ax.set_ylabel(ylabel)
     ax.legend()
     fig.tight_layout()
-    with PdfPages(filename) as pdf:
+    with PdfPages(filename, metadata=PDF_METADATA) as pdf:
         pdf.savefig(fig)
     plt.close(fig)
     print(f"PDF saved: {filename}")
@@ -432,7 +435,7 @@ def main():
     ax.set_title(f"City-level Spearman correlations (one row per city; blank: < {MIN_CITIES_CORR} cities)\n"
                  "* = BH-FDR q < 0.05 across all pairs; ext_* = imported city constants, not PedX measurements")
     fig.tight_layout()
-    with PdfPages(f"{OUT}/correlation_heatmap.pdf") as pdf:
+    with PdfPages(f"{OUT}/correlation_heatmap.pdf", metadata=PDF_METADATA) as pdf:
         pdf.savefig(fig)
     plt.close(fig)
     print("PDF saved: correlation_heatmap.pdf")

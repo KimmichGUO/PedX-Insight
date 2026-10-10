@@ -168,6 +168,15 @@ evidence rule, completeness gate, `'1.0'` flag tokens, city join, NA cluster ids
   come from an external study); correlate city-level covariates on one row per city.
 - pandas 3: `str + NA` is NA (fillna before building ids), `.values` can be read-only under
   copy-on-write, and an int column gains NA -> float -> `'1.0'` in CSVs (use `Int64`).
+- **The crosswalk detector is invalid** (`[E7]`, `modules/crosswalk`): `crosswalk.py` keeps
+  `cls_id == 0`, but the shipped `best.pt` names class 0 `Flexible_delineator_post` (class 4 is
+  `crosswalk`) -- unchanged since the first commit. Against JAAD's per-frame `ped_crossing`
+  (all 346 clips) it is at chance (ROC-AUC 0.50) and never fires; class 4 is also at chance
+  (0.49), so this needs replacing (candidate: `scene_seg` `[E10]`), not a class-index patch.
+  Everything derived from `[E7]` is unvalidated: `crosswalk_prob`, `crosswalk_usage_ratio`,
+  per-pedestrian `crosswalk`/`crosswalk_use_or_not`, `crosswalk_coeff.csv`, the `[S2]` stripe
+  calibration's boxes and `[V8]`'s crosswalk band. Run `validation/` before trusting any detector;
+  `validation/results/JAAD_REPORT.md` has the per-module verdicts.
 - **City attribution is unverified.** The crawler files a video under the city it searched
   for; titles show some do not depict that city (e.g. Paris2 "How does a blind girl cross the
   road in the UK?", NewYork3 a campaign video). Localization (`--mode localize`) or a manual

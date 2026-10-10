@@ -46,7 +46,19 @@ def _write_risk_fixture(d, light_rows=True):
 
 
 def _run_risk(d):
-    from modules.risky_crossing.risky_crossing import detect_crossing_risk
+    # RESULTS_ROOT is bound at import time, so an env var set inside a test is ignored
+    # once any module has imported modules.paths. Patch the module constant instead,
+    # or detect_crossing_risk mkdirs <repo>/analysis_results/x (it did, once).
+    import modules.risky_crossing.risky_crossing as rc
+    orig = rc.RESULTS_ROOT
+    rc.RESULTS_ROOT = d
+    try:
+        return _run_risk_inner(d, rc.detect_crossing_risk)
+    finally:
+        rc.RESULTS_ROOT = orig
+
+
+def _run_risk_inner(d, detect_crossing_risk):
     out = os.path.join(d, "[C1]risky_crossing.csv")
     detect_crossing_risk(
         video_path=os.path.join(d, "x.mp4"),
@@ -62,9 +74,7 @@ def _run_risk(d):
 
 def test_risk_is_evidence_positive():
     d = _tmpdir()
-    old = os.environ.get("PEDX_RESULTS_ROOT")
     try:
-        os.environ["PEDX_RESULTS_ROOT"] = d  # detect_crossing_risk mkdirs its default dir
         _write_risk_fixture(d)
         r = _run_risk(d)
         assert r.loc[1, "risk"] == "risky" and r.loc[1, "risky_ratio"] == 1.0
@@ -76,22 +86,18 @@ def test_risk_is_evidence_positive():
         # a light nor a crosswalk in any frame.
         assert r.loc[3, "unsignalled_ratio"] == 1.0
     finally:
-        _restore_env(old)
         shutil.rmtree(d, ignore_errors=True)
 
 
 def test_missing_light_detector_is_not_risk():
     """A detector that never ran must yield NA risk, not 100% risky (the old bug)."""
     d = _tmpdir()
-    old = os.environ.get("PEDX_RESULTS_ROOT")
     try:
-        os.environ["PEDX_RESULTS_ROOT"] = d
         _write_risk_fixture(d, light_rows=False)
         r = _run_risk(d)
         assert r["risk"].isna().all(), r
         assert (r["env_available"] == False).all()  # noqa: E712
     finally:
-        _restore_env(old)
         shutil.rmtree(d, ignore_errors=True)
 
 

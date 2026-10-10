@@ -132,8 +132,13 @@ cap.release()
 csvfile.close()
 if opt.save:
     out.release()
-if not opt.noshow:
+# destroyAllWindows only closes HighGUI windows; it raises cv2.error when OpenCV has no GUI backend
+# (e.g. opencv-python and -headless installed side by side), and in crosswalk/traffic_sign it ran
+# BEFORE the CSV was written, so a harmless cleanup call lost the whole mode's output.
+try:
     cv2.destroyAllWindows()
+except cv2.error:
+    pass
 
 print(f"\nSidewalk detection results saved to {sidewalk_csv_path}")
 print(f"Analysis completed with {analyze_interval_sec}s interval ({analyze_every_n_frames} frames)")

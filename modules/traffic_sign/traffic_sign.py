@@ -77,7 +77,13 @@ def run_traffic_sign(video_path, analyze_interval_sec=1.0, output_csv_path=None,
         })
 
     cap.release()
-    cv2.destroyAllWindows()
+    # destroyAllWindows only closes HighGUI windows; it raises cv2.error when OpenCV has no GUI backend
+    # (e.g. opencv-python and -headless installed side by side), and in crosswalk/traffic_sign it ran
+    # BEFORE the CSV was written, so a harmless cleanup call lost the whole mode's output.
+    try:
+        cv2.destroyAllWindows()
+    except cv2.error:
+        pass
     pd.DataFrame(results_list, columns=["frame_id", "sign_detected_1", "sign_classes_1",
                                         "sign_detected_2", "sign_classes_2"]).to_csv(output_csv_path, index=False)
     print(f"Traffic Sign detection completed. Results saved to {output_csv_path}")

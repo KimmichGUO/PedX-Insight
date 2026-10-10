@@ -112,7 +112,13 @@ def run_crosswalk_detection(video_path, analyze_interval_sec=1.0, output_csv_pat
                     break
 
     cap.release()
-    cv2.destroyAllWindows()
+    # destroyAllWindows only closes HighGUI windows; it raises cv2.error when OpenCV has no GUI backend
+    # (e.g. opencv-python and -headless installed side by side), and in crosswalk/traffic_sign it ran
+    # BEFORE the CSV was written, so a harmless cleanup call lost the whole mode's output.
+    try:
+        cv2.destroyAllWindows()
+    except cv2.error:
+        pass
 
     # FIX #18: majority-vote temporal smoothing of the per-sample crosswalk detection over a
     # small centered sliding window to suppress frame-to-frame Yes/No label flicker.

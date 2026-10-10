@@ -157,6 +157,37 @@ def match_boxes(gt, pred, thr=DET_IOU):
     return [(int(i), int(j), float(m[i, j])) for i, j in zip(r, c) if m[i, j] >= thr]
 
 
+def _pair_table(gt, pred):
+    """Per (GT id, PedX id) pair: mean IoU over their CO-VISIBLE frames and the frame count."""
+    m = gt[["frame", "id", "x1", "y1", "x2", "y2"]].merge(
+        pred[["frame", "id", "x1", "y1", "x2", "y2"]], on="frame", suffixes=("_g", "_p"))
+    if m.empty:
+        return None
+    ix1 = np.maximum(m["x1_g"], m["x1_p"]); iy1 = np.maximum(m["y1_g"], m["y1_p"])
+    ix2 = np.minimum(m["x2_g"], m["x2_p"]); iy2 = np.minimum(m["y2_g"], m["y2_p"])
+    inter = (ix2 - ix1).clip(lower=0) * (iy2 - iy1).clip(lower=0)
+    ag = (m["x2_g"] - m["x1_g"]).clip(lower=0) * (m["y2_g"] - m["y1_g"]).clip(lower=0)
+    ap = (m["x2_p"] - m["x1_p"]).clip(lower=0) * (m["y2_p"] - m["y1_p"]).clip(lower=0)
+    union = ag + ap - inter
+    m["iou"] = np.where(union > 0, inter / union.where(union > 0, 1), 0.0)
+    return m.groupby(["id_g", "id_p"])["iou"].agg(["mean", "size"]).reset_index()
+
+
+def overlap_tracks(gt, pred, min_mean_iou=MIN_TRACK_MEAN_IOU, min_covis=MIN_TRACK_COVIS):
+    """ALL PedX tracks overlapping each GT track (not one-to-one): DataFrame gt_id, pred_id,
+    mean_iou, n_covis. A person split into several track IDs (an ID switch / fragmentation)
+    appears here once per fragment, which the one-to-one `match_tracks` hides."""
+    cols = ["gt_id", "pred_id", "mean_iou", "n_covis"]
+    if gt is None or pred is None or gt.empty or pred.empty:
+        return pd.DataFrame(columns=cols)
+    pair = _pair_table(gt, pred)
+    if pair is None:
+        return pd.DataFrame(columns=cols)
+    pair = pair[(pair["size"] >= min_covis) & (pair["mean"] >= min_mean_iou)]
+    return pair.rename(columns={"id_g": "gt_id", "id_p": "pred_id", "mean": "mean_iou",
+                                "size": "n_covis"})[cols].reset_index(drop=True)
+
+
 def match_tracks(gt, pred, min_mean_iou=MIN_TRACK_MEAN_IOU, min_covis=MIN_TRACK_COVIS):
     """Match GT pedestrian tracks to PedX tracks within one clip.
 
@@ -170,18 +201,9 @@ def match_tracks(gt, pred, min_mean_iou=MIN_TRACK_MEAN_IOU, min_covis=MIN_TRACK_
     cols = ["gt_id", "pred_id", "mean_iou", "n_covis"]
     if gt is None or pred is None or gt.empty or pred.empty:
         return pd.DataFrame(columns=cols)
-    m = gt[["frame", "id", "x1", "y1", "x2", "y2"]].merge(
-        pred[["frame", "id", "x1", "y1", "x2", "y2"]], on="frame", suffixes=("_g", "_p"))
-    if m.empty:
+    pair = _pair_table(gt, pred)
+    if pair is None:
         return pd.DataFrame(columns=cols)
-    ix1 = np.maximum(m["x1_g"], m["x1_p"]); iy1 = np.maximum(m["y1_g"], m["y1_p"])
-    ix2 = np.minimum(m["x2_g"], m["x2_p"]); iy2 = np.minimum(m["y2_g"], m["y2_p"])
-    inter = (ix2 - ix1).clip(lower=0) * (iy2 - iy1).clip(lower=0)
-    ag = (m["x2_g"] - m["x1_g"]).clip(lower=0) * (m["y2_g"] - m["y1_g"]).clip(lower=0)
-    ap = (m["x2_p"] - m["x1_p"]).clip(lower=0) * (m["y2_p"] - m["y1_p"]).clip(lower=0)
-    union = ag + ap - inter
-    m["iou"] = np.where(union > 0, inter / union.where(union > 0, 1), 0.0)
-    pair = m.groupby(["id_g", "id_p"])["iou"].agg(["mean", "size"]).reset_index()
     pair = pair[pair["size"] >= min_covis]
     if pair.empty:
         return pd.DataFrame(columns=cols)
@@ -342,13 +364,28 @@ def spearman(x, y):
 # =============================================================================================
 
 METRIC_COLUMNS = ["task", "metric", "value", "ci_low", "ci_high", "n", "n_clips",
-                  "base_rate", "note"]
+                  "base_rate", "note", "n_pos_clips"]
 
 
-def mrow(task, metric, ci, n, n_clips, base_rate=float("nan"), note=""):
+def mrow(task, metric, ci, n, n_clips, base_rate=float("nan"), note="", n_pos_clips=float("nan")):
+    """One metric row. `n_clips` counts clips in the denominator; `n_pos_clips` (binary tasks)
+    counts clips that contain at least one positive -- the verdict gate uses the smaller."""
     v, lo, hi = ci
     return {"task": task, "metric": metric, "value": v, "ci_low": lo, "ci_high": hi,
-            "n": int(n), "n_clips": int(n_clips), "base_rate": base_rate, "note": note}
+            "n": int(n), "n_clips": int(n_clips), "base_rate": base_rate, "note": note,
+            "n_pos_clips": n_pos_clips}
+
+
+def f1_reference(prevalence):
+    """F1 of the trivial 'always positive' classifier: precision p, recall 1 -> 2p/(1+p).
+
+    (Not the prevalence itself, which is the reference for precision and recall.)"""
+    return float("nan") if not np.isfinite(prevalence) else 2 * prevalence / (1 + prevalence)
+
+
+def _pos_clips(yt, clusters):
+    yt = np.asarray(yt, bool)
+    return len(set(np.asarray(clusters)[yt].tolist())) if len(yt) else 0
 
 
 def binary_rows(task, yt, yp, clusters, metrics=("precision", "recall", "f1"), note="",
@@ -359,13 +396,14 @@ def binary_rows(task, yt, yp, clusters, metrics=("precision", "recall", "f1"), n
     fns = {"precision": precision, "recall": recall, "f1": f1, "accuracy": accuracy,
            "kappa": lambda a, b: kappa(a, b, labels=[False, True])}
     prev = float(yt.mean()) if len(yt) else float("nan")
-    base = {"precision": prev, "recall": prev, "f1": prev, "accuracy": majority_share(yt),
-            "kappa": 0.0}
+    base = {"precision": prev, "recall": prev, "f1": f1_reference(prev),
+            "accuracy": majority_share(yt), "kappa": 0.0}
+    npc = _pos_clips(yt, cl)
     out = []
     for m in metrics:
         fn = fns[m]
         ci = cluster_bootstrap(cl, lambda idx, fn=fn: fn(yt[idx], yp[idx]), n_boot, seed)
-        out.append(mrow(task, m, ci, len(yt), len(set(cl.tolist())), base[m], note))
+        out.append(mrow(task, m, ci, len(yt), len(set(cl.tolist())), base[m], note, npc))
     return out
 
 
@@ -387,21 +425,24 @@ def score_rows(task, yt, score, clusters, note="", n_boot=N_BOOT, seed=SEED, cv=
     cl = np.asarray(clusters)
     nc = len(set(cl.tolist()))
     prev = float(yt.mean()) if len(yt) else float("nan")
+    npc = _pos_clips(yt, cl)
     out = [mrow(task, "roc_auc", cluster_bootstrap(cl, lambda i: safe_auc(yt[i], s[i]), n_boot, seed),
-                len(yt), nc, 0.5, note),
+                len(yt), nc, 0.5, note, npc),
            mrow(task, "pr_auc", cluster_bootstrap(cl, lambda i: safe_ap(yt[i], s[i]), n_boot, seed),
-                len(yt), nc, prev, note)]
+                len(yt), nc, prev, note, npc)]
     t, fb, pb, rb = best_f1_threshold(yt, s)
     out.append(mrow(task, "best_f1_threshold", (t, float("nan"), float("nan")), len(yt), nc,
                     float("nan"), "in-sample argmax-F1 threshold on the score"))
     out.append(mrow(task, "f1_at_best_threshold",
                     cluster_bootstrap(cl, lambda i: f1(yt[i], s[i] >= t), n_boot, seed),
-                    len(yt), nc, prev, f"in-sample (optimistic); P={pb:.3f} R={rb:.3f}"))
+                    len(yt), nc, f1_reference(prev), f"in-sample (optimistic); P={pb:.3f} R={rb:.3f}",
+                    npc))
     if cv and nc >= 5:
         yp = cv_threshold_predictions(yt, s, cl)
         out.append(mrow(task, "f1_cv_threshold",
                         cluster_bootstrap(cl, lambda i: f1(yt[i], yp[i]), n_boot, seed),
-                        len(yt), nc, prev, "threshold chosen on other clips (5-fold by clip)"))
+                        len(yt), nc, f1_reference(prev), "threshold chosen on other clips (5-fold by clip)",
+                        npc))
     return out
 
 
@@ -874,11 +915,29 @@ def score_detection(gt, runs, clips, interval=1.0):
                                      cluster_bootstrap(rc[sel], lambda i, m=mt[sel]: float(m[i].mean())),
                                      int(sel.sum()), len(set(rc[sel].tolist())), np.nan,
                                      f"recall stratified by GT {label}"))
+            # Combined sub-populations. These were defined AFTER inspecting interim results, so
+            # they are exploratory: the verdict's primary population is the a-priori
+            # recall_kind=b (JAAD's behaviourally annotated, road-interacting pedestrians).
+            hh = rec["height"].to_numpy(float)
+            oc = rec["occlusion"].astype(str).to_numpy()
+            for label, sel in (("unoccluded_h>=50px", (oc == "none") & (hh >= 50)),
+                               ("unoccluded_h>=100px", (oc == "none") & (hh >= 100)),
+                               ("not_fully_occluded_h>=50px", (oc != "full") & (hh >= 50))):
+                if sel.any():
+                    rows.append(mrow(task, f"recall_{label}",
+                                     cluster_bootstrap(rc[sel], lambda i, m=mt[sel]: float(m[i].mean())),
+                                     int(sel.sum()), len(set(rc[sel].tolist())), np.nan,
+                                     "combined GT sub-population (exploratory: chosen after interim results)"))
     return rows, cms, tables
 
 
-def track_matches(gt, runs, clips):
-    """Per clip: GT (non-'p') tracks matched to PedX tracks ([B2] dense, fallback [B1])."""
+def track_matches(gt, runs, clips, mode="match"):
+    """Per clip: GT (non-'p') tracks matched to PedX tracks ([B2] dense, fallback [B1]).
+
+    mode='match': one-to-one Hungarian assignment (`match_tracks`).
+    mode='overlap': every overlapping PedX track (`overlap_tracks`), for fragmentation and for
+    'was the person flagged in ANY of their tracks' end-to-end scoring."""
+    fn = match_tracks if mode == "match" else overlap_tracks
     gidx = gt_box_index(gt, clips)
     out = []
     for c in clips:
@@ -890,7 +949,7 @@ def track_matches(gt, runs, clips):
         g = g[g["kind"] != "p"].rename(columns={"ped_id": "id"})
         p = pr.assign(frame=to_jaad_frame(pr["frame_id"].astype(int), code),
                       id=pr["track_id"])
-        m = match_tracks(g, p)
+        m = fn(g, p)
         if not m.empty:
             m.insert(0, "clip", c)
             m["source"] = code
@@ -900,16 +959,43 @@ def track_matches(gt, runs, clips):
     return pd.concat(out, ignore_index=True)
 
 
-def score_crossing(gt, runs, clips, matches, fps_by_clip):
-    """(f) [C3] crossed vs JAAD crossing attribute (1/0; -1 ignored)."""
+def _truthy(v):
+    return str(v).strip().lower() in ("true", "yes", "1", "1.0")
+
+
+def score_crossing(gt, runs, clips, matches, fps_by_clip, overlaps=None):
+    """(f) [C3] crossed vs JAAD crossing attribute, with the choices the audit flagged made explicit.
+
+    Population: behavioural pedestrians ('b') labelled crossing 1 (crosses) or 0 (does not).
+      f_crossing                     one-to-one matched tracks only
+      f_crossing_incl_irrelevant     matched; JAAD crossing = -1 ('irrelevant') counted as NOT crossing
+      f_crossing_any_track           END TO END over every labelled pedestrian: flagged if ANY PedX track
+                                     overlapping them is crossed (robust to ID fragmentation); a
+                                     pedestrian with no overlapping track counts as not crossed
+      f_crossing_end_to_end          one-to-one matching, unmatched counted as not crossed
+      f_track_fragmentation          PedX track ids overlapping each GT pedestrian
+    A matched track with no [C3] row (never judged) is scored 'not crossed'.
+    """
     task = "f_crossing"
     peds = gt["peds"]
-    beh = peds[(peds["kind"] == "b") & peds["clip"].isin(clips_with(runs, clips, "C3"))]
-    beh = beh[beh["crossing"].isin([0, 1])]
+    c3_clips = set(clips_with(runs, clips, "C3"))
+    beh = peds[(peds["kind"] == "b") & peds["clip"].isin(c3_clips)]
+    beh = beh[beh["crossing"].isin([-1, 0, 1])]
     rows, cms = [], {}
     if beh.empty:
         return rows, cms, pd.DataFrame()
     mm = matches.set_index(["clip", "gt_id"])
+    ov = {}
+    if overlaps is not None and not overlaps.empty:
+        ov = overlaps.groupby(["clip", "gt_id"])["pred_id"].apply(list).to_dict()
+
+    def c3_row(clip, tid):
+        c3 = runs.read(clip, "C3")
+        if c3 is None or c3.empty:
+            return None
+        hit = c3[c3["track_id"] == tid]
+        return None if hit.empty else hit.iloc[0]
+
     recs = []
     for r in beh.itertuples(index=False):
         key = (r.clip, r.ped_id)
@@ -917,16 +1003,26 @@ def score_crossing(gt, runs, clips, matches, fps_by_clip):
         crossed, start = False, np.nan
         tid = mm.loc[key, "pred_id"] if matched else None
         if matched:
-            c3 = runs.read(r.clip, "C3")
-            hit = c3[c3["track_id"] == tid] if c3 is not None and not c3.empty else pd.DataFrame()
-            if not hit.empty:
-                crossed = bool(_as_bool(hit["crossed"]).iloc[0])
-                sf = hit["started_frame"].iloc[0]
+            row = c3_row(r.clip, tid)
+            if row is not None:
+                crossed = _truthy(row["crossed"])
+                sf = row["started_frame"]
                 start = float(to_jaad_frame(sf, "C3")) if pd.notna(sf) else np.nan
-        recs.append({"clip": r.clip, "ped_id": r.ped_id, "jaad": int(r.crossing) == 1,
-                     "matched": matched, "track_id": tid, "pedx": crossed,
-                     "pedx_start_frame": start, "crossing_point": r.crossing_point})
-    d = pd.DataFrame(recs)
+        tids = ov.get(key, [])
+        any_crossed = False
+        for t in tids:
+            row = c3_row(r.clip, t)
+            if row is not None and _truthy(row["crossed"]):
+                any_crossed = True
+                break
+        recs.append({"clip": r.clip, "ped_id": r.ped_id, "crossing_raw": int(r.crossing),
+                     "jaad": int(r.crossing) == 1, "matched": matched, "track_id": tid,
+                     "pedx": crossed, "pedx_start_frame": start, "crossing_point": r.crossing_point,
+                     "any_crossed": any_crossed, "n_overlap_ids": len(tids)})
+    d_all = pd.DataFrame(recs)
+    d = d_all[d_all["crossing_raw"].isin([0, 1])].reset_index(drop=True)
+    if d.empty:
+        return rows, cms, d_all
     cl_all = d["clip"].to_numpy()
     mt = d["matched"].to_numpy(bool)
     rows.append(mrow(task, "match_rate", cluster_bootstrap(cl_all, lambda i: float(mt[i].mean())),
@@ -937,7 +1033,7 @@ def score_crossing(gt, runs, clips, matches, fps_by_clip):
     if not m.empty:
         rows += binary_rows(task, m["jaad"], m["pedx"], m["clip"],
                             metrics=("precision", "recall", "f1", "accuracy", "kappa"),
-                            note="matched pedestrians only")
+                            note="matched pedestrians only (one-to-one assignment)")
         cms["crossing_matched"] = cm_frame(m["jaad"].map({True: "crossed", False: "not"}),
                                            m["pedx"].map({True: "crossed", False: "not"}),
                                            ["crossed", "not"], ["crossed", "not"])
@@ -953,10 +1049,30 @@ def score_crossing(gt, runs, clips, matches, fps_by_clip):
             rows.append(mrow(task, "onset_abs_error_median_s",
                              cluster_bootstrap(ec, lambda i: float(np.median(np.abs(err[i])))),
                              len(tp), tp["clip"].nunique(), np.nan, ""))
+    mi = d_all[d_all["matched"]]
+    if not mi.empty:
+        rows += binary_rows(task + "_incl_irrelevant", mi["jaad"], mi["pedx"], mi["clip"],
+                            metrics=("precision", "recall", "f1", "kappa"),
+                            note="matched; JAAD crossing=-1 ('irrelevant') counted as NOT crossing")
     rows += binary_rows(task + "_end_to_end", d["jaad"], d["pedx"] & d["matched"], cl_all,
                         metrics=("precision", "recall", "f1"),
-                        note="unmatched GT counted as 'not crossed'")
-    return rows, cms, d
+                        note="one-to-one matching; unmatched GT counted as 'not crossed'")
+    rows += binary_rows(task + "_any_track", d["jaad"], d["any_crossed"], cl_all,
+                        metrics=("precision", "recall", "f1", "kappa"),
+                        note="all labelled pedestrians; flagged if ANY overlapping PedX track is "
+                             "crossed; no overlapping track = not crossed")
+    seen = d_all[d_all["n_overlap_ids"] >= 1]
+    if not seen.empty:
+        k = seen["n_overlap_ids"].to_numpy(float)
+        sc = seen["clip"].to_numpy()
+        rows.append(mrow("f_track_fragmentation", "ids_per_gt_pedestrian_mean",
+                         cluster_bootstrap(sc, lambda i: float(k[i].mean())), len(seen),
+                         seen["clip"].nunique(), 1.0,
+                         "PedX track ids overlapping a GT behavioural pedestrian; 1.0 = no ID splits"))
+        rows.append(mrow("f_track_fragmentation", "share_with_2plus_ids",
+                         cluster_bootstrap(sc, lambda i: float((k[i] >= 2).mean())), len(seen),
+                         seen["clip"].nunique(), 0.0, "share of GT pedestrians split over >=2 PedX ids"))
+    return rows, cms, d_all
 
 
 def ego_table(gt, runs, clips):
@@ -1017,6 +1133,16 @@ def score_ego(gt, runs, clips):
         rows.append(mrow(f"{task}_{col}", "roc_auc_stopped",
                          cluster_bootstrap(cl, lambda i, s=s: safe_auc(yt[i], s[i])),
                          len(d), d["clip"].nunique(), 0.5, note))
+    s_med = -d["step_med"].to_numpy(float)
+    ok = np.isfinite(s_med)
+    if ok.any() and len(set(cl[ok].tolist())) >= 5 and yt[ok].any() and not yt[ok].all():
+        yp_cv = cv_threshold_predictions(yt[ok], s_med[ok], cl[ok])
+        prev = float(yt[ok].mean())
+        rows.append(mrow(f"{task}_step_med", "f1_cv_threshold",
+                         cluster_bootstrap(cl[ok], lambda i: f1(yt[ok][i], yp_cv[i])),
+                         int(ok.sum()), len(set(cl[ok].tolist())), f1_reference(prev),
+                         "threshold on smoothed step chosen on other clips (5-fold by clip)",
+                         _pos_clips(yt[ok], cl[ok])))
     ea = d[d["exp_available"]]
     if not ea.empty:
         s = -ea["exp_abs"].to_numpy(float)
@@ -1196,7 +1322,13 @@ def score_signal_coverage(gt, runs, clips):
 
 
 def score_signs(gt, runs, clips):
-    """(k) [E3] pedestrian-crossing / stop-sign evidence vs JAAD ped_sign / stop_sign."""
+    """(k) [E3] pedestrian-crossing / stop-sign evidence vs JAAD ped_sign / stop_sign.
+
+    The scored class sets are the ones production risky_crossing.py uses. Because a "recall 0"
+    can mean "detector cannot see the sign" OR "the production class list is wrong", the rows
+    also give, per [E3] class, how often JAAD labels the sign on frames where that class fires
+    (`k_signs_class[<name>]`), and an exploratory score for class 'ip' alone.
+    """
     task = "k_signs"
     fr = gt["frames"][["clip", "frame", "ped_sign", "stop_sign"]]
     parts = []
@@ -1210,7 +1342,9 @@ def score_signs(gt, runs, clips):
             "clip": c, "frame": to_jaad_frame(e["frame_id"].astype(int), "E3"),
             "ped": [bool(set(a) & PED_SIGN_CLASSES_1) or bool(set(b) & PED_SIGN_CLASSES_2)
                     for a, b in zip(c1, c2)],
-            "stop": [bool(set(b) & STOP_SIGN_CLASSES_2) for b in c2]}))
+            "stop": [bool(set(b) & STOP_SIGN_CLASSES_2) for b in c2],
+            "ped_ip": [("ip" in set(a)) for a in c1],
+            "classes": [frozenset(x for x in (set(a) | set(b)) if x) for a, b in zip(c1, c2)]}))
     if not parts:
         return [], {}, pd.DataFrame()
     d = pd.concat(parts, ignore_index=True).merge(fr, on=["clip", "frame"], how="inner")
@@ -1219,6 +1353,23 @@ def score_signs(gt, runs, clips):
                        note="classes risky_crossing.py treats as protective")
     rows += binary_rows(task + "_stop_sign", d["stop_sign"] == 1, d["stop"], cl,
                         note="best_new.pt 'Stop_Sign'")
+    rows += binary_rows(task + "_ped_sign_ip_only", d["ped_sign"] == 1, d["ped_ip"], cl,
+                        note="EXPLORATORY: class 'ip' alone, chosen after inspecting interim results")
+    counts = {}
+    for cs in d["classes"]:
+        for k in cs:
+            counts[k] = counts.get(k, 0) + 1
+    for k, n in sorted(counts.items(), key=lambda kv: -kv[1]):
+        if n < 10:
+            continue
+        sel = np.array([k in cs for cs in d["classes"]])
+        for lab in ("ped_sign", "stop_sign"):
+            v = (d[lab].to_numpy() == 1)
+            rows.append(mrow(f"k_signs_class[{k}]", f"precision_{lab}",
+                             cluster_bootstrap(cl[sel], lambda i, v=v[sel]: float(v[i].mean())),
+                             int(sel.sum()), len(set(cl[sel].tolist())), float(v.mean()),
+                             "descriptive: share of frames where [E3] flags this class that JAAD "
+                             "labels with the sign; base_rate = overall prevalence"))
     return rows, {}, d
 
 
@@ -1265,8 +1416,10 @@ def score_all(gt, runs, clips, interval=1.0):
     rows.extend(r)
     details["detection"] = t
     matches = track_matches(gt, runs, clips)
+    overlaps = track_matches(gt, runs, clips, mode="overlap")
     details["matches"] = matches
-    add("crossing", score_crossing(gt, runs, clips, matches, fps_by_clip))
+    details["overlaps"] = overlaps
+    add("crossing", score_crossing(gt, runs, clips, matches, fps_by_clip, overlaps))
     add("ego", score_ego(gt, runs, clips))
     add("looking", score_looking(gt, runs, clips, matches, fps_by_clip))
     add("age_gender", score_age_gender(gt, runs, clips, matches))

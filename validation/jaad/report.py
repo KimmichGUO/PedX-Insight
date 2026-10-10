@@ -117,9 +117,13 @@ def judge(row, bar, min_positives=0):
     A lower bound just under the bar is NOT a failure: calling it one would turn
     'not enough data' into a negative result.
     """
-    if row is None:
+    if row is None or pd.isna(row["value"]):
         return FEW
-    if row["n_clips"] < MIN_CLIPS or positives(row) < min_positives:
+    clips = row["n_clips"]
+    npc = row.get("n_pos_clips")
+    if npc is not None and pd.notna(npc):
+        clips = min(clips, npc)          # a task with few positive-bearing clips is not powered
+    if clips < MIN_CLIPS or positives(row) < min_positives:
         return FEW
     lo, hi = row["ci_low"], row["ci_high"]
     if pd.isna(lo) or pd.isna(hi):
@@ -173,8 +177,11 @@ def verdicts(m):
     # [E6] day/night: kappa (JAAD is mostly daytime, so accuracy alone is weak)
     acc, kap = get(m, "b_daynight", "accuracy"), get(m, "b_daynight", "kappa")
     if acc is not None:
-        ev = (f"accuracy {cell(acc)} vs majority-class {fmt(acc['base_rate'])}; kappa {cell(kap)} "
-              f"on {acc['n_clips']:.0f} clips")
+        kalt = get(m, "b_daynight_alt", "kappa")
+        ev = (f"accuracy {cell(acc)} vs majority-class {fmt(acc['base_rate'])}; kappa {cell(kap)} with "
+              f"PedX 'Evening' counted as night (the stricter mapping, used for the verdict)"
+              + (f", {cell(kalt)} with Evening counted as day" if kalt else "")
+              + f", on {acc['n_clips']:.0f} clips")
         add("[E6] day/night", judge(kap, BAR_KAPPA_DAYNIGHT), ev)
 
     # [E2] traffic light. JAAD's traffic_light label is not a visibility label (a clip labelled
@@ -228,33 +235,48 @@ def verdicts(m):
                     "d_crosswalk_X7cls4_conf")
     crosswalk_entry("[E10] scene_seg crosswalk (Mask2Former / Vistas)", "E10", "d_crosswalk_E10_frac")
 
-    # pedestrian detection / tracking
+    # pedestrian detection / tracking. The PRIMARY population is fixed a priori: JAAD's
+    # behaviourally annotated pedestrians ('b'), i.e. the ones that interact with the road and
+    # are what the crossing analysis is about. All boxes also include distant bystanders, so that
+    # recall is shown but not judged. The restricted-scope fallback (unoccluded and >= 50 px) was
+    # defined after inspecting interim results and is labelled exploratory.
     src = "B2" if get(m, "e_detection_B2", "recall") is not None else "B1"
     r_all = get(m, f"e_detection_{src}", "recall")
     if r_all is not None:
+        r_b = get(m, f"e_detection_{src}", "recall_kind=b") or r_all
+        r_ped = get(m, f"e_detection_{src}", "recall_kind=ped")
         r_none = get(m, f"e_detection_{src}", "recall_occlusion=none")
-        r_100 = get(m, f"e_detection_{src}", "recall_height=100-200px")
-        r_200 = get(m, f"e_detection_{src}", "recall_height=>=200px")
+        r_u50 = get(m, f"e_detection_{src}", "recall_unoccluded_h>=50px")
+        r_u100 = get(m, f"e_detection_{src}", "recall_unoccluded_h>=100px")
         pr = get(m, f"e_detection_{src}", "precision_lower_bound")
-        ev = (f"[{src}] recall {cell(r_all)}; unoccluded {cell(r_none)}; "
-              f"height 100-200 px {cell(r_100)}, >=200 px {cell(r_200)}; "
-              f"precision (lower bound; JAAD does not box everyone) {cell(pr)}")
-        s_all, s_none = judge(r_all, BAR_RECALL_TRACK), judge(r_none, BAR_RECALL_TRACK)
-        if s_all == FAIL and s_none == PASS:
+        ev = (f"[{src}] recall on behaviourally annotated pedestrians (PRIMARY, a priori) {cell(r_b)}; "
+              f"all JAAD boxes {cell(r_all)} (distant bystanders alone: {cell(r_ped)}); "
+              f"unoccluded {cell(r_none)}; unoccluded and >=50 px {cell(r_u50)}, >=100 px {cell(r_u100)} "
+              f"(exploratory sub-populations); precision (lower bound; JAAD does not box everyone) {cell(pr)}")
+        s_b = judge(r_b, BAR_RECALL_TRACK)
+        if s_b == FAIL and judge(r_u50, BAR_RECALL_TRACK) == PASS:
             add("[B1]/[B2] pedestrian detection", PASS, ev, on_pass=RESTRICTED,
-                scope="unoccluded pedestrians; occluded and small (<100 px) ones are largely missed")
+                scope="unoccluded pedestrians of >= 50 px (scope defined after interim results)")
         else:
-            add("[B1]/[B2] pedestrian detection", s_all, ev)
+            add("[B1]/[B2] pedestrian detection", s_b, ev)
 
-    # crossing judge
-    f1c, kc = get(m, "f_crossing", "f1"), get(m, "f_crossing", "kappa")
-    rc, pc = get(m, "f_crossing", "recall"), get(m, "f_crossing", "precision")
+    # crossing judge. Judged END TO END (a pedestrian counts as flagged if ANY PedX track
+    # overlapping them is crossed, which removes the penalty for ID fragmentation) and with JAAD's
+    # 'irrelevant' pedestrians counted as not crossing for precision (conservative).
+    f1c, kc = get(m, "f_crossing_any_track", "f1"), get(m, "f_crossing_any_track", "kappa")
+    rc, pc = get(m, "f_crossing_any_track", "recall"), get(m, "f_crossing_any_track", "precision")
+    pi = get(m, "f_crossing_incl_irrelevant", "precision")
+    m1 = get(m, "f_crossing", "recall")
+    frag = get(m, "f_track_fragmentation", "share_with_2plus_ids")
     mr = get(m, "f_crossing", "match_rate")
     if f1c is not None:
-        ev = (f"vs JAAD crossing label on matched pedestrians: precision {cell(pc)}, recall {cell(rc)}, "
-              f"F1 {cell(f1c)}, kappa {cell(kc)}; track match rate {cell(mr)}; JAAD behavioural "
-              f"pedestrians cross {fmt(f1c['base_rate'])} of the time, so kappa is the informative number")
-        add("[C3] crossing judge", combine(judge(f1c, 0.8), judge(kc, 0.4)), ev)
+        ev = (f"end to end over labelled behavioural pedestrians (flagged if any overlapping track is "
+              f"crossed): precision {cell(pc)}, recall {cell(rc)}, F1 {cell(f1c)}, kappa {cell(kc)}; "
+              f"precision with JAAD 'irrelevant' pedestrians counted as not crossing {cell(pi)}; "
+              f"one-to-one-matched recall {cell(m1)} is lower because {cell(frag)} of pedestrians are "
+              f"split over >= 2 PedX track ids; match rate {cell(mr)}; JAAD behavioural pedestrians cross "
+              f"{fmt(f1c['base_rate'])} of the time, so kappa is the informative number")
+        add("[C3] crossing judge", combine(judge(f1c, 0.8), judge(kc, 0.4), judge(pi, 0.8)), ev)
 
     # ego-motion gate
     a1, a2 = get(m, "g_ego_step_px", "roc_auc_stopped"), get(m, "g_ego_step_med", "roc_auc_stopped")
@@ -266,9 +288,13 @@ def verdicts(m):
               + (f", smoothed step {cell(a2)}" if a2 else "")
               + (f", bbox-expansion {cell(a3)}" if a3 else "")
               + (f"; production gate precision {cell(gp)}, recall {cell(gr)}, F1 {cell(gf)}" if gf else ""))
+        cvf = get(m, "g_ego_step_med", "f1_cv_threshold")
+        if cvf is not None:
+            ev += f"; cross-validated best-threshold F1 on the smoothed step {cell(cvf)}"
         s_auc = judge(a1, BAR_AUC_EGO)
         s_gate = judge(gf, BAR_F1) if gf is not None else FEW
-        if s_auc == PASS and s_gate in (FAIL, STRADDLE):
+        s_cv = judge(cvf, BAR_F1) if cvf is not None else FEW
+        if s_auc == PASS and s_gate in (FAIL, STRADDLE) and s_cv == PASS:
             add("[B3] ego-motion / static-camera gate", PASS, ev, on_pass=RECAL)
         else:
             add("[B3] ego-motion / static-camera gate", combine(s_auc, s_gate), ev)
@@ -295,16 +321,28 @@ def verdicts(m):
     sf = get(m, "k_signs_ped_sign", "f1")
     if sf is not None:
         sr, sp = get(m, "k_signs_ped_sign", "recall"), get(m, "k_signs_ped_sign", "precision")
-        ev = f"JAAD pedestrian-crossing sign: precision {cell(sp)}, recall {cell(sr)}, F1 {cell(sf)}"
+        ip = get(m, "k_signs_ped_sign_ip_only", "f1")
+        ipp, ipr = get(m, "k_signs_ped_sign_ip_only", "precision"), get(m, "k_signs_ped_sign_ip_only", "recall")
+        ev = (f"JAAD pedestrian-crossing sign, with the class set production risky_crossing.py uses: "
+              f"precision {cell(sp)}, recall {cell(sr)}, F1 {cell(sf)}"
+              + (f". Exploratory (class 'ip' alone, chosen after interim results): precision {cell(ipp)}, "
+                 f"recall {cell(ipr)}, F1 {cell(ip)} -- so part of the failure is the production class "
+                 f"list, not the detector; see the per-class `k_signs_class[...]` rows" if ip else ""))
         add("[E3] traffic sign (pedestrian sign)", judge(sf, BAR_F1, MIN_POSITIVES), ev)
 
-    # risky-crossing signal coverage
-    cv = get(m, "j_risky_coverage", "pedx_determined_share")
-    if cv is not None:
-        ev = (f"share of crossings with an observed signal state: {cell(cv)} on "
-              f"{cv['n']:.0f} crossings / {cv['n_clips']:.0f} clips (JAAD has no risky label, so "
-              "only coverage can be validated)")
-        add("[C1] risky crossing (coverage only)", judge(cv, BAR_COVERAGE_RISKY), ev)
+    # risky-crossing signal coverage. The unconditional share is capped by how often JAAD labels a
+    # light at all (a few % of windows), so it cannot be judged against an absolute bar. The
+    # verdict uses coverage GIVEN a JAAD-labelled light in the crossing window.
+    cv = get(m, "j_risky_coverage_observed", "recall")
+    un = get(m, "j_risky_coverage", "pedx_determined_share")
+    if un is not None:
+        ev = (f"coverage given a JAAD-labelled light in the crossing window: {cell(cv)}"
+              + (f" ({positives(cv):.0f} such crossings)" if cv is not None and pd.notna(positives(cv)) else "")
+              + f"; unconditional share of crossings with an observed signal {cell(un)} on "
+                f"{un['n']:.0f} crossings is capped by JAAD's light prevalence "
+                f"({fmt(un['base_rate'])} of windows). JAAD has no risky label, so only coverage can be "
+                f"validated")
+        add("[C1] risky crossing (coverage only)", judge(cv, BAR_COVERAGE_RISKY, MIN_POSITIVES), ev)
     return out
 
 
@@ -347,8 +385,30 @@ def run_log_summary(results_root):
     return last
 
 
+SENSITIVITY_KEYS = [
+    ("a_weather", "accuracy"), ("a_weather", "kappa"), ("b_daynight", "kappa"),
+    ("c_traffic_light_visible_presence", "recall"), ("d_crosswalk_E7_frame", "f1"),
+    ("d_crosswalk_E10_frame", "f1"), ("d_crosswalk_E10_frac", "roc_auc"),
+    ("e_detection_B2", "recall_kind=b"), ("f_crossing_any_track", "f1"),
+    ("f_crossing_any_track", "kappa"), ("g_ego_step_px", "roc_auc_stopped"),
+    ("h_looking_pedx_window", "f1"), ("i_age_gender_gender", "accuracy"),
+]
+
+
+def sensitivity_table(m_all, m_street):
+    lines = ["| task | metric | all clips | street clips only |", "|---|---|---|---|"]
+    for task, metric in SENSITIVITY_KEYS:
+        a, b = get(m_all, task, metric), get(m_street, task, metric)
+        if a is None and b is None:
+            continue
+        fa = f"{cell(a)} (clips {a['n_clips']:.0f})" if a else "n/a"
+        fb = f"{cell(b)} (clips {b['n_clips']:.0f})" if b else "n/a"
+        lines.append(f"| {task} | {metric} | {fa} | {fb} |")
+    return "\n".join(lines)
+
+
 def write_report(out_dir, m, cms, details, clips, gt, results_root, interval, verdict_rows,
-                 requested_clips):
+                 requested_clips, m_street=None, n_street=0):
     from modules.provenance import git_state, package_versions
     sha, dirty = git_state()
     pk = package_versions()
@@ -410,6 +470,13 @@ def write_report(out_dir, m, cms, details, clips, gt, results_root, interval, ve
         A(md_table(sub))
         A("")
 
+    if m_street is not None:
+        A("## Sensitivity: street clips only\n")
+        A(f"JAAD includes parking-lot and garage clips ({len(clips) - n_street} of the {len(clips)} "
+          f"scored), a scene type PedX is not designed for. The same metrics on the {n_street} "
+          "street clips:\n")
+        A(sensitivity_table(m, m_street))
+        A("")
     A("## Confusion matrices\n")
     A("Rows = JAAD label, columns = PedX. Also written as `cm_*.csv`.\n")
     for name, cm in cms.items():
@@ -460,8 +527,14 @@ def main():
     m.to_csv(os.path.join(args.out, "jaad_metrics.csv"), index=False)
     for name, cm in cms.items():
         cm.to_csv(os.path.join(args.out, f"cm_{name}.csv"))
+    street = set(gt["clips"].loc[gt["clips"]["road_type"] == "street", "clip"])
+    clips_st = [c for c in clips if c in street]
+    m_st = None
+    if 0 < len(clips_st) < len(clips):
+        m_st, _, _ = S.score_all(gt, runs, clips_st, args.interval)
+        m_st.to_csv(os.path.join(args.out, "jaad_metrics_street.csv"), index=False)
     write_report(args.out, m, cms, details, clips, gt, args.results_root, args.interval,
-                 verdicts(m), len(requested))
+                 verdicts(m), len(requested), m_st, len(clips_st))
     print(f"wrote {args.out}/jaad_metrics.csv, {len(cms)} confusion matrices, JAAD_REPORT.md")
     for v in verdicts(m):
         print(f"  {v['module']:<55} {v['verdict']}")

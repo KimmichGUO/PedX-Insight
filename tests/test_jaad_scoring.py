@@ -170,6 +170,72 @@ def test_traffic_light_table_alignment_and_na_label():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_f1_reference_is_the_always_positive_f1():
+    """The trivial classifier's F1 is 2p/(1+p), not the prevalence p (audit finding)."""
+    assert abs(S.f1_reference(0.27) - 2 * 0.27 / 1.27) < 1e-12
+    assert np.isnan(S.f1_reference(float("nan")))
+    yt = np.array([1, 0, 0, 0] * 5, bool)
+    rows = {r["metric"]: r for r in S.binary_rows("t", yt, yt, np.repeat(list("abcde"), 4))}
+    assert abs(rows["f1"]["base_rate"] - 2 * 0.25 / 1.25) < 1e-12
+    assert rows["precision"]["base_rate"] == 0.25 and rows["recall"]["base_rate"] == 0.25
+    assert rows["f1"]["n_pos_clips"] == 5                       # clips that contain a positive
+    # ...which is not the same as the number of clips:
+    rows2 = {r["metric"]: r for r in S.binary_rows("t", [1, 0, 0, 0], [1, 0, 0, 0], list("aabb"))}
+    assert rows2["f1"]["n_clips"] == 2 and rows2["f1"]["n_pos_clips"] == 1
+
+
+def test_judge_gates_on_positive_clips_and_nan():
+    ok = _row("t", "m", 0.9, 0.85, 0.95, clips=40)
+    assert R.judge(ok, 0.7) == R.PASS
+    # 40 clips in the denominator but only 5 contain a positive: not powered -> few, never fail
+    thin = dict(ok, value=0.0, ci_low=0.0, ci_high=0.0, n_pos_clips=5)
+    assert R.judge(thin, 0.7) == R.FEW
+    # a metric that could not be computed (NaN) is 'cannot tell', not a failure
+    nan = dict(ok, value=float("nan"), ci_low=float("nan"), ci_high=float("nan"))
+    assert R.judge(nan, 0.7) == R.FEW
+
+
+def test_overlap_tracks_exposes_id_fragmentation():
+    frames = list(range(10))
+    gt = pd.DataFrame({"frame": frames, "id": "g", "x1": 0, "y1": 0, "x2": 10, "y2": 30})
+    a = pd.DataFrame({"frame": frames[:5], "id": 1, "x1": 0, "y1": 0, "x2": 10, "y2": 30})
+    b = pd.DataFrame({"frame": frames[5:], "id": 2, "x1": 1, "y1": 0, "x2": 11, "y2": 30})
+    pred = pd.concat([a, b], ignore_index=True)
+    ov = S.overlap_tracks(gt, pred)
+    assert sorted(ov["pred_id"]) == [1, 2]                     # both fragments are reported...
+    assert len(S.match_tracks(gt, pred)) == 1                  # ...but the one-to-one match keeps one
+
+
+def test_crossing_any_track_and_irrelevant_negatives():
+    """One-to-one matching picks a fragment that was never judged 'crossed'; the any-track
+    variant credits the pedestrian, and JAAD 'irrelevant' (-1) counts against precision."""
+    root = tempfile.mkdtemp(prefix="pedx_jaad_runs_")
+    try:
+        os.makedirs(os.path.join(root, "video_0001"))
+        pd.DataFrame({"track_id": [7, 8, 9], "crossed": [False, True, True],
+                      "started_frame": [np.nan, 40, 50], "ended_frame": [np.nan, 80, 90]}
+                     ).to_csv(os.path.join(root, "video_0001", S.FILES["C3"]), index=False)
+        peds = pd.DataFrame({"clip": "video_0001", "ped_id": ["b1", "b2"], "kind": "b",
+                             "crossing": [1, -1], "crossing_point": [45, -1]})
+        gt = {"peds": peds}
+        matches = pd.DataFrame({"clip": "video_0001", "gt_id": ["b1", "b2"], "pred_id": [7, 9],
+                                "mean_iou": 0.9, "n_covis": 10, "source": "B2"})
+        overlaps = pd.DataFrame({"clip": "video_0001", "gt_id": ["b1", "b1", "b2"],
+                                 "pred_id": [7, 8, 9], "mean_iou": 0.8, "n_covis": 6})
+        rows, _, d = S.score_crossing(gt, S.Runs(root), ["video_0001"], matches,
+                                      {"video_0001": 30.0}, overlaps)
+        by = {(r["task"], r["metric"]): r["value"] for r in rows}
+        assert by[("f_crossing", "recall")] == 0.0                      # matched fragment 7 not crossed
+        assert by[("f_crossing_any_track", "recall")] == 1.0            # fragment 8 is crossed
+        # b2 is JAAD 'irrelevant' (-1): ignored by the main population, a false positive here
+        assert by[("f_crossing_incl_irrelevant", "precision")] == 0.0   # matched crossers: b1 no, b2 yes(-1)
+        assert by[("f_track_fragmentation", "ids_per_gt_pedestrian_mean")] == 1.5
+        assert by[("f_track_fragmentation", "share_with_2plus_ids")] == 0.5
+        assert len(d) == 2 and set(d["crossing_raw"]) == {1, -1}
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def test_traffic_light_visible_subset():
     """JAAD labels a light on frames where none is in view; those must not count against [E2]."""
     root = tempfile.mkdtemp(prefix="pedx_jaad_runs_")

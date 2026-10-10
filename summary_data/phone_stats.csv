@@ -1,2 +1,2 @@
-accessory,risky_crossing_rate(%),run_red_light_rate(%)
-phone_using,28.57142857142857,17.77777777777778
+accessory,risky_crossing_rate(%),risky_crossing_rate(%)_n,risky_crossing_rate(%)_n_clusters,risky_crossing_rate(%)_ci_low,risky_crossing_rate(%)_ci_high,run_red_light_rate(%),run_red_light_rate(%)_n,run_red_light_rate(%)_n_clusters,run_red_light_rate(%)_ci_low,run_red_light_rate(%)_ci_high
+phone_using,28.57142857142857,21,10,11.11111111111111,61.53846153846154,17.77777777777778,45,12,7.894736842105263,31.03448275862069

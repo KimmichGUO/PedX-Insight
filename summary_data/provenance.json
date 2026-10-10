@@ -1,0 +1,21 @@
+{
+  "generated_utc": "2026-10-10T09:34:10Z",
+  "git_sha": "6e1618ee8fcd9c5a8d96d2b67e704d2da0209644",
+  "git_dirty": true,
+  "n_videos": 28,
+  "n_cities": 21,
+  "n_pedestrians": 1371,
+  "min_n": 10,
+  "min_clusters": 2,
+  "min_speed_crossers": 5,
+  "min_risky_coverage": 0.25,
+  "min_city_n": 5,
+  "min_cities_corr": 8,
+  "pipeline_versions": {
+    "dense_v2": 15,
+    "legacy_1hz": 13
+  },
+  "code_versions": {
+    "NaN": 28
+  }
+}

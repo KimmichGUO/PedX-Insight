@@ -1,5 +1,5 @@
-continent,run_red_light_rate(%),risky_crossing_rate(%)
-Oceania,20.087336244541483,38.88888888888889
-North America,9.014084507042254,17.11229946524064
-Asia,13.244047619047619,42.592592592592595
-Europe,16.363636363636363,31.70731707317073
+continent,risky_crossing_rate(%),risky_crossing_rate(%)_n,risky_crossing_rate(%)_n_clusters,risky_crossing_rate(%)_ci_low,risky_crossing_rate(%)_ci_high,run_red_light_rate(%),run_red_light_rate(%)_n,run_red_light_rate(%)_n_clusters,run_red_light_rate(%)_ci_low,run_red_light_rate(%)_ci_high
+Asia,37.31347377660742,159,4,,,14.695567557994721,668,5,5.714285714285714,23.769489809822282
+Europe,24.330357142857142,39,2,,,14.277307392061491,109,3,,
+North America,17.400166923472007,188,4,,,7.1736401673640176,357,5,1.6736401673640167,12.673640167364017
+Oceania,49.973418394471025,108,3,,,21.14756588440799,229,3,,

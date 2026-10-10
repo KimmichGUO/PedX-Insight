@@ -4,47 +4,9 @@ import pandas as pd
 import ast
 from pathlib import Path
 from modules.completeness import missing_outputs
+from modules.mapping_utils import clean_mapping, find_city_in_mapping
 from modules.provenance import summarize as summarize_provenance
 
-
-def find_city_in_mapping(city, link, mapping_df):
-    """
-    Find the corresponding city information in mapping.csv
-    """
-    # First find all rows that match the city name
-    city_matches = mapping_df[mapping_df['city'] == city]
-
-    if len(city_matches) == 0:
-        print(f"Warning: City {city} not found")
-        return None
-    elif len(city_matches) == 1:
-        # Only one match, return it
-        return city_matches.iloc[0]
-    else:
-        # Multiple matches, need to check using link
-        for _, row in city_matches.iterrows():
-            try:
-                videos_str = row['videos']
-                if pd.isna(videos_str):
-                    continue
-
-                if isinstance(videos_str, str):
-                    if videos_str.startswith('[') and videos_str.endswith(']'):
-                        videos_content = videos_str[1:-1]
-                        videos_list = [v.strip() for v in videos_content.split(',')]
-                    else:
-                        videos_list = [v.strip() for v in videos_str.split(',')]
-                else:
-                    videos_list = videos_str
-
-                if link in videos_list:
-                    return row
-            except Exception as e:
-                print(f"Error parsing videos column: {e}, value: {videos_str}")
-                continue
-
-        print(f"Warning: City {city} has multiple matches but no record containing link {link} was found")
-        return city_matches.iloc[0]  # Return the first match by default
 
 
 def parse_video_info_csv(file_path):
@@ -107,6 +69,7 @@ def main():
     # Load mapping.csv
     try:
         mapping_df = pd.read_csv(mapping_csv_path)
+        mapping_df = clean_mapping(mapping_df)  # zeros->NA, unanimous country backfill
         print(f"Successfully loaded mapping.csv with {len(mapping_df)} records")
     except Exception as e:
         print(f"Error reading mapping.csv: {e}")
@@ -242,6 +205,10 @@ def main():
             print(f"  Warning: {vehicle_count_path} does not exist")
 
         city_info = find_city_in_mapping(city, link, mapping_df)
+
+        if city_info is not None:
+
+            city = city_info['city']  # canonical name (NewYork -> New York)
 
         crossing_time = None
         if crossing_time_df is not None:

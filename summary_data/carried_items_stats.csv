@@ -1,5 +1,5 @@
-accessory,risky_crossing_rate(%),run_red_light_rate(%)
-backpack,14.285714285714285,5.263157894736842
-umbrella,20.0,16.666666666666664
-handbag,7.5,5.555555555555555
-suitcase,38.46153846153847,18.91891891891892
+accessory,risky_crossing_rate(%),risky_crossing_rate(%)_n,risky_crossing_rate(%)_n_clusters,risky_crossing_rate(%)_ci_low,risky_crossing_rate(%)_ci_high,run_red_light_rate(%),run_red_light_rate(%)_n,run_red_light_rate(%)_n_clusters,run_red_light_rate(%)_ci_low,run_red_light_rate(%)_ci_high
+backpack,14.285714285714285,21,9,0.0,38.11507936507926,5.263157894736842,57,12,0.0,12.0
+umbrella,,5,4,,,16.666666666666664,12,5,0.0,50.0
+handbag,7.5,40,7,0.0,18.75,5.555555555555555,72,9,0.0,11.458333333333332
+suitcase,38.46153846153847,13,5,10.0,62.5,18.91891891891892,37,5,4.3478260869565215,50.0

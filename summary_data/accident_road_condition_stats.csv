@@ -1,5 +1,5 @@
-environment_factor,risky_crossing_rate(%),run_red_light_rate(%)
-arrow_board,,0.0
-cones,0.0,0.0
-crack,11.11111111111111,8.333333333333332
-potholes,0.0,0.0
+environment_factor,risky_crossing_rate(%),risky_crossing_rate(%)_n,risky_crossing_rate(%)_n_clusters,risky_crossing_rate(%)_ci_low,risky_crossing_rate(%)_ci_high,run_red_light_rate(%),run_red_light_rate(%)_n,run_red_light_rate(%)_n_clusters,run_red_light_rate(%)_ci_low,run_red_light_rate(%)_ci_high
+arrow_board,,0,0,,,,2,2,,
+cones,,1,1,,,,5,4,,
+crack,11.11111111111111,18,5,0.0,44.44444444444444,8.333333333333332,48,8,0.0,19.047619047619047
+potholes,,1,1,,,,4,3,,

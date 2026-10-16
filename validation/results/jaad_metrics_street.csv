@@ -1,0 +1,180 @@
+task,metric,value,ci_low,ci_high,n,n_clips,base_rate,note,n_pos_clips
+a_weather,accuracy,0.31724137931034485,0.2655172413793103,0.3724137931034483,290,290,0.4862068965517241,PedX shine/sunrise->clear; JAAD cloud->cloudy; JAAD n/a dropped,
+a_weather,kappa,-0.07106883044208168,-0.1440138007820128,0.0019635817566740297,290,290,0.0,PedX shine/sunrise->clear; JAAD cloud->cloudy; JAAD n/a dropped,
+a_weather_rain,precision,0.075,0.023255813953488372,0.1340408896096373,290,290,0.08620689655172414,'rain' one-vs-rest at clip level,25.0
+a_weather_rain,recall,0.24,0.08,0.41379310344827586,290,290,0.08620689655172414,'rain' one-vs-rest at clip level,25.0
+a_weather_rain,f1,0.11428571428571428,0.037037037037037035,0.1981981981981982,290,290,0.15873015873015872,'rain' one-vs-rest at clip level,25.0
+a_weather,pred_rain_share,0.27586206896551724,,,290,290,0.08620689655172414,base_rate here = JAAD rain share,
+b_daynight,accuracy,0.7172413793103448,0.6620689655172414,0.7655172413793103,290,290,0.9827586206896551,PedX Evening->night,
+b_daynight,kappa,0.0786516853932584,0.017994966642404363,0.14927590048273298,290,290,0.0,PedX Evening->night,
+b_daynight_alt,accuracy,0.9827586206896551,0.9655172413793104,0.996551724137931,290,290,0.9827586206896551,sensitivity: PedX Evening->day,
+b_daynight_alt,kappa,0.6070460704607046,0.2137877614252517,0.8871595330739299,290,290,0.0,sensitivity: PedX Evening->day,
+c_traffic_light_presence,precision,0.8484848484848485,0.5,1.0,2220,290,0.06396396396396396,"frame-level, [E2] sampled frames",18.0
+c_traffic_light_presence,recall,0.39436619718309857,0.14615384615384616,0.631296318431747,2220,290,0.06396396396396396,"frame-level, [E2] sampled frames",18.0
+c_traffic_light_presence,f1,0.5384615384615384,0.23129251700680273,0.7435263100589505,2220,290,0.12023708721422523,"frame-level, [E2] sampled frames",18.0
+c_traffic_light_state,accuracy,1.0,1.0,1.0,56,8,0.5892857142857143,frames where both JAAD and PedX see a light; PedX yellow counts wrong,
+c_traffic_light_presence_clip,precision,0.8,0.5,1.0,290,290,0.06206896551724138,clip has any light,18.0
+c_traffic_light_presence_clip,recall,0.4444444444444444,0.21428571428571427,0.6923076923076923,290,290,0.06206896551724138,clip has any light,18.0
+c_traffic_light_presence_clip,f1,0.5714285714285714,0.3076923076923077,0.782608695652174,290,290,0.1168831168831169,clip has any light,18.0
+c_traffic_light,clip_rate_spearman,0.5779900972880971,0.3244639893948314,0.7769474300250141,290,290,0.0,per-clip detected-frame rate vs JAAD labelled-frame rate,
+c_traffic_light_visible_label_validity,labelled_frames_with_no_light_in_view,0.07746478873239436,0.01492260917634052,0.17650326797385604,142,18,,share of JAAD traffic_light-labelled frames where [E10] sees no light region,
+c_traffic_light_visible_presence,recall,0.42748091603053434,0.1666304347826087,0.6378401677539609,131,18,1.0,frames with a JAAD light label AND a light region in view; [E2] reports any colour,
+c_traffic_light_visible_state,accuracy,1.0,1.0,1.0,56,8,0.5892857142857143,"colour agreement where [E2] reports a colour on a visible, labelled light",
+c_traffic_light_visible_no_light,false_positive_rate,0.0,0.0,0.0,1899,268,0.0,[E2] reports a colour although JAAD says n/a and no light region is in view,
+d_crosswalk_E7_frame,precision,,,,2220,290,0.5563063063063063,production [E7] crosswalk_detected (smoothed),177.0
+d_crosswalk_E7_frame,recall,0.0,0.0,0.0,2220,290,0.5563063063063063,production [E7] crosswalk_detected (smoothed),177.0
+d_crosswalk_E7_frame,f1,0.0,0.0,0.0,2220,290,0.7149059334298119,production [E7] crosswalk_detected (smoothed),177.0
+d_crosswalk_E7_clip,precision,,,,290,290,0.6103448275862069,clip positive if any sampled frame positive,177.0
+d_crosswalk_E7_clip,recall,0.0,0.0,0.0,290,290,0.6103448275862069,clip positive if any sampled frame positive,177.0
+d_crosswalk_E7_clip,f1,0.0,0.0,0.0,290,290,0.7580299785867237,clip positive if any sampled frame positive,177.0
+d_crosswalk_E7,clip_rate_spearman,,,,290,290,0.0,per-clip detected-frame rate vs JAAD labelled-frame rate,
+d_crosswalk_E7_frame,pred_positive_rate,0.0,0.0,0.0,2220,290,0.5563063063063063,share of sampled frames flagged; base_rate = JAAD share,
+d_crosswalk_E10_frame,precision,0.9360146252285192,0.9075070019665098,0.9603308382701325,2220,290,0.5563063063063063,[E10] crosswalk_present at shipped threshold,177.0
+d_crosswalk_E10_frame,recall,0.8291497975708502,0.7926815218613016,0.8645854436790924,2220,290,0.5563063063063063,[E10] crosswalk_present at shipped threshold,177.0
+d_crosswalk_E10_frame,f1,0.8793473593817089,0.8532269395493711,0.904158372447235,2220,290,0.7149059334298119,[E10] crosswalk_present at shipped threshold,177.0
+d_crosswalk_E10_clip,precision,0.8781725888324873,0.8282828282828283,0.9227146042363433,290,290,0.6103448275862069,clip positive if any sampled frame positive,177.0
+d_crosswalk_E10_clip,recall,0.9774011299435028,0.9523809523809523,0.9947089947089947,290,290,0.6103448275862069,clip positive if any sampled frame positive,177.0
+d_crosswalk_E10_clip,f1,0.9251336898395722,0.8959943661971831,0.9521588061061744,290,290,0.7580299785867237,clip positive if any sampled frame positive,177.0
+d_crosswalk_E10,clip_rate_spearman,0.8439042903127157,0.7969617484048979,0.8812786311903353,290,290,0.0,per-clip detected-frame rate vs JAAD labelled-frame rate,
+d_crosswalk_E10_frame,pred_positive_rate,0.4927927927927928,0.43819914198060345,0.548238719421744,2220,290,0.5563063063063063,share of sampled frames flagged; base_rate = JAAD share,
+d_crosswalk_X7cls4_frame,precision,0.2777777777777778,0.0,1.0,2220,290,0.5563063063063063,"COUNTERFACTUAL: same model, class 4, conf>=0.35 + module smoothing",177.0
+d_crosswalk_X7cls4_frame,recall,0.004048582995951417,0.0,0.012999113874304156,2220,290,0.5563063063063063,"COUNTERFACTUAL: same model, class 4, conf>=0.35 + module smoothing",177.0
+d_crosswalk_X7cls4_frame,f1,0.007980845969672785,0.0,0.025597816107699435,2220,290,0.7149059334298119,"COUNTERFACTUAL: same model, class 4, conf>=0.35 + module smoothing",177.0
+d_crosswalk_X7cls4_clip,precision,0.5,0.0,1.0,290,290,0.6103448275862069,clip positive if any sampled frame positive,177.0
+d_crosswalk_X7cls4_clip,recall,0.005649717514124294,0.0,0.01775147928994083,290,290,0.6103448275862069,clip positive if any sampled frame positive,177.0
+d_crosswalk_X7cls4_clip,f1,0.0111731843575419,0.0,0.03448774167829377,290,290,0.7580299785867237,clip positive if any sampled frame positive,177.0
+d_crosswalk_X7cls4,clip_rate_spearman,-0.00709905136667964,-0.11508868399038126,0.09270715158934499,290,290,0.0,per-clip detected-frame rate vs JAAD labelled-frame rate,
+d_crosswalk_X7cls4_frame,pred_positive_rate,0.008108108108108109,0.0,0.023353540440037176,2220,290,0.5563063063063063,share of sampled frames flagged; base_rate = JAAD share,
+d_crosswalk_E10_frac,roc_auc,0.9486812306048213,0.9335496334649953,0.9625309204178323,2220,290,0.5,crosswalk_frac as a continuous score,177.0
+d_crosswalk_E10_frac,pr_auc,0.9546484024412223,0.9371666217581036,0.9687510281970664,2220,290,0.5563063063063063,crosswalk_frac as a continuous score,177.0
+d_crosswalk_E10_frac,best_f1_threshold,0.00017,,,2220,290,,in-sample argmax-F1 threshold on the score,
+d_crosswalk_E10_frac,f1_at_best_threshold,0.9240607513988809,0.899959695907807,0.9439007440824557,2220,290,0.7149059334298119,in-sample (optimistic); P=0.912 R=0.936,177.0
+d_crosswalk_E10_frac,f1_cv_threshold,0.9189406099518459,0.8939596778308639,0.9399093156721509,2220,290,0.7149059334298119,threshold chosen on other clips (5-fold by clip),177.0
+d_crosswalk_X7cls4_conf,roc_auc,0.5243634271152304,0.4605758609856422,0.5807655120835251,2220,290,0.5,"COUNTERFACTUAL class-4 max confidence (raw, unsmoothed)",177.0
+d_crosswalk_X7cls4_conf,pr_auc,0.5522934215961265,0.47865374311896336,0.6361245173848697,2220,290,0.5563063063063063,"COUNTERFACTUAL class-4 max confidence (raw, unsmoothed)",177.0
+d_crosswalk_X7cls4_conf,best_f1_threshold,0.0,,,2220,290,,in-sample argmax-F1 threshold on the score,
+d_crosswalk_X7cls4_conf,f1_at_best_threshold,0.7149059334298119,0.6581025955347667,0.763381206616889,2220,290,0.7149059334298119,in-sample (optimistic); P=0.556 R=1.000,177.0
+d_crosswalk_X7cls4_conf,f1_cv_threshold,0.7149059334298119,0.6581025955347667,0.763381206616889,2220,290,0.7149059334298119,threshold chosen on other clips (5-fold by clip),177.0
+d_crosswalk_X7cls0_conf,roc_auc,0.5008175260486241,0.4865741719041792,0.514010347869082,2220,290,0.5,class-0 ('Flexible_delineator_post') max confidence = what [E7] thresholds,177.0
+d_crosswalk_X7cls0_conf,pr_auc,0.5575712625251806,0.49376655649778206,0.6204418080603112,2220,290,0.5563063063063063,class-0 ('Flexible_delineator_post') max confidence = what [E7] thresholds,177.0
+d_crosswalk_X7cls0_conf,best_f1_threshold,0.0,,,2220,290,,in-sample argmax-F1 threshold on the score,
+d_crosswalk_X7cls0_conf,f1_at_best_threshold,0.7149059334298119,0.6581025955347667,0.763381206616889,2220,290,0.7149059334298119,in-sample (optimistic); P=0.556 R=1.000,177.0
+d_crosswalk_X7_probe_check,agreement_with_E7,1.0,,,2220,290,,probe class-0 reconstruction vs actual [E7] (should be ~1.0),
+d_crosswalk_E10_minus_E7,delta_f1,0.8793473593817089,0.8532269395493711,0.904158372447235,2220,290,0.0,paired on common frames; CI excluding 0 = significant,
+d_crosswalk_E10_minus_E7,delta_recall,0.8291497975708502,0.7926815218613016,0.8645854436790924,2220,290,0.0,paired on common frames; CI excluding 0 = significant,
+d_crosswalk_E10_minus_E7,delta_precision,,,,2220,290,0.0,paired on common frames; CI excluding 0 = significant,
+e_detection_B1,recall,0.6305867206179878,0.6110762896168493,0.6498297063076068,10874,290,,all non-'p' JAAD boxes on the grid,
+e_detection_B1,precision_lower_bound,0.8641461877756774,0.8505860479089925,0.8769572261320232,7935,290,,JAAD does not box every pedestrian -> precision is a LOWER bound,
+e_detection_B1,recall_occlusion=none,0.7756410256410257,0.7560960671208424,0.79396184553608,7956,282,,recall stratified by GT occlusion,
+e_detection_B1,recall_occlusion=part,0.3809827696234844,0.3483070923681973,0.41837904939359,1567,230,,recall stratified by GT occlusion,
+e_detection_B1,recall_occlusion=full,0.06587712805329386,0.04951200097008011,0.0835745935419146,1351,216,,recall stratified by GT occlusion,
+e_detection_B1,recall_height=<50px,0.2076555023923445,0.1699143425209718,0.24840197190472035,1045,166,,recall stratified by GT height,
+e_detection_B1,recall_height=50-100px,0.528035413153457,0.49999362895005095,0.554113062355213,4744,257,,recall stratified by GT height,
+e_detection_B1,recall_height=100-200px,0.7670827858081471,0.7377346381543248,0.7953704016624606,3044,268,,recall stratified by GT height,
+e_detection_B1,recall_height=>=200px,0.8819206271435571,0.8579932021117527,0.9044249640413491,2041,250,,recall stratified by GT height,
+e_detection_B1,recall_kind=b,0.8129437465865648,0.7880248363301317,0.8373714921852764,3662,270,,recall stratified by GT kind,
+e_detection_B1,recall_kind=ped,0.5379922351636162,0.5123410239200941,0.5619435163144046,7212,256,,recall stratified by GT kind,
+e_detection_B1,recall_unoccluded_h>=50px,0.8320323390019515,0.8162948062371594,0.8455658285102556,7174,280,,combined GT sub-population (exploratory: chosen after interim results),
+e_detection_B1,recall_unoccluded_h>=100px,0.9426459342340046,0.9306873936829441,0.9539848433350135,3923,275,,combined GT sub-population (exploratory: chosen after interim results),
+e_detection_B1,recall_not_fully_occluded_h>=50px,0.7591198610306891,0.7432305600506501,0.7748583244362759,8635,281,,combined GT sub-population (exploratory: chosen after interim results),
+e_detection_B2,recall,0.624563676274785,0.6067300931797872,0.6430079305582239,166734,290,,all non-'p' JAAD boxes on the grid,
+e_detection_B2,precision_lower_bound,0.869677052972666,0.8564560133008411,0.8815681274243602,119741,290,,JAAD does not box every pedestrian -> precision is a LOWER bound,
+e_detection_B2,recall_occlusion=none,0.7700436688405141,0.750812643651707,0.7885893453194014,121597,284,,recall stratified by GT occlusion,
+e_detection_B2,recall_occlusion=part,0.36963572854291415,0.33601860984097115,0.40086266563562073,24048,278,,recall stratified by GT occlusion,
+e_detection_B2,recall_occlusion=full,0.07643795343544027,0.06399418924435621,0.0899155283650163,21089,258,,recall stratified by GT occlusion,
+e_detection_B2,recall_height=<50px,0.20928872250818906,0.17675187724637564,0.2416019591011931,17096,203,,recall stratified by GT height,
+e_detection_B2,recall_height=50-100px,0.5260615653312957,0.5014088484835255,0.5504279696603349,73288,273,,recall stratified by GT height,
+e_detection_B2,recall_height=100-200px,0.7651106285075365,0.7385770329800184,0.7913884111110401,46507,274,,recall stratified by GT height,
+e_detection_B2,recall_height=>=200px,0.885333243976812,0.8657008813693206,0.9050571345448905,29843,264,,recall stratified by GT height,
+e_detection_B2,recall_kind=b,0.802034677990092,0.7776360589004115,0.825003404098565,56520,270,,recall stratified by GT kind,
+e_detection_B2,recall_kind=ped,0.5335529061643711,0.5096937948562447,0.5562647776923098,110214,262,,recall stratified by GT kind,
+e_detection_B2,recall_unoccluded_h>=50px,0.8303778374599904,0.8163149979633079,0.8434226135840915,108724,283,,combined GT sub-population (exploratory: chosen after interim results),
+e_detection_B2,recall_unoccluded_h>=100px,0.9461992304403591,0.9362641115045591,0.9546879751705325,58475,277,,combined GT sub-population (exploratory: chosen after interim results),
+e_detection_B2,recall_not_fully_occluded_h>=50px,0.7559357994917079,0.7403735022600932,0.771121593334078,131027,283,,combined GT sub-population (exploratory: chosen after interim results),
+f_crossing,match_rate,0.9866666666666667,0.9761079579381391,0.9946435707942147,525,259,,"GT behavioural peds with a PedX track (mean IoU>=0.3, >=3 co-visible frames)",
+f_crossing,precision,0.9811320754716981,0.9620253164556962,0.9955757085493743,518,256,0.8494208494208494,matched pedestrians only (one-to-one assignment),223.0
+f_crossing,recall,0.4727272727272727,0.41829768270944745,0.5270588235294118,518,256,0.8494208494208494,matched pedestrians only (one-to-one assignment),223.0
+f_crossing,f1,0.6380368098159509,0.58600214977766,0.6851088487467352,518,256,0.9185803757828809,matched pedestrians only (one-to-one assignment),223.0
+f_crossing,accuracy,0.5444015444015444,0.4942646990013503,0.5965305027168571,518,256,0.8494208494208494,matched pedestrians only (one-to-one assignment),223.0
+f_crossing,kappa,0.19135312483462974,0.13773817721024945,0.25310138506916474,518,256,0.0,matched pedestrians only (one-to-one assignment),223.0
+f_crossing,onset_error_median_s,1.6666666666666665,1.4666666666666666,2.0,150,111,,"PedX started_frame minus JAAD crossing_point (s), true positives",
+f_crossing,onset_abs_error_median_s,1.9666666666666666,1.7,2.334166666666662,150,111,,,
+f_crossing_incl_irrelevant,precision,0.9585253456221198,0.9266036322785995,0.9851485148514851,586,267,0.7508532423208191,matched; JAAD crossing=-1 ('irrelevant') counted as NOT crossing,223.0
+f_crossing_incl_irrelevant,recall,0.4727272727272727,0.41825815524733617,0.5243738505559926,586,267,0.7508532423208191,matched; JAAD crossing=-1 ('irrelevant') counted as NOT crossing,223.0
+f_crossing_incl_irrelevant,f1,0.6331811263318112,0.5821320962489164,0.6800031055900622,586,267,0.8576998050682261,matched; JAAD crossing=-1 ('irrelevant') counted as NOT crossing,223.0
+f_crossing_incl_irrelevant,kappa,0.27218849527421896,0.20277380081161833,0.3433402403783095,586,267,0.0,matched; JAAD crossing=-1 ('irrelevant') counted as NOT crossing,223.0
+f_crossing_end_to_end,precision,0.9811320754716981,0.9610373772568894,0.9956521739130435,525,259,0.8495238095238096,one-to-one matching; unmatched GT counted as 'not crossed',226.0
+f_crossing_end_to_end,recall,0.4663677130044843,0.4137056921481301,0.5214316502463054,525,259,0.8495238095238096,one-to-one matching; unmatched GT counted as 'not crossed',226.0
+f_crossing_end_to_end,f1,0.6322188449848024,0.5813201922735188,0.6811599837717223,525,259,0.9186405767250257,one-to-one matching; unmatched GT counted as 'not crossed',226.0
+f_crossing_any_track,precision,0.9806949806949807,0.9578462699152354,0.9964292046605876,525,259,0.8495238095238096,all labelled pedestrians; flagged if ANY overlapping PedX track is crossed; no overlapping track = not crossed,226.0
+f_crossing_any_track,recall,0.5695067264573991,0.5127014448457905,0.6253559105801849,525,259,0.8495238095238096,all labelled pedestrians; flagged if ANY overlapping PedX track is crossed; no overlapping track = not crossed,226.0
+f_crossing_any_track,f1,0.7205673758865249,0.6727787789427697,0.7652670497183963,525,259,0.9186405767250257,all labelled pedestrians; flagged if ANY overlapping PedX track is crossed; no overlapping track = not crossed,226.0
+f_crossing_any_track,kappa,0.2564541291329072,0.18579217997128422,0.3378169132024811,525,259,0.0,all labelled pedestrians; flagged if ANY overlapping PedX track is crossed; no overlapping track = not crossed,226.0
+f_track_fragmentation,ids_per_gt_pedestrian_mean,1.6491525423728814,1.536831678549089,1.7670645822853384,590,267,1.0,PedX track ids overlapping a GT behavioural pedestrian; 1.0 = no ID splits,
+f_track_fragmentation,share_with_2plus_ids,0.39661016949152544,0.34414223545579475,0.45037348734873484,590,267,0.0,share of GT pedestrians split over >=2 PedX ids,
+g_ego_step_px,roc_auc_stopped,0.9479919667390183,0.9311206596448639,0.9614668862414397,33001,290,0.5,raw [B3] step_px (lower = stopped),
+g_ego_step_med,roc_auc_stopped,0.9535374912978499,0.9371674099843227,0.9666703870887533,33001,290,0.5,rolling-median(5) step_px used by the gate,
+g_ego_step_med,f1_cv_threshold,0.7468947261250255,0.6813570413809841,0.7978940764139513,33001,290,0.25626799820348206,threshold on smoothed step chosen on other clips (5-fold by clip),83.0
+g_ego_expansion,roc_auc_stopped,0.8677721054461043,0.8402480223366308,0.892855259453835,22685,222,0.5,"|bbox expansion rate|, frames with >=3 co-tracked pedestrians only",
+g_ego_expansion,coverage,0.6874034120178176,,,33001,290,,share of [B3] rows with an expansion anchor,
+g_ego_gate,precision,0.7115179902065148,0.6277085437968691,0.7834155804179878,33001,290,0.1469652434774704,positive = camera static/stopped; precision = P(stopped | gate says static),83.0
+g_ego_gate,recall,0.6890721649484536,0.6096872164717769,0.7556060363754281,33001,290,0.1469652434774704,positive = camera static/stopped; precision = P(stopped | gate says static),83.0
+g_ego_gate,f1,0.700115219440662,0.6295593648268524,0.7561858002678052,33001,290,0.25626799820348206,positive = camera static/stopped; precision = P(stopped | gate says static),83.0
+h_looking_pedx_window,precision,0.808695652173913,0.7249852362204724,0.8909090909090909,213,152,0.6338028169014085,JAAD look in PedX's own pre-crossing window; JAAD look = looking at the ego-vehicle,108.0
+h_looking_pedx_window,recall,0.6888888888888889,0.6048387096774194,0.7686710677382318,213,152,0.6338028169014085,JAAD look in PedX's own pre-crossing window; JAAD look = looking at the ego-vehicle,108.0
+h_looking_pedx_window,f1,0.744,0.6782535003684598,0.8,213,152,0.7758620689655172,JAAD look in PedX's own pre-crossing window; JAAD look = looking at the ego-vehicle,108.0
+h_looking_pedx_window,accuracy,0.6995305164319249,0.6380070993914807,0.7611940298507462,213,152,0.6338028169014085,JAAD look in PedX's own pre-crossing window; JAAD look = looking at the ego-vehicle,108.0
+h_looking_pedx_window,kappa,0.385945945945946,0.25539758175029176,0.5098633070350653,213,152,0.0,JAAD look in PedX's own pre-crossing window; JAAD look = looking at the ego-vehicle,108.0
+h_looking_before_cp,precision,0.863013698630137,0.7738095238095238,0.9358974358974359,114,87,0.7894736842105263,JAAD look in the 5 s before JAAD crossing_point; JAAD look = looking at the ego-vehicle,75.0
+h_looking_before_cp,recall,0.7,0.5922298160449667,0.7948795180722891,114,87,0.7894736842105263,JAAD look in the 5 s before JAAD crossing_point; JAAD look = looking at the ego-vehicle,75.0
+h_looking_before_cp,f1,0.7730061349693251,0.6856947162426614,0.8395244356782817,114,87,0.8823529411764706,JAAD look in the 5 s before JAAD crossing_point; JAAD look = looking at the ego-vehicle,75.0
+h_looking_before_cp,accuracy,0.6754385964912281,0.5789473684210527,0.7622971108586268,114,87,0.7894736842105263,JAAD look in the 5 s before JAAD crossing_point; JAAD look = looking at the ego-vehicle,75.0
+h_looking_before_cp,kappa,0.22491730981256897,0.03624009060022648,0.4140328018179258,114,87,0.0,JAAD look in the 5 s before JAAD crossing_point; JAAD look = looking at the ego-vehicle,75.0
+i_age_gender,coverage,0.39761092150170646,0.3453497461846608,0.44755526277265406,586,267,,matched behavioural peds whose PedX track has a [P6] row (face found),
+i_age_gender_gender,accuracy,0.5619469026548672,0.48897409610426523,0.6351351351351351,226,138,0.5530973451327433,,
+i_age_gender_gender,kappa,0.17139471150285157,0.06318432019815319,0.2759840575477053,226,138,0.0,,
+i_age_gender_age,accuracy,0.7682403433476395,0.7097938662644545,0.8224356613415588,233,139,0.7725321888412017,"cuts child<=12, young 13-19, adult 20-64, senior>=65",
+i_age_gender_age,kappa,0.03043846805887329,-0.013092240747140032,0.08831879016289047,233,139,0.0,"cuts child<=12, young 13-19, adult 20-64, senior>=65",
+i_age_gender_age_alt,accuracy,0.7467811158798283,0.6892184299240286,0.8,233,139,0.7725321888412017,"cuts child<=12, young 13-24, adult 25-59, senior>=60",
+i_age_gender_age_alt,kappa,0.024620405846459525,-0.0429563265020238,0.10621241243463997,233,139,0.0,"cuts child<=12, young 13-24, adult 25-59, senior>=60",
+j_risky_coverage,pedx_determined_share,0.02214022140221402,0.003921185661764706,0.04545853269537478,271,165,0.05904059040590406,[C1] crossings with an observed signal; base_rate = share whose window has a JAAD light,
+j_risky_coverage,pedx_mean_signal_coverage,0.01763468634686347,0.002896415626659586,0.03995727664528777,271,165,0.056677749082784945,base_rate = mean JAAD light-labelled share of the same windows,
+j_risky_coverage_observed,precision,0.6666666666666666,0.0,1.0,271,165,0.05904059040590406,PedX 'signal observed' vs JAAD 'light labelled' in the crossing window,10.0
+j_risky_coverage_observed,recall,0.25,0.0,0.5334615384615378,271,165,0.05904059040590406,PedX 'signal observed' vs JAAD 'light labelled' in the crossing window,10.0
+j_risky_coverage,C5_ran_red_count,1.0,,,271,165,,count only; JAAD green share in those windows: 1.00,
+k_signs_ped_sign,precision,0.895397489539749,0.8314827616190601,0.942239128592015,2220,290,0.3346846846846847,classes risky_crossing.py treats as protective,115.0
+k_signs_ped_sign,recall,0.576043068640646,0.4978878096978058,0.6511342008254196,2220,290,0.3346846846846847,classes risky_crossing.py treats as protective,115.0
+k_signs_ped_sign,f1,0.7010647010647011,0.6315587044534413,0.7586776044265046,2220,290,0.5015187310158623,classes risky_crossing.py treats as protective,115.0
+k_signs_stop_sign,precision,0.0,0.0,0.0,2220,290,0.02837837837837838,best_new.pt 'Stop_Sign',7.0
+k_signs_stop_sign,recall,0.0,0.0,0.0,2220,290,0.02837837837837838,best_new.pt 'Stop_Sign',7.0
+k_signs_stop_sign,f1,0.0,0.0,0.0,2220,290,0.05519053876478318,best_new.pt 'Stop_Sign',7.0
+k_signs_ped_sign_ip_only,precision,0.9681818181818181,0.9395562770562771,0.987952531278962,2220,290,0.3346846846846847,"EXPLORATORY: class 'ip' alone, chosen after inspecting interim results",115.0
+k_signs_ped_sign_ip_only,recall,0.5733512786002691,0.4946449419279517,0.6495021755321233,2220,290,0.3346846846846847,"EXPLORATORY: class 'ip' alone, chosen after inspecting interim results",115.0
+k_signs_ped_sign_ip_only,f1,0.7202028740490279,0.6521371224978635,0.7769714426217992,2220,290,0.5015187310158623,"EXPLORATORY: class 'ip' alone, chosen after inspecting interim results",115.0
+k_signs_class[ip],precision_ped_sign,0.9681818181818181,0.9420861762175794,0.9872901427297056,440,96,0.3346846846846847,descriptive: share of frames where [E3] flags this class that JAAD labels with the sign; base_rate = overall prevalence,
+k_signs_class[ip],precision_stop_sign,0.0022727272727272726,0.0,0.007960640891675358,440,96,0.02837837837837838,descriptive: share of frames where [E3] flags this class that JAAD labels with the sign; base_rate = overall prevalence,
+k_signs_class[pn],precision_ped_sign,0.73125,0.6066612903225806,0.8350529173064268,160,59,0.3346846846846847,descriptive: share of frames where [E3] flags this class that JAAD labels with the sign; base_rate = overall prevalence,
+k_signs_class[pn],precision_stop_sign,0.025,0.0,0.08333333333333333,160,59,0.02837837837837838,descriptive: share of frames where [E3] flags this class that JAAD labels with the sign; base_rate = overall prevalence,
+k_signs_class[pg],precision_ped_sign,0.10526315789473684,0.023255813953488372,0.2413793103448276,38,18,0.3346846846846847,descriptive: share of frames where [E3] flags this class that JAAD labels with the sign; base_rate = overall prevalence,
+k_signs_class[pg],precision_stop_sign,0.0,0.0,0.0,38,18,0.02837837837837838,descriptive: share of frames where [E3] flags this class that JAAD labels with the sign; base_rate = overall prevalence,
+k_signs_class[p5],precision_ped_sign,0.3333333333333333,0.041666666666666664,0.6206896551724138,27,16,0.3346846846846847,descriptive: share of frames where [E3] flags this class that JAAD labels with the sign; base_rate = overall prevalence,
+k_signs_class[p5],precision_stop_sign,0.0,0.0,0.0,27,16,0.02837837837837838,descriptive: share of frames where [E3] flags this class that JAAD labels with the sign; base_rate = overall prevalence,
+k_signs_class[pne],precision_ped_sign,0.6,0.14285714285714285,0.9166666666666666,10,7,0.3346846846846847,descriptive: share of frames where [E3] flags this class that JAAD labels with the sign; base_rate = overall prevalence,
+k_signs_class[pne],precision_stop_sign,0.0,0.0,0.0,10,7,0.02837837837837838,descriptive: share of frames where [E3] flags this class that JAAD labels with the sign; base_rate = overall prevalence,
+z_coverage,clips_with_B1,290.0,,,290,290,,[B1]tracked_pedestrians.csv,
+z_coverage,clips_with_B3,290.0,,,290,290,,[B3]ego_motion.csv,
+z_coverage,clips_with_E1,290.0,,,290,290,,[E1]weather.csv,
+z_coverage,clips_with_E2,290.0,,,290,290,,[E2]traffic_light.csv,
+z_coverage,clips_with_E3,290.0,,,290,290,,[E3]traffic_sign.csv,
+z_coverage,clips_with_E6,290.0,,,290,290,,[E6]daytime.csv,
+z_coverage,clips_with_E7,290.0,,,290,290,,[E7]crosswalk_detection.csv,
+z_coverage,clips_with_E9,290.0,,,290,290,,[E9]sidewalk_detection.csv,
+z_coverage,clips_with_E10,290.0,,,290,290,,[E10]scene_segmentation.csv,
+z_coverage,clips_with_C3,290.0,,,290,290,,[C3]crossing_judge.csv,
+z_coverage,clips_with_C1,290.0,,,290,290,,[C1]risky_crossing.csv,
+z_coverage,clips_with_C5,290.0,,,290,290,,[C5]red_light_runner.csv,
+z_coverage,clips_with_P6,290.0,,,290,290,,[P6]age_gender.csv,
+z_coverage,clips_with_P12,290.0,,,290,290,,[P12]pose_behavior.csv,
+z_coverage,clips_with_S1,290.0,,,290,290,,[S1]pedestrian_speed.csv,
+z_coverage,clips_with_X7,290.0,,,290,290,,[X7]crosswalk_class_probe.csv,
+z_coverage,S1_reliable_share,0.20875420875420875,,,891,100,,[S1] tracks flagged reliable (no speed GT in JAAD),

@@ -162,7 +162,9 @@ def expected_row(index):
 def test_output_columns_constant():
     assert ss.OUTPUT_COLUMNS == EXPECTED_COLUMNS
     assert set(ss.PRESENCE_THRESHOLDS) == {"crosswalk", "sidewalk", "traffic_light"}
-    assert ss.PRESENCE_THRESHOLDS == {"crosswalk": 0.002, "sidewalk": 0.01,
+    # crosswalk is the JAAD-calibrated value (see the comment on PRESENCE_THRESHOLDS); the
+    # other two are still the provisional ones.
+    assert ss.PRESENCE_THRESHOLDS == {"crosswalk": 0.0005, "sidewalk": 0.01,
                                       "traffic_light": 0.0002}
     assert set(ss.CLASS_GROUPS) == set(ss.FRAC_GROUPS)
     assert set(ss.CLASS_GROUPS["crosswalk"]) == {"Crosswalk - Plain",

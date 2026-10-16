@@ -1,3 +1,13 @@
+"""RETIRED -- do not use. `main.py --mode crosswalk` now runs modules/crosswalk/crosswalk_seg.py.
+
+This YOLO detector keys on class 0 (line below), which its weights (best.pt) name
+'Flexible_delineator_post'; the class they call 'crosswalk' is 4. Benchmarked against JAAD's
+per-frame crosswalk label on all 346 clips it is at chance (ROC-AUC 0.504, never fires at its
+threshold), and class 4 is at chance too (0.490), so it cannot be repaired by changing the class
+index. Kept only so the benchmark's counterfactual probe (validation/jaad/probes.py) and the
+history of what produced the pre-2026-10 `crosswalk_*` columns stay reproducible.
+See validation/results/JAAD_REPORT.md.
+"""
 import os
 import cv2
 import pandas as pd
@@ -5,13 +15,8 @@ from ultralytics import YOLO
 import math
 import torch
 from modules.paths import RESULTS_ROOT
-
-# Minimum plausible on-screen size for a crosswalk detection. A live run showed
-# tiny (e.g. 27x42 px) false positives being accepted and poisoning the downstream
-# scale calibration; real crosswalks in dashcam/street footage are wide, low
-# structures, so anything narrower than ~60 px or shorter than ~24 px is rejected.
-MIN_CROSSWALK_BOX_W_PX = 60
-MIN_CROSSWALK_BOX_H_PX = 24
+# Shared size gates live next to the replacement (single source of truth).
+from modules.crosswalk.crosswalk_seg import MIN_CROSSWALK_BOX_W_PX, MIN_CROSSWALK_BOX_H_PX  # noqa: F401
 
 
 # FIX #18: default confidence raised from 0.1 to 0.35 so weak/false crosswalk

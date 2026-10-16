@@ -88,8 +88,16 @@ CLASS_GROUPS = {
     "person": ["Person"],
 }
 
-# Provisional presence thresholds on the pixel fraction; the JAAD benchmark calibrates them.
-PRESENCE_THRESHOLDS = {"crosswalk": 0.002, "sidewalk": 0.01, "traffic_light": 0.0002}
+# Presence thresholds on the pixel fraction.
+#  * crosswalk: calibrated on the 346-clip JAAD benchmark (validation/results/JAAD_REPORT.md).
+#    The F1-optimal threshold is ~0.0002 (stable across all five folds, 0.00017-0.00024); from
+#    0.0002 to 0.0005 F1 is statistically indistinguishable (0.913 vs 0.906, 95% CIs overlap), so
+#    0.0005 is used: no measurable loss, 2.5x the single-fragment noise floor, higher precision
+#    (0.912) -- a spurious crosswalk feeds the usage metrics. The earlier provisional 0.002 gave
+#    F1 0.873 (recall 0.82). Calibrated on JAAD (Canada/Ukraine): transfer to other cities is
+#    unverified.
+#  * sidewalk, traffic_light: still provisional (not calibrated).
+PRESENCE_THRESHOLDS = {"crosswalk": 0.0005, "sidewalk": 0.01, "traffic_light": 0.0002}
 
 FRAC_GROUPS = ["crosswalk", "sidewalk", "curb", "road", "traffic_light", "traffic_sign",
                "pothole", "manhole", "person"]
@@ -181,9 +189,9 @@ def _row_from_counts(frame_id, counts, n_pixels, group_ids, model_id):
     return row
 
 
-def _segment_counts(frame_bgr, model, processor, device, short_side, num_labels):
-    """Per-class pixel counts (numpy, length >= num_labels) of one frame's semantic map,
-    measured at the original frame size."""
+def _segment_map(frame_bgr, model, processor, device, short_side):
+    """The (h, w) semantic class map of one frame at the ORIGINAL frame size (torch long
+    tensor, on whatever device the model ran on). Call under torch.inference_mode()."""
     import torch
     h, w = frame_bgr.shape[:2]
     rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
@@ -193,8 +201,15 @@ def _segment_counts(frame_bgr, model, processor, device, short_side, num_labels)
     pixel_values = inputs["pixel_values"].to(device=device, dtype=model.dtype)
     outputs = model(pixel_values=pixel_values)
     seg = processor.post_process_semantic_segmentation(outputs, target_sizes=[(h, w)])[0]
-    seg = torch.as_tensor(seg).reshape(-1).long()
-    return torch.bincount(seg, minlength=num_labels).cpu().numpy()
+    return torch.as_tensor(seg).long()
+
+
+def _segment_counts(frame_bgr, model, processor, device, short_side, num_labels):
+    """Per-class pixel counts (numpy, length >= num_labels) of one frame's semantic map,
+    measured at the original frame size."""
+    import torch
+    seg = _segment_map(frame_bgr, model, processor, device, short_side)
+    return torch.bincount(seg.reshape(-1), minlength=num_labels).cpu().numpy()
 
 
 def _default_output_path(video_path):

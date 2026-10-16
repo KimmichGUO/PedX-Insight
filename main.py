@@ -192,7 +192,8 @@ def main():
             analyze_interval_sec=args.analysis_interval,
         )
     elif args.mode == "crosswalk":
-        from modules.crosswalk.crosswalk import run_crosswalk_detection
+        # Segmentation-based detector (the YOLO one was at chance on JAAD; see crosswalk_seg.py).
+        from modules.crosswalk.crosswalk_seg import run_crosswalk_detection
         run_crosswalk_detection(
             video_path=args.source_video_path,
             analyze_interval_sec=args.analysis_interval

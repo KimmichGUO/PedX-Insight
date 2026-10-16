@@ -56,6 +56,10 @@ SPEED_RANGE_MPS = (0.3, 3.0)
 MIN_OBS = 50          # per model
 MIN_EVENTS = 10       # per 0/1 model (fewer and the logit is not estimable)
 MIN_CLUSTERS = 8      # cluster-robust inference needs a handful of clusters at least
+MIN_MULTI_VIDEO_CITIES = 5   # city and video variance are split only with this many multi-video cities
+SPLIT_NOTE = ("city and video variance are not separable ({k} cities have more than one video; "
+              "{m} needed): var_city_or_video / icc_city_or_video is the between-video variance, "
+              "which includes between-city variance")
 MIN_LEVEL_N = 20      # categorical levels with fewer rows are dropped from that model
 MAX_LOGIT_SE = 5.0    # a logit SE beyond this signals (quasi-)separation, not an estimate
 
@@ -110,14 +114,14 @@ def _nuisance(sub, outcome):
 
 def variance_partition(d):
     import statsmodels.formula.api as smf
-    from statsmodels.genmod.bayes_mixed_glm import BinomialBayesMixedGLM
     rows = []
     rng = np.random.default_rng(SEED)
 
     # crossing speed: LMM with city RE + video variance component
     sub = d.dropna(subset=["speed_ok"])
     base = {"outcome": "crossing_speed_mps (0.3-3.0 m/s)", "adjusted_for": "none", "n_obs": len(sub),
-            "n_videos": sub["link"].nunique(), "n_cities": sub["cluster"].nunique()}
+            "n_videos": sub["link"].nunique(), "n_cities": sub["cluster"].nunique(),
+            "n_multi_video_cities": _multi_video_cities(sub)}
     # City and video variance are separable only when some city has several videos.
     # (re_formula="1" is required: with vc_formula, statsmodels otherwise drops the
     # per-group random intercept.)
@@ -141,14 +145,17 @@ def variance_partition(d):
             lr = max(0.0, 2 * (m1.llf - m0.llf))
             p = 0.5 * stats.chi2.sf(lr, 1)
         tot = v_city + v_video + v_res
+        split = separable and base["n_multi_video_cities"] >= MIN_MULTI_VIDEO_CITIES
         rows.append({**base,
                      "model": "LMM (REML), city RE" + (" + video VC" if separable else ""),
-                     "var_city": v_city, "var_video": v_video, "var_residual": v_res,
-                     "icc_city": v_city / tot, "icc_city_ci_low": None, "icc_city_ci_high": None,
-                     "icc_video": v_video / tot, "icc_city_or_video": (v_city + v_video) / tot,
+                     "var_city": v_city if split else None, "var_video": v_video if split else None,
+                     "var_city_or_video": v_city + v_video, "var_residual": v_res,
+                     "icc_city": v_city / tot if split else None,
+                     "icc_video": v_video / tot if split else None,
+                     "icc_city_or_video": (v_city + v_video) / tot,
                      "city_component_p": p,
-                     "note": "" if separable else "one video per city: city and video variance "
-                                                  "are not separable; icc_city includes video"})
+                     "note": "" if split else SPLIT_NOTE.format(k=base["n_multi_video_cities"],
+                                                                 m=MIN_MULTI_VIDEO_CITIES)})
     except Exception as e:
         rows.append({**base, "model": "LMM", "note": f"failed: {e}"})
 
@@ -162,7 +169,8 @@ def variance_partition(d):
             nuis = _nuisance(sub0, y) if adjusted else []
             sub = sub0.dropna(subset=nuis)
             base = {"outcome": y, "adjusted_for": "+".join(nuis) or "none", "n_obs": len(sub),
-                    "n_videos": sub["link"].nunique(), "n_cities": sub["cluster"].nunique()}
+                    "n_videos": sub["link"].nunique(), "n_cities": sub["cluster"].nunique(),
+                    "n_multi_video_cities": _multi_video_cities(sub)}
             if sub[y].sum() < MIN_EVENTS:
                 rows.append({**base, "model": "GLMM", "note": "too few events"})
                 continue
@@ -172,39 +180,68 @@ def variance_partition(d):
                     if c != "dense":
                         sub = sub.assign(**{c: (sub[c] - sub[c].mean()) / sub[c].std()})
             formula = f"{y} ~ 1" + "".join(f" + {c}" for c in nuis)
+            latent = np.pi ** 2 / 3
             try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    model = BinomialBayesMixedGLM.from_formula(
-                        formula, {"city": "0 + C(cluster)", "video": "0 + C(link)"}, sub)
-                    fit = model.fit_vb()
-                names = list(model.vcp_names)
-                mean = dict(zip(names, fit.vcp_mean))
-                sd = dict(zip(names, fit.vcp_sd))
-                # vcp are log standard deviations; propagate their (approximate) posterior.
-                draws = {k: np.exp(rng.normal(mean[k], sd[k], 4000)) ** 2 for k in names}
-                latent = np.pi ** 2 / 3
-                icc = draws["city"] / (draws["city"] + draws["video"] + latent)
-                both = (draws["city"] + draws["video"]) / (draws["city"] + draws["video"] + latent)
-                v_city, v_video = np.exp(mean["city"]) ** 2, np.exp(mean["video"]) ** 2
-                multi = base["n_videos"] - base["n_cities"]
-                rows.append({**base, "model": "Bayesian logistic GLMM (VB), city + video RE",
-                             "var_city": v_city, "var_video": v_video, "var_residual": latent,
-                             "icc_city": v_city / (v_city + v_video + latent),
-                             "icc_city_ci_low": float(np.quantile(icc, 0.025)),
-                             "icc_city_ci_high": float(np.quantile(icc, 0.975)),
-                             "icc_video": v_video / (v_city + v_video + latent),
-                             "icc_city_or_video": (v_city + v_video) / (v_city + v_video + latent),
-                             "icc_city_or_video_ci_low": float(np.quantile(both, 0.025)),
-                             "icc_city_or_video_ci_high": float(np.quantile(both, 0.975)),
-                             "city_component_p": None,
-                             "note": "latent-scale ICC; variational Bayes understates uncertainty; "
-                                     f"only {multi} extra video(s) beyond one per city, so the "
-                                     "city/video split is weakly identified -- read "
-                                     "icc_city_or_video"})
+                # ONE random intercept per video (between-video variance, which INCLUDES
+                # between-city variance). A two-component city+video fit is not identified
+                # when most cities have one video: the variational fit then returns the two
+                # components in an arbitrary order from run to run (observed on identical
+                # data: var_city 0.36/var_video 0.02 one night, 0.02/0.38 the next).
+                v_cv, lo_cv, hi_cv = _vb_icc(formula, {"video": "0 + C(link)"}, sub, rng, latent)
+                row = {**base, "model": "Bayesian logistic GLMM (VB), video RE (includes city)",
+                       "var_city_or_video": v_cv["video"], "var_residual": latent,
+                       "icc_city_or_video": v_cv["video"] / (v_cv["video"] + latent),
+                       "icc_city_or_video_ci_low": lo_cv, "icc_city_or_video_ci_high": hi_cv,
+                       "city_component_p": None}
+                split = base["n_multi_video_cities"] >= MIN_MULTI_VIDEO_CITIES
+                if split:
+                    v2, _, _ = _vb_icc(formula, {"city": "0 + C(cluster)", "video": "0 + C(link)"},
+                                           sub, rng, latent)
+                    tot = v2["city"] + v2["video"] + latent
+                    # guard against label switching: the two components must sum to the
+                    # single-component total, otherwise the split is not reported
+                    split = abs((v2["city"] + v2["video"]) - v_cv["video"]) <= 0.5 * v_cv["video"]
+                if split:
+                    row.update({"var_city": v2["city"], "var_video": v2["video"],
+                                "icc_city": v2["city"] / tot, "icc_video": v2["video"] / tot})
+                    row["note"] = "latent-scale ICC; variational Bayes understates uncertainty"
+                else:
+                    row["note"] = ("latent-scale ICC; variational Bayes understates uncertainty; "
+                                   + SPLIT_NOTE.format(k=base["n_multi_video_cities"],
+                                                       m=MIN_MULTI_VIDEO_CITIES))
+                rows.append(row)
             except Exception as e:
                 rows.append({**base, "model": "GLMM", "note": f"failed: {e}"})
-    return pd.DataFrame(rows)
+    out = pd.DataFrame(rows)
+    # Rounded so identical data gives byte-identical CSVs (the nightly job rewrites this tracked
+    # file; unrounded variational estimates differ in the 6th decimal between runs).
+    num = out.select_dtypes("number").columns
+    out[num] = out[num].round(4)
+    return out
+
+
+def _multi_video_cities(sub):
+    """Number of cities with at least two videos in `sub`."""
+    return int((sub.groupby("cluster")["link"].nunique() >= 2).sum())
+
+
+def _vb_icc(formula, vc, sub, rng, latent, n_draw=4000):
+    """Variational-Bayes logistic mixed model; returns ({component: variance}, ci_low, ci_high)
+    for the latent-scale ICC of the SUM of the components (the identified quantity)."""
+    from statsmodels.genmod.bayes_mixed_glm import BinomialBayesMixedGLM
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        model = BinomialBayesMixedGLM.from_formula(formula, vc, sub)
+        fit = model.fit_vb()
+    names = list(model.vcp_names)
+    mean = dict(zip(names, fit.vcp_mean))
+    sd = dict(zip(names, fit.vcp_sd))
+    # vcp are log standard deviations; propagate their (approximate) posterior.
+    draws = {k: np.exp(rng.normal(mean[k], sd[k], n_draw)) ** 2 for k in names}
+    total = sum(draws.values())
+    icc = total / (total + latent)
+    var = {k: float(np.exp(mean[k]) ** 2) for k in names}
+    return var, float(np.quantile(icc, 0.025)), float(np.quantile(icc, 0.975))
 
 
 # --------------------------------------------------------------- adjusted associations

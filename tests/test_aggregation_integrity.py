@@ -336,6 +336,15 @@ def test_inferential_runs_on_synthetic_data():
         assoc = pd.read_csv("summary_data/inferential_associations.csv")
         assert set(vp["outcome"].str.split().str[0]) == {"crossing_speed_mps", "run_red_light", "risky_crossing"}
         assert vp["icc_city_or_video"].between(0, 1).all()
+        # Only 4 of the 12 synthetic cities have more than one video, so the city/video split
+        # is not identified and must be withheld (it used to be reported, with the two
+        # components swapping labels from run to run on identical data).
+        assert vp["icc_city"].isna().all() and vp["icc_video"].isna().all()
+        assert (vp["n_multi_video_cities"] < 5).all()
+        # ...and the result is reproducible byte for byte (the nightly job rewrites this file).
+        first = open("summary_data/inferential_variance_partition.csv", "rb").read()
+        si.main()
+        assert open("summary_data/inferential_variance_partition.csv", "rb").read() == first
         est = assoc.dropna(subset=["estimate"])
         assert {"run_red_light", "risky_crossing", "crossing_speed_mps"} <= set(est["outcome"])
         assert (est["ci_low"] <= est["estimate"]).all() and (est["estimate"] <= est["ci_high"]).all()

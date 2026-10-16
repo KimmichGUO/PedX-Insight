@@ -67,10 +67,11 @@ DAYTIME_MAP_ALT = {"Day": "day", "Evening": "day", "Night": "night"}
 AGE_CUTS = [(0, 12, "child"), (13, 19, "young"), (20, 64, "adult"), (65, 200, "senior")]
 AGE_CUTS_ALT = [(0, 12, "child"), (13, 24, "young"), (25, 59, "adult"), (60, 200, "senior")]
 AGE_LABELS = ["child", "young", "adult", "senior"]
-# Signs that [C1] risky_crossing.py treats as protective (special_not_risky_signs plus the
-# 'Pedestrian Crossing' class of the second model).
-PED_SIGN_CLASSES_1 = {"w57", "pg", "i1"}
-PED_SIGN_CLASSES_2 = {"Pedestrian Crossing"}
+# Signs that [C1] risky_crossing.py treats as protective: imported, so the benchmark always
+# scores exactly what production uses. (Before 2026-10 the set lacked 'ip' and scored F1 0.02 on
+# JAAD's pedestrian sign; with 'ip' added the same detector scores ~0.7 -- see findings.md.)
+from modules.risky_crossing.risky_crossing import (PROTECTIVE_SIGNS_1 as PED_SIGN_CLASSES_1,  # noqa: E402
+                                                   PROTECTIVE_SIGNS_2 as PED_SIGN_CLASSES_2)
 STOP_SIGN_CLASSES_2 = {"Stop_Sign"}
 HEIGHT_BINS = [0, 50, 100, 200, 1e9]
 HEIGHT_LABELS = ["<50px", "50-100px", "100-200px", ">=200px"]

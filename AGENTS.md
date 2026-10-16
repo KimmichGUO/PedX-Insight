@@ -32,7 +32,8 @@ dataset*.py, update_dataset.py   dataset/mapping helpers
 get_all_*.py, statistics_with_pdf_save.py   cross-video aggregation + stats
 modules/<name>/<name>.py    one analysis module each; exposes a run_*/detect_*/… function
 modules/localization/localize.py   video→lat/lon via the `monocular_osm` pip pkg, see "Localization"
-modules/scene_seg/scene_seg.py     [E10] Mask2Former/Vistas segmentation (candidate, not in single_all)
+modules/scene_seg/scene_seg.py     [E10] Mask2Former/Vistas segmentation (`--mode scene_seg`; also a by-product of crosswalk)
+modules/crosswalk/crosswalk_seg.py [E7] crosswalk from segmentation (replaced the invalid YOLO crosswalk.py)
 modules/paths.py            RESULTS_ROOT (env PEDX_RESULTS_ROOT, default analysis_results)
 modules/provenance.py       [A0] per-mode provenance (git sha, weights digest, packages)
 modules/completeness.py     shared "is this folder fully analysed" gate for both aggregators
@@ -168,15 +169,26 @@ evidence rule, completeness gate, `'1.0'` flag tokens, city join, NA cluster ids
   come from an external study); correlate city-level covariates on one row per city.
 - pandas 3: `str + NA` is NA (fillna before building ids), `.values` can be read-only under
   copy-on-write, and an int column gains NA -> float -> `'1.0'` in CSVs (use `Int64`).
-- **The crosswalk detector is invalid** (`[E7]`, `modules/crosswalk`): `crosswalk.py` keeps
-  `cls_id == 0`, but the shipped `best.pt` names class 0 `Flexible_delineator_post` (class 4 is
-  `crosswalk`) -- unchanged since the first commit. Against JAAD's per-frame `ped_crossing`
-  (all 346 clips) it is at chance (ROC-AUC 0.50) and never fires; class 4 is also at chance
-  (0.49), so this needs replacing (candidate: `scene_seg` `[E10]`), not a class-index patch.
-  Everything derived from `[E7]` is unvalidated: `crosswalk_prob`, `crosswalk_usage_ratio`,
-  per-pedestrian `crosswalk`/`crosswalk_use_or_not`, `crosswalk_coeff.csv`, the `[S2]` stripe
-  calibration's boxes and `[V8]`'s crosswalk band. Run `validation/` before trusting any detector;
-  `validation/results/JAAD_REPORT.md` has the per-module verdicts.
+- **The crosswalk detector was invalid and has been replaced (2026-10-16).** The old YOLO
+  `modules/crosswalk/crosswalk.py` kept `cls_id == 0`, which its `best.pt` names
+  `Flexible_delineator_post` (class 4 is `crosswalk`) -- unchanged since the first commit. Against
+  JAAD's per-frame `ped_crossing` (all 346 clips) it was at chance (ROC-AUC 0.50, never fired) and
+  class 4 is at chance too, so it could not be patched. `main.py --mode crosswalk` now runs
+  `modules/crosswalk/crosswalk_seg.py` (Mask2Former / Mapillary Vistas; JAAD F1 0.91, ROC-AUC
+  0.95) with the SAME `[E7]` schema, and also writes `[E10]scene_segmentation.csv`. It needs the
+  `transformers` weights (`$PEDX_HF_CACHE`, else `E:/PedX-validation-data/hf_cache`, else the
+  default HF cache, downloading ~0.9 GB on first use). **Folders analysed before the switch still
+  carry the invalid values** (`crosswalk_prob`, `crosswalk_usage_ratio`, per-pedestrian
+  `crosswalk`/`crosswalk_use_or_not`, `crosswalk_coeff.csv`, `[S2]` and `[V8]` crosswalk boxes)
+  until their videos are re-analysed; `code_version` in `all_video_info.csv` says which revision
+  made each folder. Box GEOMETRY from the new module is not validated (JAAD has no boxes), and `[S2]`
+  stripe calibration found no samples on the real clip tried. `validation/results/JAAD_REPORT.md`
+  has the per-module verdicts; run `validation/` before trusting any detector.
+- **Other validity limits from the same benchmark** (see its Findings section): the weather
+  classifier is at chance (kappa -0.06; "rain" is overpredicted 29% vs 8%), inferred gender and
+  age are at the majority-class baseline, `[C3]` finds only ~56% of crossing pedestrians (counts
+  are lower bounds; ~40% of pedestrians are split over >= 2 track ids), and JAAD's `traffic_light`
+  label is not a visibility label.
 - **City attribution is unverified.** The crawler files a video under the city it searched
   for; titles show some do not depict that city (e.g. Paris2 "How does a blind girl cross the
   road in the UK?", NewYork3 a campaign video). Localization (`--mode localize`) or a manual

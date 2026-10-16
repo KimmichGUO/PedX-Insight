@@ -41,6 +41,21 @@ import pandas as pd
 from modules.paths import RESULTS_ROOT
 
 
+# Signs that make a crossing "protected" (a marked crossing with priority): a protective sign
+# overrides a green vehicle light as evidence of risk. Class names of the two [E3] models
+# (best_asia.pt = TT100K codes, best_new.pt = long names). Module constants so the JAAD
+# benchmark (validation/jaad/score.py) scores exactly what production uses.
+#
+# 'ip' (TT100K "pedestrian crossing") was missing from the original set {w57, pg, i1}. On the
+# 346-clip JAAD benchmark [E3] flags 'ip' on frames JAAD labels with a pedestrian sign with
+# 97% precision (453 flagged frames, 99 clips; base rate 29%), while the original set scored
+# F1 0.02 (recall 0.01). w57/i1 fire too rarely there (<10 frames) to judge; 'pg' is at
+# base rate (precision 0.19, n=42) and is kept only because nothing shows it is wrong.
+PROTECTIVE_SIGNS_1 = {"w57", "pg", "i1", "ip"}
+PROTECTIVE_SIGNS_2 = {"Pedestrian Crossing"}
+RISKY_SIGN_1 = "p9"     # unvalidated: fires on too few JAAD frames to check
+
+
 def _read_csv_or_empty(csv_path, columns):
     """Read an input CSV defensively, reporting whether it was actually available.
 
@@ -223,12 +238,11 @@ def detect_crossing_risk(
             sign_classes_1 = signs["sign_classes_1"]
             sign_classes_2 = signs["sign_classes_2"]
 
-            special_not_risky_signs = {"w57", "pg", "i1"}
             special_not_risky_flag = (
-                    any(sign in special_not_risky_signs for sign in sign_classes_1) or
-                    "Pedestrian Crossing" in sign_classes_2
+                    any(sign in PROTECTIVE_SIGNS_1 for sign in sign_classes_1) or
+                    any(sign in PROTECTIVE_SIGNS_2 for sign in sign_classes_2)
             )
-            special_risky_flag = "p9" in sign_classes_1
+            special_risky_flag = RISKY_SIGN_1 in sign_classes_1
 
             # --- old construct, retained under an honest name -------------------
             # "No light seen AND no crosswalk seen" describes an environment the

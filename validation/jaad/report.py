@@ -152,7 +152,7 @@ def _verdict(state, on_pass=USABLE, on_fail=NOT_USABLE):
 
 def _note(state, ev):
     if state == STRADDLE:
-        return ev + "; CI straddles the bar -- more clips needed"
+        return ev + "; CI straddles the bar -- the data cannot separate the module from the bar"
     if state == FEW:
         return ev + "; too few clips or positives"
     return ev
@@ -323,11 +323,12 @@ def verdicts(m):
         sr, sp = get(m, "k_signs_ped_sign", "recall"), get(m, "k_signs_ped_sign", "precision")
         ip = get(m, "k_signs_ped_sign_ip_only", "f1")
         ipp, ipr = get(m, "k_signs_ped_sign_ip_only", "precision"), get(m, "k_signs_ped_sign_ip_only", "recall")
-        ev = (f"JAAD pedestrian-crossing sign, with the class set production risky_crossing.py uses: "
-              f"precision {cell(sp)}, recall {cell(sr)}, F1 {cell(sf)}"
+        ev = (f"JAAD pedestrian-crossing sign, with the class set production risky_crossing.py uses "
+              f"('ip' was added after this benchmark found the earlier set {{w57, pg, i1}} scored "
+              f"F1 0.02; see findings): precision {cell(sp)}, recall {cell(sr)}, F1 {cell(sf)}"
               + (f". Exploratory (class 'ip' alone, chosen after interim results): precision {cell(ipp)}, "
-                 f"recall {cell(ipr)}, F1 {cell(ip)} -- so part of the failure is the production class "
-                 f"list, not the detector; see the per-class `k_signs_class[...]` rows" if ip else ""))
+                 f"recall {cell(ipr)}, F1 {cell(ip)} -- the other classes in the set mostly add false "
+                 f"positives; see the per-class `k_signs_class[...]` rows" if ip else ""))
         add("[E3] traffic sign (pedestrian sign)", judge(sf, BAR_F1, MIN_POSITIVES), ev)
 
     # risky-crossing signal coverage. The unconditional share is capped by how often JAAD labels a

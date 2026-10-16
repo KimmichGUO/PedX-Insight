@@ -101,6 +101,29 @@ def test_missing_light_detector_is_not_risk():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_pedestrian_crossing_sign_ip_is_protective():
+    """TT100K class 'ip' (pedestrian crossing) was missing from the protective set, so a marked
+    crossing never overrode a green vehicle light (JAAD benchmark: 'ip' = 97% precision for the
+    pedestrian sign, the old set scored F1 0.02)."""
+    from modules.risky_crossing.risky_crossing import PROTECTIVE_SIGNS_1, PROTECTIVE_SIGNS_2
+    assert "ip" in PROTECTIVE_SIGNS_1 and "Pedestrian Crossing" in PROTECTIVE_SIGNS_2
+    d = _tmpdir()
+    try:
+        _write_risk_fixture(d)
+        # no sign: crosser 1 crosses during a GREEN vehicle light -> risky
+        assert _run_risk(d).loc[1, "risk"] == "risky"
+        frames = list(range(0, 60))
+        pd.DataFrame({"frame_id": frames, "sign_detected_1": ["Yes" if 8 <= f <= 16 else "No" for f in frames],
+                      "sign_classes_1": ["ip" if 8 <= f <= 16 else "" for f in frames],
+                      "sign_detected_2": "No", "sign_classes_2": ""}
+                     ).to_csv(os.path.join(d, "[E3]traffic_sign.csv"), index=False)
+        r = _run_risk(d)
+        assert r.loc[1, "risk"] == "not risky" and r.loc[1, "risky_frames"] == 0
+        assert r.loc[2, "risk"] == "not risky"          # the red-light crosser is unaffected
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def _restore_env(old):
     if old is None:
         os.environ.pop("PEDX_RESULTS_ROOT", None)

@@ -178,7 +178,13 @@ Result: [E6]daytime.csv
 ```bash
 python main.py --mode crosswalk --source_video_path PATH/TO/VIDEO --analysis_interval 1.0
 ```
-Result: [E7]crosswalk_detection.csv  
+Result: [E7]crosswalk_detection.csv (one row per frame: `crosswalk_detected`, `crosswalk_boxes`) and,
+as a by-product, [E10]scene_segmentation.csv.  
+Since 2026-10 this uses Mask2Former trained on Mapillary Vistas (`modules/crosswalk/crosswalk_seg.py`):
+the earlier YOLO detector was at chance against ground truth (see [`validation/`](validation/)). A frame
+has a crosswalk when its pixel fraction reaches a threshold calibrated on JAAD (F1 0.91, ROC-AUC 0.95;
+calibrated on Canada/Ukraine footage, so transfer to other cities is unverified). Needs `transformers`
+and the weights (`$PEDX_HF_CACHE`, else the default Hugging Face cache; ~0.9 GB downloaded on first use).
 
 #### (8) Accident
 ```bash
@@ -193,7 +199,7 @@ python main.py --mode sidewalk --source_video_path PATH/TO/VIDEO --analysis_inte
 Result: [E9]sidewalk_detection.csv  
 Weights should be downloaded from https://drive.usercontent.google.com/download?id=1X1uKaGENEBZamF6tOfx9eKLTIQLsBN5h&export=download&authuser=0
 
-#### (10) Scene segmentation (candidate detector, not in `single_all`)
+#### (10) Scene segmentation
 ```bash
 python main.py --mode scene_seg --source_video_path PATH/TO/VIDEO --analysis_interval 1.0
 ```
@@ -201,8 +207,9 @@ Result: [E10]scene_segmentation.csv -- per analysed frame, the pixel fraction of
 sidewalk, curb, road, traffic light, traffic sign, pothole, manhole and person from
 Mask2Former trained on Mapillary Vistas (`facebook/mask2former-swin-large-mapillary-vistas-semantic`,
 ~0.15 s/frame on an RTX 4090), plus thresholded `*_present` flags. It is a candidate
-replacement for the crosswalk and sidewalk detectors and is benchmarked against them in
-[`validation/`](validation/); it joins the production pipeline only if it wins there.
+replacement for the sidewalk detector too and is benchmarked in [`validation/`](validation/). Its
+crosswalk output already replaced the old crosswalk detector (7); the other columns are not yet used
+by the pipeline, and the sidewalk / traffic-light thresholds are still provisional.
 Weights load from `$PEDX_HF_CACHE` (else the default Hugging Face cache).
 
 ### 4. Advanced Funtions

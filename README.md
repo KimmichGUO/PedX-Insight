@@ -50,6 +50,31 @@ must refer to the same bytes, including after a download has been re-encoded. A 
 confidence estimate keeps its uncertainty metadata; confidence alone does not trigger
 a retry or establish that the filming city has been verified.
 
+For archive reanalysis, `scripts/reanalyze_archive.py` consumes a private inventory
+queue. It processes only `ready_for_reanalysis_location_pending` rows with valid
+video IDs and explicit intervals. Start with one bounded acquisition:
+
+```bash
+python scripts/reanalyze_archive.py --queue QUEUE.csv --work-root WORK_DIRECTORY --python CV_PYTHON --osm-python OSM_PYTHON --video-id VIDEO_ID --clip-seconds 300 --prepare-only
+```
+
+Replace the interpreter placeholders with existing executable paths and keep the
+work directory outside the repository. Repeat without `--prepare-only` to analyze
+and localize that pilot. Omitting `--video-id` and `--clip-seconds` processes the
+ready queue's full mapped intervals. The default GPU mode waits for at least 8 GiB
+free VRAM and utilization at or below 25%; `--device cpu` explicitly selects CPU.
+The worker never stops another process. Media, logs and atomic state stay under
+the work directory; pilot and full-window results are separate. Downloads resume
+only when source identity, section bounds and checksums agree. Sources are retained.
+
+The worker leaves location review pending and never publishes automatically.
+Structured city reviews in `location_verification_source` bind the reviewer,
+evidence, city, source hash and reviewed interval to the completed analysis. A
+review of five minutes cannot authorize a later full-video analysis. Recording
+dates remain unknown unless independent evidence supplies them. The localization
+wrapper preserves the companion's selected answer and tool provenance; a diagnostic
+position cannot substitute for an unavailable selected answer.
+
 All aggregators honor `PEDX_RESULTS_ROOT` and `PEDX_SUMMARY_ROOT`. Their raw audit
 tables retain legacy measurements with explicit `analysis_status`, `metric_validity`
 and `eligible_for_comparison` metadata. A search city is not a verified filming city.

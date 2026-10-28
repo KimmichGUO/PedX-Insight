@@ -31,6 +31,7 @@ import json
 import subprocess
 import importlib.util
 import math
+import re
 import datetime
 import tempfile
 if __package__ in (None, ""):
@@ -49,6 +50,13 @@ OSM_INSTALL_HINT = ('pip install '
 # --data-dir and may make other CWD-relative writes. We hand it a stable, gitignored
 # directory so runs share that cache and nothing litters the PedX repo root.
 OSM_CACHE_DIR = os.path.abspath("osm_localization_cache")
+
+LOCALIZATION_METADATA_FIELDS = [
+    "localization_result_source", "localization_answer_mode", "localization_answer_method",
+    "localization_experimental", "localization_confidence_calibrated",
+    "localization_tool_version", "localization_tool_git_sha", "localization_tool_git_dirty",
+    "localization_python_version",
+]
 
 
 def localization_succeeded(row):
@@ -117,11 +125,34 @@ def _infer_city_from_mapping(video_path, mapping_csv="mapping.csv"):
 
 
 def _extract_position(result_json_path):
-    """Pull the headline lat/lon (and supporting fields) out of the tool's result.json."""
+    """Read the selected answer; older tools exposed only a position headline."""
     with open(result_json_path, encoding="utf-8") as f:
         data = json.load(f)
-    pos = data.get("position") or {}
+    if not isinstance(data, dict):
+        raise ValueError("Localization result.json must contain an object")
+    provenance = data.get("provenance")
+    provenance = provenance if isinstance(provenance, dict) else {}
+    git = provenance.get("git")
+    git = git if isinstance(git, dict) else {}
+    config = provenance.get("config")
+    config = config if isinstance(config, dict) else {}
+    version = re.match(r"^(\d+)\.(\d+)\.(\d+)", str(provenance.get("package_version", "")))
+    selected_schema = ("answer" in data or bool(config.get("answer")) or
+                       (version is not None and tuple(map(int, version.groups())) >= (0, 1, 2)))
+    selection_error = None
+    if selected_schema:
+        answer = data.get("answer")
+        pos = answer if isinstance(answer, dict) else {}
+        status = str(pos.get("status", "")).strip().lower()
+        success = str(pos.get("success", "")).strip().lower()
+        if (not pos or status not in {"", "ok", "success", "succeeded", "complete", "completed"}
+                or success in {"false", "0", "no"}):
+            selection_error = "Selected localization answer is missing, malformed, or unsuccessful"
+    else:
+        legacy = data.get("position")
+        pos = legacy if isinstance(legacy, dict) else {}
     hyps = pos.get("hypotheses") or []
+    hyps = [hyp for hyp in hyps if isinstance(hyp, dict)] if isinstance(hyps, list) else []
     street_names = pos.get("street_names")
     if not street_names and hyps:
         street_names = hyps[0].get("street_names")
@@ -132,10 +163,7 @@ def _extract_position(result_json_path):
     conf = pos.get("spatial_confidence") or {}
     if not isinstance(conf, dict):
         conf = {"level": conf}
-    # The tool also estimates the camera's ROUTE through the city (visual odometry snapped
-    # to the OSM graph) as position.route_latlon = [[lat, lon], ...]. These are walking-tour
-    # videos, so that polyline is the path actually walked. Everything but the single chosen
-    # point used to be dropped here, leaving the route computed but discarded.
+    # Never attach diagnostic geometry/confidence to a different selected route.
     clean_route = []
     for p in pos.get("route_latlon") or []:
         if isinstance(p, (list, tuple)) and len(p) >= 2:
@@ -145,18 +173,30 @@ def _extract_position(result_json_path):
                 continue
             if abs(lat_p) <= 90 and abs(lon_p) <= 180:
                 clean_route.append([lat_p, lon_p])
-    return {
-        "lat": pos.get("latitude"),
-        "lon": pos.get("longitude"),
+    result = {
+        "lat": None if selection_error else pos.get("latitude"),
+        "lon": None if selection_error else pos.get("longitude"),
         "confidence_level": conf.get("level"),
         "confidence_spread_m": conf.get("spread_m"),
         "street_names": street_names,
         "hypotheses": hyps,
         "route_latlon": clean_route,
-        # Length and provenance live at the top level of result.json, not under position.
-        "route_length_m": data.get("estimated_length_m"),
-        "trajectory_source": data.get("trajectory_source"),
+        "route_length_m": pos.get("route_length_m", pos.get("estimated_length_m")) if selected_schema else data.get("estimated_length_m"),
+        "trajectory_source": pos.get("source") or pos.get("method") if selected_schema else data.get("trajectory_source"),
+        "selection_error": selection_error,
+        "localization_result_source": "answer" if selected_schema else "position",
+        "localization_answer_mode": pos.get("mode") if selected_schema else None,
+        "localization_answer_method": pos.get("method") if selected_schema else None,
+        "localization_experimental": pos.get("experimental") if selected_schema else None,
+        "localization_confidence_calibrated": pos.get("confidence_calibrated") if selected_schema else None,
+        "localization_tool_version": provenance.get("package_version"),
+        "localization_tool_git_sha": git.get("commit"),
+        "localization_tool_git_dirty": git.get("dirty"),
+        "localization_python_version": provenance.get("python"),
     }
+    if selected_schema and not localization_succeeded({"status": "ok", "lat": result["lat"], "lon": result["lon"]}):
+        result.update(lat=None, lon=None, selection_error=selection_error or "Selected localization answer has no valid finite position")
+    return result
 
 
 def run_localization(video_path, city=None, osm_python=None, output_csv_path=None,
@@ -184,8 +224,9 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
     fieldnames = ["video_name", "city", "lat", "lon", "confidence_level", "confidence_spread_m",
                   "street_names", "source", "status", "result_json", "candidates",
                   "route_latlon", "route_length_m", "trajectory_source", "error",
-                  "source_video_sha256", "analysis_run_id", "localized_at"]
+                  "source_video_sha256", "analysis_run_id", "localized_at"] + LOCALIZATION_METADATA_FIELDS
     source_video_sha256, analysis_run_id = "", ""
+    result_metadata = {}
 
     attempt_path = os.path.join(os.path.dirname(os.path.abspath(output_csv_path)), "[L1]localization_attempt.csv")
 
@@ -234,6 +275,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
             "source_video_sha256": source_video_sha256,
             "analysis_run_id": analysis_run_id,
             "localized_at": "",
+            **result_metadata,
         }
 
     # Failure output is written to a full log next to the CSV; `error` in the CSV holds a
@@ -366,6 +408,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
     result_json = result_files[-1]
     try:
         pos = _extract_position(result_json)
+        result_metadata = {name: pos.get(name) for name in LOCALIZATION_METADATA_FIELDS}
     except (OSError, ValueError, TypeError, AttributeError) as e:
         _record_failure("invalid_result_json", str(e))
         raise
@@ -391,9 +434,10 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         "source_video_sha256": source_video_sha256,
         "analysis_run_id": analysis_run_id,
         "localized_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        **result_metadata,
     }
     if not localization_succeeded(row):
-        _record_failure("no_position", "Localization produced no finite, valid latitude/longitude")
+        _record_failure("no_position", pos.get("selection_error") or "Localization produced no finite, valid latitude/longitude")
         raise RuntimeError("Localization completed without a usable position")
     try:
         unchanged = file_hash(video_path) == source_video_sha256

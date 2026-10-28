@@ -211,3 +211,117 @@ def test_rapid_retry_cannot_rebind_previous_tool_result_to_changed_clip(setup_lo
     attempt = read(out.with_name('[L1]localization_attempt.csv'))
     assert attempt['status'] == 'no_result_json'
     assert attempt['source_video_sha256'] == file_hash(video)
+
+
+def selected_answer_fixture():
+    """Match the installed 0.1.2 report schema, with disagreeing diagnostics."""
+    return {
+        'answer': {'mode': 'track', 'method': 'vpr_track_only', 'source': 'mapillary',
+                   'latitude': 50, 'longitude': 11, 'route_latlon': [[50, 11], [50.1, 11.2]]},
+        'position': {'latitude': 48, 'longitude': 9, 'route_latlon': [[48, 9], [48.2, 9.3]],
+                     'street_names': ['Diagnostic street'],
+                     'spatial_confidence': {'level': 'high', 'spread_m': 12}},
+        'estimated_length_m': 900, 'trajectory_source': 'diagnostic_visual_odometry',
+        'provenance': {'package_version': '0.1.2', 'python': '3.12.7',
+                       'git': {'commit': 'b' * 40, 'dirty': True}, 'config': {'answer': 'track'}},
+    }
+
+
+def test_selected_answer_supplies_headline_and_never_inherits_diagnostic_fields(tmp_path):
+    payload = selected_answer_fixture()
+    result_json = tmp_path / 'result.json'
+    result_json.write_text(json.dumps(payload), encoding='utf-8')
+    result = localize._extract_position(result_json)
+    assert (result['lat'], result['lon']) == (50, 11)
+    assert result['route_latlon'] == payload['answer']['route_latlon']
+    assert result['trajectory_source'] == 'mapillary'
+    assert result['route_length_m'] is None
+    assert result['confidence_level'] is None and result['confidence_spread_m'] is None
+    assert result['street_names'] is None and result['hypotheses'] == []
+    assert result['localization_result_source'] == 'answer'
+    assert result['localization_answer_method'] == 'vpr_track_only'
+    assert result['localization_tool_version'] == '0.1.2'
+    assert result['localization_tool_git_sha'] == 'b' * 40
+    assert result['localization_tool_git_dirty'] is True
+    assert result['localization_python_version'] == '3.12.7'
+
+
+@pytest.mark.parametrize('answer', [None, {}, [], 'invalid',
+    {'latitude': 50, 'longitude': 11, 'status': 'failed'},
+    {'latitude': 50, 'longitude': 11, 'status': 'pending'},
+    {'latitude': 50, 'longitude': 11, 'success': False},
+    {'latitude': 50, 'longitude': 'nan'}, {'latitude': 95, 'longitude': 11}])
+def test_unsuccessful_selected_answer_never_falls_back_to_valid_diagnostic(setup_localizer, monkeypatch, answer):
+    video, out = setup_localizer
+    previous = out.read_bytes()
+    payload = selected_answer_fixture()
+    payload['answer'] = answer
+
+    def execute(command, **kwargs):
+        result = Path(command[command.index('--output-dir') + 1]) / 'result.json'
+        result.write_text(json.dumps(payload), encoding='utf-8')
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(localize.subprocess, 'run', execute)
+    with pytest.raises(RuntimeError, match='without a usable position'):
+        localize.run_localization(str(video), city='City, Country')
+    assert out.read_bytes() == previous
+    attempt = read(out.with_name('[L1]localization_attempt.csv'))
+    assert attempt['status'] == 'no_position' and attempt['lat'] == '' and attempt['lon'] == ''
+    assert attempt['localization_result_source'] == 'answer'
+    assert attempt['localization_tool_version'] == '0.1.2'
+    assert 'Selected localization answer' in attempt['error']
+
+
+@pytest.mark.parametrize('schema_marker', ['version', 'config'])
+def test_modern_result_without_answer_does_not_promote_diagnostic(tmp_path, schema_marker):
+    payload = selected_answer_fixture()
+    del payload['answer']
+    payload['provenance'].pop('package_version' if schema_marker == 'config' else 'config')
+    result_json = tmp_path / 'result.json'
+    result_json.write_text(json.dumps(payload), encoding='utf-8')
+    result = localize._extract_position(result_json)
+    assert result['lat'] is None and result['lon'] is None
+    assert result['localization_result_source'] == 'answer' and result['selection_error']
+
+
+def test_legacy_position_remains_supported_with_its_original_metadata(tmp_path):
+    payload = selected_answer_fixture()
+    del payload['answer']
+    payload['provenance'] = {'package_version': '0.1.1'}
+    payload['position']['hypotheses'] = [{'street_names': ['Legacy street']}]
+    payload['position'].pop('street_names')
+    result_json = tmp_path / 'result.json'
+    result_json.write_text(json.dumps(payload), encoding='utf-8')
+    result = localize._extract_position(result_json)
+    assert (result['lat'], result['lon']) == (48, 9)
+    assert result['route_latlon'] == payload['position']['route_latlon']
+    assert result['street_names'] == 'Legacy street'
+    assert result['confidence_level'] == 'high' and result['confidence_spread_m'] == 12
+    assert result['route_length_m'] == 900
+    assert result['trajectory_source'] == 'diagnostic_visual_odometry'
+    assert result['localization_result_source'] == 'position'
+
+
+def test_successful_selected_answer_persists_provenance_in_result_and_attempt(setup_localizer, monkeypatch):
+    video, out = setup_localizer
+    payload = selected_answer_fixture()
+    payload['answer'].update(experimental=True, confidence_calibrated=False)
+
+    def execute(command, **kwargs):
+        result = Path(command[command.index('--output-dir') + 1]) / 'result.json'
+        result.write_text(json.dumps(payload), encoding='utf-8')
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(localize.subprocess, 'run', execute)
+    localize.run_localization(str(video), city='City, Country')
+    for path in [out, out.with_name('[L1]localization_attempt.csv')]:
+        row = read(path)
+        assert (row['lat'], row['lon']) == ('50', '11')
+        assert row['localization_result_source'] == 'answer'
+        assert row['localization_tool_version'] == '0.1.2'
+        assert row['localization_tool_git_sha'] == 'b' * 40
+        assert row['localization_python_version'] == '3.12.7'
+        assert row['localization_experimental'] == 'True'
+        assert row['localization_confidence_calibrated'] == 'False'
+        assert row['confidence_level'] == '' and row['route_length_m'] == ''

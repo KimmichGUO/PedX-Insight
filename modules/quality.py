@@ -1,6 +1,9 @@
 """Machine-readable validity; raw history is retained separately from eligibility."""
 import json
+import datetime
+import math
 from pathlib import Path
+import re
 import unicodedata
 
 import pandas as pd
@@ -95,6 +98,74 @@ def analysis_time_record(folder):
         return None
 
 
+def _location_review_issue(evidence, identity, state, configuration):
+    """Structured reviews authorize only their source bytes and reviewed interval."""
+    if isinstance(evidence, str):
+        text = evidence.strip()
+        if not text:
+            return None
+        try:
+            review = json.loads(text)
+        except ValueError:
+            # Retain legacy free-text manual evidence, but never reinterpret a
+            # malformed JSON review as that older, less specific contract.
+            return "review_invalid" if text.lstrip("\ufeff").startswith(("{", "[", '"')) else None
+    else:
+        review = evidence
+    if not isinstance(review, dict):
+        return "review_invalid"
+    if type(review.get("schema_version")) is not int or review["schema_version"] != 1:
+        return "review_invalid"
+    if any(not isinstance(review.get(key), str) or not review[key].strip()
+           for key in ("review_id", "reviewer", "reviewed_at", "method", "city_id", "source_video_sha256")):
+        return "review_invalid"
+    try:
+        reviewed_at = datetime.datetime.fromisoformat(review["reviewed_at"].replace("Z", "+00:00"))
+        if reviewed_at.utcoffset() is None:
+            return "review_invalid"
+    except ValueError:
+        return "review_invalid"
+    references = review.get("evidence")
+    if (not isinstance(references, list) or not references or
+            any(not ((isinstance(item, str) and item.strip()) or
+                     (isinstance(item, dict) and item)) for item in references)):
+        return "review_invalid"
+
+    def bounds(record):
+        values = []
+        for key in ("clip_start_seconds", "clip_end_seconds"):
+            value = record.get(key)
+            if value is None or isinstance(value, bool):
+                return None
+            try:
+                value = float(value)
+            except (TypeError, ValueError):
+                return None
+            if not math.isfinite(value) or value < 0:
+                return None
+            values.append(value)
+        return values if values[1] > values[0] else None
+
+    reviewed_bounds = bounds(review)
+    if not reviewed_bounds or not re.fullmatch(r"[0-9a-fA-F]{64}", review["source_video_sha256"]):
+        return "review_invalid"
+    if review["city_id"] != identity:
+        return "review_city_mismatch"
+    if state != "complete":
+        return "review_analysis_incomplete"
+    source = configuration.get("source_sha256")
+    if not isinstance(source, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", source):
+        return "review_source_unverified"
+    if review["source_video_sha256"].lower() != source.lower():
+        return "review_source_mismatch"
+    analyzed_bounds = bounds(configuration)
+    if not analyzed_bounds:
+        return "review_interval_unknown"
+    if reviewed_bounds[0] > analyzed_bounds[0] or reviewed_bounds[1] < analyzed_bounds[1]:
+        return "review_interval_mismatch"
+    return None
+
+
 def video_metadata(folder, city, link, city_info=None):
     raw = {} if city_info is None else {key: _clean(value) for key, value in dict(city_info).items()}
     provenance = raw.get("video_provenance")
@@ -121,6 +192,14 @@ def video_metadata(folder, city, link, city_info=None):
     verified = raw.get("verified_city_id") or ""
     eligibility = raw.get("eligibility_status") or "unverified"
     evidence = raw.get("location_verification_source") or ""
+    configuration = manifest.get("configuration", {}) if manifest else {}
+    if not isinstance(configuration, dict):
+        configuration = {}
+    if evidence:
+        review_issue = _location_review_issue(evidence, identity, state, configuration)
+        if review_issue:
+            eligibility = review_issue
+    evidence_present = bool(evidence.strip()) if isinstance(evidence, str) else bool(evidence)
     out = {key: raw.get(key) or None for key in METADATA_COLUMNS}
     out.update(city_id=identity, searched_city_id=raw.get("searched_city_id") or identity,
         verified_city_id=verified or None, eligibility_status=eligibility,
@@ -129,9 +208,8 @@ def video_metadata(folder, city, link, city_info=None):
         recording_date_source=raw.get("recording_date_source") or "unknown",
         analyzed_at=analyzed_at, analyzed_at_source=analyzed_source,
         analysis_run_id=manifest.get("run_id") if manifest else None, analysis_status=state,
-        eligible_for_comparison=bool(state == "complete" and eligibility == "verified" and verified == identity and evidence),
+        eligible_for_comparison=bool(state == "complete" and eligibility == "verified" and verified == identity and evidence_present),
         metric_validity=json.dumps(metric_validity(folder), ensure_ascii=False, sort_keys=True))
-    configuration = manifest.get("configuration", {}) if manifest else {}
     out["source_video_sha256"] = configuration.get("source_sha256")
     timing = analysis_time_record(folder) or {}
     for key in ("clip_start_seconds", "clip_end_seconds"):

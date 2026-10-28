@@ -10,3 +10,4 @@ and published as city data.
 import os
 
 RESULTS_ROOT = os.environ.get("PEDX_RESULTS_ROOT") or "analysis_results"
+SUMMARY_ROOT = os.environ.get("PEDX_SUMMARY_ROOT") or "summary_data"

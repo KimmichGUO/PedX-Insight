@@ -156,10 +156,11 @@ evidence rule, completeness gate, `'1.0'` flag tokens, city join, NA cluster ids
 
 - `analysis_results/` is runtime-only and untracked. `summary_data/` IS tracked: its history is
   the history of the published numbers. Aggregators `mkdir` both; keep that if you add outputs.
-- **A scheduled task ("PedX Nightly Publish", 03:00, `scripts/nightly_publish.ps1`) runs the
-  aggregators + stats on the CURRENT WORKING TREE and publishes to the live Visualizer DB.**
-  Whatever branch is checked out at 03:00 goes live, so never leave the tree in a broken state
-  overnight. The Visualizer importer keys on the exact column names of the `summary_data`
+- **A scheduled task ("PedX Nightly Publish", 03:00, `scripts/nightly_publish.ps1`) builds a
+  fresh checksummed release from immutable configured revisions of both repositories.**
+  `PEDX_PUBLISH_REF` / `PEDX_VISUALIZER_PUBLISH_REF` default to `refs/heads/main`; arbitrary
+  working-tree edits are not published. Missing completed manifests or incompatible releases
+  fail closed and retain the previous active dataset. The Visualizer importer keys on the exact column names of the `summary_data`
   CSVs; adding columns is safe, renaming is not (coordinate with whoever owns PedX-Visualizer).
 - **Statistics rules** (see the docstrings of `statistics_with_pdf_save.py` and
   `modules/stats_utils.py`): rows are clustered in cities, so publish n, number of cities and

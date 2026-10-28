@@ -21,6 +21,12 @@ def _insight_rollup(output_dir):
             return None
         return df if not df.empty else None
 
+    def _reliable(df):
+        if "reliable" not in df.columns:
+            return df.iloc[0:0]
+        flags = df["reliable"].astype(str).str.strip().str.lower()
+        return df[flags.isin(["true", "1", "1.0"])]
+
     out = {}
 
     pet = _read("[I1]pet_conflicts.csv")
@@ -35,10 +41,9 @@ def _insight_rollup(output_dir):
 
     vs = _read("[V8]vehicle_speed.csv")
     if vs is not None and "median_speed_mps" in vs.columns:
-        use = vs[vs["reliable"] == True] if "reliable" in vs.columns else vs
-        if use.empty:
-            use = vs
+        use = _reliable(vs)
         v = pd.to_numeric(use["median_speed_mps"], errors="coerce").dropna()
+        v = v[v.map(math.isfinite)]
         if not v.empty:
             out["vehicle_median_speed_mps"] = round(float(v.median()), 3)
             out["vehicle_p85_speed_mps"] = round(float(v.quantile(0.85)), 3)
@@ -87,10 +92,8 @@ def _insight_rollup(output_dir):
 
     po = _read("[P12]pose_behavior.csv")
     if po is not None:
-        use = po[po["reliable"] == True] if "reliable" in po.columns else po
-        if use.empty:
-            use = po
-        if {"looked_left", "looked_right"}.issubset(use.columns):
+        use = _reliable(po)
+        if not use.empty and {"looked_left", "looked_right"}.issubset(use.columns):
             ll = use["looked_left"].astype(str).str.lower().isin(["true", "1"])
             lr = use["looked_right"].astype(str).str.lower().isin(["true", "1"])
             out["look_before_cross_frac"] = round(float((ll | lr).mean()), 3)

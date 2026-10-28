@@ -62,6 +62,7 @@ import pandas as pd
 from modules.paths import RESULTS_ROOT
 
 DEFAULT_MODEL_ID = "facebook/mask2former-swin-large-mapillary-vistas-semantic"
+DEFAULT_MODEL_REVISION = "4772b6bf101d91f2534c106dc524d906aeb3c68a"
 DEFAULT_HF_CACHE = "E:/PedX-validation-data/hf_cache"
 OUTPUT_FILENAME = "[E10]scene_segmentation.csv"
 
@@ -149,22 +150,46 @@ def _load_model(model_id, device):
     from transformers import AutoImageProcessor, Mask2FormerForUniversalSegmentation
 
     cache_dir = _resolve_cache_dir()
+    revision = os.environ.get("PEDX_SCENE_MODEL_REVISION") or (DEFAULT_MODEL_REVISION if model_id == DEFAULT_MODEL_ID else "main")
     try:
         processor = AutoImageProcessor.from_pretrained(
-            model_id, cache_dir=cache_dir, local_files_only=True)
+            model_id, revision=revision, cache_dir=cache_dir, local_files_only=True)
         model = Mask2FormerForUniversalSegmentation.from_pretrained(
-            model_id, cache_dir=cache_dir, local_files_only=True)
+            model_id, revision=revision, cache_dir=cache_dir, local_files_only=True)
     except Exception as exc:
         print(f"[scene_seg] {model_id} not loadable from local cache "
               f"({type(exc).__name__}); trying a normal load.")
-        processor = AutoImageProcessor.from_pretrained(model_id, cache_dir=cache_dir)
-        model = Mask2FormerForUniversalSegmentation.from_pretrained(model_id, cache_dir=cache_dir)
+        processor = AutoImageProcessor.from_pretrained(model_id, revision=revision, cache_dir=cache_dir)
+        model = Mask2FormerForUniversalSegmentation.from_pretrained(model_id, revision=revision, cache_dir=cache_dir)
     # A "swin.layernorm MISSING" line in transformers' load report is expected: SwinBackbone
     # declares that key ignorable and uses its per-stage hidden_states_norms instead.
     dtype = torch.float16 if str(device).startswith("cuda") else torch.float32
     model.to(device=device, dtype=dtype)
     model.eval()
     return model, processor
+
+
+def _record_scene_assets(model, model_id, output_path, device, short_side):
+    """Resolve local snapshot files without another hub request."""
+    from pathlib import Path
+    from modules.provenance import record_model_reference
+    revision = getattr(model.config, "_commit_hash", None)
+    if not revision:
+        return
+    roots = [_resolve_cache_dir(), os.environ.get("HF_HUB_CACHE"),
+             str(Path(os.environ.get("HF_HOME", Path.home() / ".cache" / "huggingface")) / "hub")]
+    files = []
+    for root in roots:
+        if not root:
+            continue
+        snapshot = Path(root) / ("models--" + model_id.replace("/", "--")) / "snapshots" / revision
+        if snapshot.is_dir():
+            files = [p for p in snapshot.iterdir() if p.is_file() and p.suffix in {".json", ".bin", ".safetensors"}]
+            break
+    record_model_reference(Path(output_path).parent, "scene_segmentation", model_id,
+                           revision=revision, files=files,
+                           parameters={"device": device, "short_side": short_side,
+                                       "presence_thresholds": dict(PRESENCE_THRESHOLDS)})
 
 
 def _group_class_ids(id2label):
@@ -274,6 +299,7 @@ def run_scene_segmentation(video_path, analyze_interval_sec=1.0, output_csv_path
                 if used_device is None:
                     used_device = "cuda" if torch.cuda.is_available() else "cpu"
                 model, processor = _load_model(model_id, used_device)
+                _record_scene_assets(model, model_id, output_csv_path, used_device, short_side)
                 id2label = model.config.id2label
                 group_ids = _group_class_ids(id2label)
                 num_labels = max(int(i) for i in id2label) + 1

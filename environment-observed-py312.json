@@ -1,0 +1,55 @@
+{
+  "observed_date": "2026-10-27",
+  "python": "3.12.9",
+  "platform": "Windows",
+  "machine": "AMD64",
+  "direct_distribution_versions": {
+    "filterpy": "1.4.5",
+    "lap": "0.5.13",
+    "matplotlib": "3.11.1",
+    "numpy": "2.5.3",
+    "opencv-python": "5.0.0.93",
+    "pandas": "3.0.5",
+    "Pillow": "10.4.0",
+    "scikit-learn": "1.9.0",
+    "scipy": "1.18.1",
+    "seaborn": "0.13.2",
+    "Shapely": "2.1.2",
+    "scikit-image": "0.26.0",
+    "statsmodels": null,
+    "supervision": "0.30.0",
+    "torch": "2.13.0+cu126",
+    "torchvision": "0.28.0+cu126",
+    "transformers": "5.15.0",
+    "ultralytics": "8.4.117",
+    "yt-dlp": "2026.10.21",
+    "onnxruntime": "1.28.0",
+    "pytest": "9.1.1",
+    "opencv-contrib-python": "5.0.0.93",
+    "opencv-python-headless": "5.0.0.93"
+  },
+  "module_version_fallbacks": {
+    "statsmodels": "0.15.0"
+  },
+  "limitations": [
+    "Not a complete transitive or hashed lock; model assets are not covered",
+    "Observed Pillow 10.4.0 does not satisfy the declared >=12.3.0 floor and is omitted from install constraints",
+    "Statsmodels metadata reports null; imported module version is used with an explicit note",
+    "Multiple OpenCV providers exist in the old shared environment; corrected requirements select only opencv-python",
+    "Observed CUDA binaries differ from the fresh CPU CI profile; clean install still needs CI validation"
+  ],
+  "cv2_providers": [
+    {
+      "name": "opencv-python",
+      "version": "5.0.0.93"
+    },
+    {
+      "name": "opencv-contrib-python",
+      "version": "5.0.0.93"
+    },
+    {
+      "name": "opencv-python-headless",
+      "version": "5.0.0.93"
+    }
+  ]
+}

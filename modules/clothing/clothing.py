@@ -110,6 +110,6 @@ def run_clothing_detection(
             results.append(result)
 
     cap.release()
-    results_df = pd.DataFrame(results)
+    results_df = pd.DataFrame(results, columns=["frame_id", "track_id"] + list(class_names.values()))
     results_df.to_csv(output_csv_path, index=False)
     print(f"\nClothing detection results saved to {output_csv_path}")

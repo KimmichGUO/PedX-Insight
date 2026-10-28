@@ -38,11 +38,13 @@ from matplotlib.backends.backend_pdf import PdfPages
 from scipy import stats
 
 from modules.provenance import git_state, utc_now
+from modules.paths import SUMMARY_ROOT
+from modules.quality import apply_metric_policy
 from modules.stats_utils import (AGE_LABELS, MIN_CLUSTERS, MIN_N, age_band, bh_fdr,
                                  city_cluster_id, cluster_bootstrap_ci, city_level,
                                  rate_columns, rate_with_ci)
 
-OUT = "./summary_data"
+OUT = SUMMARY_ROOT
 # No CreationDate: identical results give byte-identical PDFs, so the tracked summary_data/
 # history only changes when the numbers do.
 PDF_METADATA = {"CreationDate": None}
@@ -57,11 +59,36 @@ MIN_RISKY_COVERAGE = 0.25
 MIN_CITY_N = 5
 # City-level correlations need at least this many cities with both values.
 MIN_CITIES_CORR = 8
-CROSSWALK_VALIDITY_NOTE = ("NOT VALID for cross-city claims: crosswalk detector at chance on JAAD "
-                           "(ROC-AUC 0.50, 346 clips); see validation/results/JAAD_REPORT.md")
+CROSSWALK_VALIDITY_NOTE = "Presence validation does not validate geometry or global transfer; only eligible observations are included."
+
+
+
+def _rate_schema(label, metrics):
+    return list(label) + [metric + suffix for metric in metrics for suffix in ("", "_n", "_n_clusters", "_ci_low", "_ci_high")]
+
+
+EMPTY_SCHEMAS = {
+    "gender_stats.csv": _rate_schema(["gender"], ["risky_crossing", "run_red_light"]),
+    "age_stats.csv": _rate_schema(["age"], ["risky_crossing", "run_red_light"]),
+    "clothing_stats.csv": _rate_schema(["clothing_type"], ["risky_crossing_rate(%)", "run_red_light_rate(%)"]),
+    "accident_road_condition_stats.csv": _rate_schema(["environment_factor"], ["risky_crossing_rate(%)", "run_red_light_rate(%)"]),
+    "phone_stats.csv": _rate_schema(["accessory"], ["risky_crossing_rate(%)", "run_red_light_rate(%)"]),
+    "carried_items_stats.csv": _rate_schema(["accessory"], ["risky_crossing_rate(%)", "run_red_light_rate(%)"]),
+    "vehicle_stats.csv": _rate_schema(["vehicle_type"], ["risky_crossing_rate(%)", "run_red_light_rate(%)"]),
+    "road_corr.csv": _rate_schema(["index"], ["risky_crossing", "run_red_light"]),
+    "weather_daytime_stats.csv": _rate_schema(["weather", "daytime"], ["run_red_light_prob", "risky_crossing_prob"]),
+    "continent_stats.csv": _rate_schema(["continent"], ["risky_crossing_rate(%)", "run_red_light_rate(%)"]),
+    "crosswalk_coeff.csv": _rate_schema(["continent"], ["crosswalk_usage_ratio", "crosswalk_prob"]) + ["validity_note", "crosswalk_coeff"],
+    "crossing_stats.csv": _rate_schema(["continent"], ["avg_crossing_speed"]) + ["avg_decision_time", "avg_decision_time_n_clusters", "imported_crossing_speed", "imported_crossing_speed_n_clusters", "crossing_speed_source", "decision_time_source"],
+    "city_correlations.csv": ["var_x", "var_y", "spearman_rho", "p_value", "n_cities", "q_value_bh"],
+}
 
 
 def save_csv(df, filename):
+    if df.empty and not len(df.columns):
+        df = pd.DataFrame(columns=EMPTY_SCHEMAS.get(os.path.basename(filename), ["status"]))
+    df = df.copy()
+    df["analysis_scope"] = "experimental" if os.environ.get("PEDX_INCLUDE_EXPERIMENTAL") == "1" else "validated"
     df.to_csv(filename, index=False, encoding="utf-8")
     print(f"CSV saved: {filename}")
 
@@ -175,7 +202,8 @@ def main():
     save_bar_chart_pdf(stats_minutes.reset_index(), "index", ["duration_minutes", "analysis_minutes"],
                        f"{OUT}/time_stats.pdf", "Video Duration vs Analysis Time", "minutes")
 
-    ped = _with_cluster(pd.read_csv(f"{OUT}/all_pedestrian_info.csv", encoding="utf-8"))
+    experimental = os.environ.get("PEDX_INCLUDE_EXPERIMENTAL") == "1"
+    ped = _with_cluster(apply_metric_policy(pd.read_csv(f"{OUT}/all_pedestrian_info.csv", encoding="utf-8"), include_experimental=experimental))
     for col in RATE_METRICS:
         ped[col] = pd.to_numeric(ped[col], errors="coerce")
 
@@ -333,7 +361,7 @@ def main():
                        "Risky Crossing & Red Light Violation Rate by Continent (city-weighted)", "%")
 
     # ---------- video-level frame shared by sections 12-14 ----------
-    vid = _with_cluster(pd.read_csv(f"{OUT}/all_video_info.csv", encoding="utf-8"))
+    vid = _with_cluster(apply_metric_policy(pd.read_csv(f"{OUT}/all_video_info.csv", encoding="utf-8"), include_experimental=experimental))
     for col in ["measured_crossing_speed_mps", "measured_crossing_speed_n", "risky_crossing_ratio",
                 "risky_crossing_coverage", "run_red_light_ratio", "crosswalk_usage_ratio",
                 "crosswalk_prob", "traffic_light_prob", "crossing_time", "crossing_speed"]:
@@ -372,7 +400,7 @@ def main():
     save_bar_chart_pdf(continent_stats, "continent", ["crosswalk_usage_ratio", "crosswalk_prob"],
                        f"{OUT}/crosswalk_coeff.pdf",
                        "Crosswalk Usage and Presence by Continent (city-weighted)\n"
-                       "NOT VALID: crosswalk detector is at chance on JAAD (see validation/)", "ratio")
+                       "Only policy-eligible observations; see per-video metric validity", "ratio")
 
     # ========== 13. continent speed and decision time ==========
     # avg_crossing_speed is MEASURED ([S1] crossing speed, videos with >= MIN_SPEED_CROSSERS
@@ -457,6 +485,8 @@ def main():
         "n_videos": int(len(vid)),
         "n_cities": int(vid["cluster"].nunique()),
         "n_pedestrians": int(len(ped)),
+        "analysis_scope": "experimental" if experimental else "validated",
+        "validity_policy": "modules.quality.apply_metric_policy; unknown recording dates remain unknown",
         "min_n": MIN_N, "min_clusters": MIN_CLUSTERS,
         "min_speed_crossers": MIN_SPEED_CROSSERS, "min_risky_coverage": MIN_RISKY_COVERAGE,
         "min_city_n": MIN_CITY_N, "min_cities_corr": MIN_CITIES_CORR,

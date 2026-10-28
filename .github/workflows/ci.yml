@@ -1,0 +1,56 @@
+name: Offline pipeline regression
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python312:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      CUDA_VISIBLE_DEVICES: ""
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Create isolated environment with matched CPU-only Torch
+        shell: bash
+        run: |
+          python -m venv "$RUNNER_TEMP/pedx-venv"
+          echo "$RUNNER_TEMP/pedx-venv/bin" >> "$GITHUB_PATH"
+          echo "YOLO_CONFIG_DIR=$RUNNER_TEMP/pedx-yolo" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/pedx-venv/bin/python" -m pip install --upgrade pip
+          "$RUNNER_TEMP/pedx-venv/bin/python" -m pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cpu
+      - name: Resolve, install, and validate dependency metadata
+        shell: bash
+        run: |
+          python -m pip install --dry-run -r requirements-dev.txt -c constraints-py312-observed.txt --report "$RUNNER_TEMP/pedx-resolver.json"
+          python -m pip install -r requirements-dev.txt -c constraints-py312-observed.txt
+          python -m pip freeze > "$RUNNER_TEMP/pedx-freeze.txt"
+          python -m pip check
+          python -B scripts/check_environment.py --imports --strict | tee "$RUNNER_TEMP/pedx-environment.json"
+          python -B -c "import torch; assert torch.version.cuda is None, 'CI must use CPU-only Torch'"
+      - name: Run offline synthetic regression suite
+        shell: bash
+        run: |
+          python -B -m pytest -q -p no:cacheprovider tests --basetemp "$RUNNER_TEMP/pedx-pytest" -k 'not real_archived_crops and not empty_and_non_png_folders and not unreadable_png_is_skipped'
+      - name: Preserve resolver and installed environment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python312-environment-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/pedx-resolver.json
+            ${{ runner.temp }}/pedx-freeze.txt
+            ${{ runner.temp }}/pedx-environment.json

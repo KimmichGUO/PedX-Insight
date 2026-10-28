@@ -40,7 +40,8 @@ _PACKAGES = ("numpy", "pandas", "opencv-python", "torch", "ultralytics", "transf
              "supervision", "scipy")
 
 PROVENANCE_COLUMNS = ["mode", "started_utc", "finished_utc", "git_sha", "git_dirty",
-                      "weights_digest", "packages"]
+                      "weights_digest", "packages", "parameters", "source_sha256",
+                      "run_id", "model_assets_digest"]
 
 
 def utc_now():
@@ -53,6 +54,9 @@ def git_state():
     `dirty` considers tracked files only: untracked scratch files do not change what the
     pipeline computes, modified tracked files do.
     """
+    immutable = os.environ.get("PEDX_IMMUTABLE_SOURCE_REVISION", "")
+    if len(immutable) == 40 and all(char in "0123456789abcdef" for char in immutable.lower()):
+        return immutable.lower(), False
     try:
         sha = subprocess.run(["git", "-C", str(REPO), "rev-parse", "HEAD"],
                              capture_output=True, text=True, timeout=15).stdout.strip()
@@ -123,7 +127,34 @@ def package_versions():
     return out
 
 
-def record_mode_run(video_path, mode, started_utc):
+def record_model_reference(output_dir, role, model_id, *, revision=None, files=(), parameters=None):
+    """Record the resolved assets actually selected, including external hub snapshots."""
+    from modules.pipeline import atomic_json
+    path = Path(output_dir) / "[A0]model_assets.json"
+    try:
+        assets = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        cache = json.loads(_HASH_CACHE.read_text(encoding="utf-8")) if _HASH_CACHE.exists() else {}
+    except (OSError, ValueError):
+        assets, cache = {}, {}
+    hashes = {}
+    for value in files:
+        source = Path(value).resolve()
+        if not source.is_file():
+            continue
+        key = str(source)
+        stat = source.stat()
+        stamp = f"{stat.st_size}:{stat.st_mtime_ns}"
+        hit = cache.get(key, {})
+        digest = hit.get("sha256") if hit.get("key") == stamp else _sha256(source)
+        hashes[key] = digest
+        cache[key] = {"key": stamp, "sha256": digest}
+    assets[role] = {"model_id": str(model_id), "revision": revision,
+                    "files": hashes, "parameters": parameters or {}, "recorded_at": utc_now()}
+    atomic_json(path, assets)
+    atomic_json(_HASH_CACHE, cache)
+
+
+def record_mode_run(video_path, mode, started_utc, parameters=None):
     """Append a provenance row for a mode that just completed successfully."""
     try:
         video_name = os.path.splitext(os.path.basename(video_path))[0]
@@ -147,6 +178,19 @@ def record_mode_run(video_path, mode, started_utc):
 
         prov_path = os.path.join(out_dir, "[A0]provenance.csv")
         new_file = not os.path.exists(prov_path)
+        if not new_file:
+            with open(prov_path, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                old_columns, rows = reader.fieldnames, list(reader)
+            if old_columns != PROVENANCE_COLUMNS:
+                temp = prov_path + ".tmp"
+                with open(temp, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=PROVENANCE_COLUMNS, extrasaction="ignore")
+                    writer.writeheader()
+                    writer.writerows(rows)
+                os.replace(temp, prov_path)
+        source = Path(video_path)
+        assets_path = Path(out_dir) / "[A0]model_assets.json"
         with open(prov_path, "a", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=PROVENANCE_COLUMNS)
             if new_file:
@@ -159,6 +203,10 @@ def record_mode_run(video_path, mode, started_utc):
                 "git_dirty": dirty,
                 "weights_digest": digest,
                 "packages": json.dumps(package_versions(), sort_keys=True),
+                "parameters": json.dumps(parameters or {}, sort_keys=True),
+                "source_sha256": os.environ.get("PEDX_SOURCE_SHA256") or (_sha256(source) if source.is_file() else None),
+                "run_id": os.environ.get("PEDX_PIPELINE_RUN_ID"),
+                "model_assets_digest": _sha256(assets_path) if assets_path.exists() else None,
             })
     except Exception as e:  # provenance must never fail an analysis
         print(f"[warn] provenance not recorded for mode {mode}: {e}", flush=True)

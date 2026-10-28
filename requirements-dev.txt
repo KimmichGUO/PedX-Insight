@@ -1,0 +1,3 @@
+-r requirements.txt
+# The observed Python 3.12 offline regression suite uses this runner release.
+pytest==9.1.1

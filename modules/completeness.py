@@ -29,3 +29,19 @@ REQUIRED_OUTPUTS = [
 def missing_outputs(folder_path):
     """Return the required outputs absent from `folder_path` (a pathlib.Path)."""
     return [name for name in REQUIRED_OUTPUTS if not (folder_path / name).exists()]
+
+
+def publication_issues(folder_path, *, allow_legacy=True):
+    """Verify new runs; retain pre-manifest folders only as legacy audit rows."""
+    from modules.pipeline import read_manifest, stage_current, STAGES
+    missing = missing_outputs(folder_path)
+    if missing:
+        return missing
+    manifest = read_manifest(folder_path)
+    if manifest is None:
+        return [] if allow_legacy else ["missing completed run manifest"]
+    if manifest.get("status") != "complete":
+        return [f"run status: {manifest.get('status', 'unknown')}"]
+    stages = manifest.get("stages", {})
+    return [f"stale or unsuccessful stage: {name}" for name in STAGES
+            if not stage_current(folder_path, stages.get(name, {}))]

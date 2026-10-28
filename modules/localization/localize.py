@@ -28,10 +28,15 @@ import sys
 import csv
 import glob
 import json
-import time
 import subprocess
 import importlib.util
+import math
+import datetime
+import tempfile
+if __package__ in (None, ""):
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from modules.paths import RESULTS_ROOT
+from modules.pipeline import file_hash, read_manifest
 
 # The companion tool as a pip package: import name (find_spec / -m target) and the
 # one-line install hint surfaced when it is missing. Not on PyPI yet, so install is
@@ -44,6 +49,16 @@ OSM_INSTALL_HINT = ('pip install '
 # --data-dir and may make other CWD-relative writes. We hand it a stable, gitignored
 # directory so runs share that cache and nothing litters the PedX repo root.
 OSM_CACHE_DIR = os.path.abspath("osm_localization_cache")
+
+
+def localization_succeeded(row):
+    """A process exit alone is insufficient: require a usable geographic result."""
+    try:
+        lat, lon = float(row.get("lat")), float(row.get("lon"))
+        return (str(row.get("status", "")).strip().lower() == "ok" and math.isfinite(lat)
+                and math.isfinite(lon) and -90 <= lat <= 90 and -180 <= lon <= 180)
+    except (AttributeError, TypeError, ValueError):
+        return False
 
 
 def _resolve_osm_python(osm_python=None):
@@ -160,9 +175,6 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
     Returns:
         dict with keys video_name, city, lat, lon, confidence_level, street_names.
     """
-    if not os.path.exists(video_path):
-        raise FileNotFoundError(f"Video not found: {video_path} (localization needs the video file present)")
-
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     output_dir = os.path.join(RESULTS_ROOT, video_name)
     os.makedirs(output_dir, exist_ok=True)
@@ -171,13 +183,31 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
 
     fieldnames = ["video_name", "city", "lat", "lon", "confidence_level", "confidence_spread_m",
                   "street_names", "source", "status", "result_json", "candidates",
-                  "route_latlon", "route_length_m", "trajectory_source", "error"]
+                  "route_latlon", "route_length_m", "trajectory_source", "error",
+                  "source_video_sha256", "analysis_run_id", "localized_at"]
+    source_video_sha256, analysis_run_id = "", ""
 
-    def _write(row):
-        with open(output_csv_path, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
-            w.writeheader()
-            w.writerow(row)
+    attempt_path = os.path.join(os.path.dirname(os.path.abspath(output_csv_path)), "[L1]localization_attempt.csv")
+
+    def _write(row, path=output_csv_path, columns=fieldnames):
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        temp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", newline="", encoding="utf-8",
+                                             dir=os.path.dirname(os.path.abspath(path)),
+                                             delete=False) as f:
+                temp_path = f.name
+                w = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
+                w.writeheader()
+                w.writerow(row)
+            os.replace(temp_path, path)
+        finally:
+            if temp_path and os.path.exists(temp_path):
+                os.remove(temp_path)
+
+    def _attempt(row):
+        _write({**row, "attempted_utc": datetime.datetime.now(datetime.timezone.utc).isoformat()},
+               attempt_path, fieldnames + ["attempted_utc"])
 
     def _existing_row():
         """The row already on disk, if any. Used to avoid destroying a good result."""
@@ -201,6 +231,9 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
             # reason was lost to the console, so diagnosing a batch run meant reproducing
             # each failure by hand.
             "error": error,
+            "source_video_sha256": source_video_sha256,
+            "analysis_run_id": analysis_run_id,
+            "localized_at": "",
         }
 
     # Failure output is written to a full log next to the CSV; `error` in the CSV holds a
@@ -208,6 +241,8 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
     log_path = os.path.join(output_dir, "[L1]localization.log")
 
     def _record_failure(status, output):
+        if isinstance(output, bytes):
+            output = output.decode("utf-8", errors="replace")
         text = (output or "").strip()
         if text:
             try:
@@ -216,6 +251,8 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
             except OSError:
                 pass
         tail = " | ".join(line.strip() for line in text.splitlines()[-6:] if line.strip())
+        failure = _placeholder(status, tail[:1000])
+        _attempt(failure)
 
         # NEVER overwrite a previously SUCCESSFUL localization with a failure placeholder.
         # The usual failure here is a transient Overpass timeout, and clobbering turns
@@ -224,20 +261,33 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         # (Observed: a retry of Ulm1/Ulm2 during an Overpass outage wiped both good rows.)
         # The failure is still fully recorded in the .log next to the CSV.
         prior = _existing_row()
-        if prior and (prior.get("status") or "").strip() == "ok":
+        if localization_succeeded(prior):
             print(f"[localize] {video_name}: {status} — KEEPING the previous successful "
                   f"result; this attempt's output is in {log_path}")
             if text:
                 print(text[-2000:])
             return
 
-        _write(_placeholder(status, tail[:1000]))
+        _write(failure)
         if text:
             print(f"[localize] {video_name}: {status} — full output in {log_path}")
             print(text[-2000:])
 
+    if not os.path.exists(video_path):
+        _record_failure("video_missing", f"Video not found: {video_path}")
+        raise FileNotFoundError(f"Video not found: {video_path} (localization needs the video file present)")
+
+    # A filename/YouTube ID can be reused for a different interval. Bind the result
+    # to the actual analyzed bytes rather than attaching an older clip's geography.
+    source_video_sha256 = file_hash(video_path)
+    analysis_manifest = read_manifest(output_dir) or {}
+    configuration = analysis_manifest.get("configuration") if isinstance(analysis_manifest, dict) else None
+    if isinstance(configuration, dict) and configuration.get("source_sha256") == source_video_sha256:
+        analysis_run_id = analysis_manifest.get("run_id") or ""
+
     # Resolve city.
     if not city:
+        _record_failure("city_unknown", "Could not determine the city from mapping.csv")
         city = _infer_city_from_mapping(video_path, mapping_csv)
     if not city:
         raise ValueError(
@@ -248,7 +298,7 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
     # Resolve the interpreter that has the monocular_osm package (see _resolve_osm_python).
     py = _resolve_osm_python(osm_python)
     if py is None:
-        _write(_placeholder("osm_env_not_configured"))
+        _record_failure("osm_env_not_configured", "The monocular_osm package is not configured")
         raise RuntimeError(
             "The `monocular_osm` package is not installed in this environment.\n"
             "It is an OPTIONAL companion, kept out of PedX's core requirements because of "
@@ -260,9 +310,12 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
             f"(wrote a placeholder {output_csv_path} with status=osm_env_not_configured)"
         )
 
-    # The tool writes <output-dir>/<slug>/result.json; give it a per-video output dir we scan.
-    osm_output_dir = os.path.abspath(os.path.join(output_dir, "osm_localization"))
-    os.makedirs(osm_output_dir, exist_ok=True)
+    # Keep every invocation's result tree separate. A shared tree plus an mtime
+    # tolerance can accept an earlier retry's result and relabel it with new clip
+    # bytes, even when this invocation exited without producing a result.
+    osm_history_dir = os.path.abspath(os.path.join(output_dir, "osm_localization"))
+    os.makedirs(osm_history_dir, exist_ok=True)
+    osm_output_dir = tempfile.mkdtemp(prefix="attempt_", dir=osm_history_dir)
     os.makedirs(OSM_CACHE_DIR, exist_ok=True)
 
     # `-m monocular_osm.cli` is the installed package's entry point (identical to the
@@ -278,10 +331,6 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         cmd += list(extra_args)
 
     print(f"[localize] {video_name}: running monocular_osm for city '{city}' ...")
-    # Record the start time so we only accept a result.json written by THIS run — the
-    # newest-mtime glob below would otherwise silently reuse a stale result from a
-    # previous run (e.g. after the tool errors out early this time).
-    run_started = time.time()
     # cwd = a stable, gitignored cache dir so the tool's default ./data cache and any
     # other relative writes never litter the repo root; imports resolve from the pkg.
     # Capture the tool's output (merged stdout+stderr) instead of letting it stream to the
@@ -293,27 +342,33 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                        text=True, encoding="utf-8", errors="replace")
     except subprocess.TimeoutExpired as e:
-        _record_failure("timeout", (e.output or "") + f"\n[timed out after {timeout}s]")
+        output = e.output.decode("utf-8", errors="replace") if isinstance(e.output, bytes) else (e.output or "")
+        _record_failure("timeout", output + f"\n[timed out after {timeout}s]")
         raise
     except subprocess.CalledProcessError as e:
         _record_failure("subprocess_failed", e.output)
         raise
+    except OSError as e:
+        _record_failure("subprocess_failed", str(e))
+        raise
 
     result_files = sorted(
-        (p for p in glob.glob(os.path.join(osm_output_dir, "**", "result.json"), recursive=True)
-         if os.path.getmtime(p) >= run_started - 1.0),  # 1s slack for coarse filesystems
+        glob.glob(os.path.join(osm_output_dir, "**", "result.json"), recursive=True),
         key=os.path.getmtime,
     )
     if not result_files:
-        _write(_placeholder("no_result_json",
-                            f"no fresh result.json under {osm_output_dir}"))
+        _record_failure("no_result_json", f"no fresh result.json under {osm_output_dir}")
         raise RuntimeError(
             f"Localization ran but produced no fresh result.json under {osm_output_dir}. "
             "Check the tool's logs above."
         )
 
     result_json = result_files[-1]
-    pos = _extract_position(result_json)
+    try:
+        pos = _extract_position(result_json)
+    except (OSError, ValueError, TypeError, AttributeError) as e:
+        _record_failure("invalid_result_json", str(e))
+        raise
 
     row = {
         "video_name": video_name,
@@ -333,8 +388,22 @@ def run_localization(video_path, city=None, osm_python=None, output_csv_path=Non
         "route_length_m": pos["route_length_m"] if pos["route_length_m"] is not None else "",
         "trajectory_source": pos["trajectory_source"] or "",
         "error": "",
+        "source_video_sha256": source_video_sha256,
+        "analysis_run_id": analysis_run_id,
+        "localized_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }
+    if not localization_succeeded(row):
+        _record_failure("no_position", "Localization produced no finite, valid latitude/longitude")
+        raise RuntimeError("Localization completed without a usable position")
+    try:
+        unchanged = file_hash(video_path) == source_video_sha256
+    except OSError:
+        unchanged = False
+    if not unchanged:
+        _record_failure("source_changed", "Video bytes changed while localization was running")
+        raise RuntimeError("Source video changed during localization; result was not accepted")
     _write(row)
+    _attempt(row)
     print(f"[localize] {video_name}: lat={pos['lat']}, lon={pos['lon']}, "
           f"confidence={pos['confidence_level']}, route={len(pos['route_latlon'])} pts "
           f"-> {output_csv_path}")

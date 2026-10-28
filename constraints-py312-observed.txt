@@ -1,0 +1,26 @@
+# Snapshot-derived DIRECT constraints, 2026-10-27, CPython 3.12 on Windows.
+# Not a complete transitive/hash/platform lock. See docs/ENVIRONMENT.md and
+# environment-observed-py312.json before treating this as a reproducibility artifact.
+# Pillow is deliberately unpinned here: observed 10.4.0 violates the required >=12.3.0.
+# statsmodels metadata is damaged locally; 0.15.0 is its imported module version.
+# Torch public versions permit a matched CPU or CUDA build; observed builds are +cu126.
+filterpy==1.4.5
+lap==0.5.13
+matplotlib==3.11.1
+numpy==2.5.3
+opencv-python==5.0.0.93
+pandas==3.0.5
+scikit-learn==1.9.0
+scipy==1.18.1
+seaborn==0.13.2
+Shapely==2.1.2
+scikit-image==0.26.0
+statsmodels==0.15.0
+supervision==0.30.0
+torch==2.13.0
+torchvision==0.28.0
+transformers==5.15.0
+ultralytics==8.4.117
+yt-dlp==2026.10.21
+onnxruntime==1.28.0
+pytest==9.1.1

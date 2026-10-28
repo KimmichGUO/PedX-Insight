@@ -51,6 +51,12 @@ def ultralytics_pedestrian_tracking_with_imgsave(video_path, analyze_interval_se
         used_weights = weights
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
+    from modules.provenance import record_model_reference
+    model_path = getattr(model, "ckpt_path", None) or used_weights
+    record_model_reference(output_dir, "pedestrian_tracking", used_weights, files=[model_path],
+                           parameters={"tracking_fps": tracking_fps, "analysis_interval": analyze_interval_sec,
+                                       "tracker_config": tracker_cfg, "device": device,
+                                       "fallback_used": used_weights != det_weights})
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():

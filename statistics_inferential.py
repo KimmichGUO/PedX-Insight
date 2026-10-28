@@ -47,8 +47,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 from scipy import stats
 
 from modules.stats_utils import SEED, age_band, bh_fdr, city_cluster_id
+from modules.paths import SUMMARY_ROOT
+from modules.quality import apply_metric_policy
 
-OUT = "./summary_data"
+OUT = SUMMARY_ROOT
 # No CreationDate: identical results give byte-identical PDFs, so the tracked summary_data/
 # history only changes when the numbers do.
 PDF_METADATA = {"CreationDate": None}
@@ -79,8 +81,9 @@ FAMILIES = {
 
 
 def load():
-    ped = pd.read_csv(f"{OUT}/all_pedestrian_info.csv", encoding="utf-8")
-    vid = pd.read_csv(f"{OUT}/all_video_info.csv", encoding="utf-8")
+    include_experimental = os.environ.get("PEDX_INCLUDE_EXPERIMENTAL") == "1"
+    ped = apply_metric_policy(pd.read_csv(f"{OUT}/all_pedestrian_info.csv", encoding="utf-8"), include_experimental=include_experimental)
+    vid = apply_metric_policy(pd.read_csv(f"{OUT}/all_video_info.csv", encoding="utf-8"), include_experimental=include_experimental)
     nuis = vid[["link", "pipeline_version", "traffic_light_prob", "risky_crossing_coverage"]]
     d = ped.merge(nuis, on="link", how="left")
     d = city_cluster_id(d)
@@ -327,6 +330,9 @@ def associations(d):
                              "scale": scale, "p_value": p, "method": method, "note": ""})
     out = pd.DataFrame(rows)
     out["q_value_bh"] = np.nan
+    for column in ("p_value", "estimate", "ci_low", "ci_high", "n_clusters"):
+        if column not in out:
+            out[column] = np.nan
     for y in out["outcome"].unique():
         m = out["outcome"] == y
         out.loc[m, "q_value_bh"] = bh_fdr(out.loc[m, "p_value"]).to_numpy()

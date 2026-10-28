@@ -25,11 +25,13 @@ from modules.paths import RESULTS_ROOT
 
 WAIT_SPEED_MPS = 0.3
 MIN_WAIT_SECONDS = 1.0
+OUTPUT_COLUMNS = ["track_id", "waiting_time", "observed_duration_s", "unobserved_gap_count"]
 
 
 def run_waiting_time_analysis(video_path, csv_path=None, output_csv=None,
                               mapping_csv="mapping.csv", wait_speed_mps=WAIT_SPEED_MPS,
                               min_wait_seconds=MIN_WAIT_SECONDS, smooth_window=3,
+                              max_gap_seconds=None,
                               # accepted for backward compatibility; no longer used
                               move_thresh=None, frame_thresh=None, min_good_points=None):
     video_name = os.path.splitext(os.path.basename(video_path))[0]
@@ -44,7 +46,7 @@ def run_waiting_time_analysis(video_path, csv_path=None, output_csv=None,
         csv_path = dense_path if (os.path.exists(dense_path) and os.path.getsize(dense_path) > 0) else b1_path
 
     def _write_empty(msg):
-        pd.DataFrame(columns=["track_id", "waiting_time"]).to_csv(output_csv, index=False)
+        pd.DataFrame(columns=OUTPUT_COLUMNS).to_csv(output_csv, index=False)
         print(f"[waiting] {msg} Empty results saved to {output_csv}")
 
     if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0:
@@ -59,6 +61,15 @@ def run_waiting_time_analysis(video_path, csv_path=None, output_csv=None,
         return _write_empty("Trajectory CSV empty or malformed.")
 
     assumed_height_m, _ = _resolve_assumed_height_m(video_name, mapping_csv)
+
+    # Infer the observed sampling cadence across tracks, with a conservative ceiling
+    # for legacy 1 Hz data. Sparse observations alone cannot establish continuity.
+    cadence = np.diff(np.sort(pd.to_numeric(df["timestamp"], errors="coerce").dropna().unique()))
+    cadence = cadence[np.isfinite(cadence) & (cadence > 0)]
+    if max_gap_seconds is None:
+        max_gap_seconds = min(1.5, 1.5 * float(np.median(cadence))) if cadence.size else 1.5
+    if not np.isfinite(max_gap_seconds) or max_gap_seconds <= 0:
+        raise ValueError("max_gap_seconds must be finite and positive")
 
     # Optional ego-motion: ALWAYS subtract when available (subtracting a near-zero series
     # on static clips is harmless; the old moving-only gate left partial pans uncompensated).
@@ -93,20 +104,35 @@ def run_waiting_time_analysis(video_path, csv_path=None, output_csv=None,
         cx, cy = cam_at(fr)
         # Ego-compensate BEFORE smoothing (smoothed foot minus raw camera diffs
         # re-injected camera shake as fake pedestrian motion).
-        foot_x = _rolling_median((g["x1"].to_numpy() + g["x2"].to_numpy()) / 2.0 - cx, smooth_window)
-        foot_y = _rolling_median(g["y2"].to_numpy(dtype=float) - cy, smooth_window)
+        foot_x = (g["x1"].to_numpy(dtype=float) + g["x2"].to_numpy(dtype=float)) / 2.0 - cx
+        foot_y = g["y2"].to_numpy(dtype=float) - cy
+        gaps = np.diff(t)
+        breaks = np.flatnonzero(~np.isfinite(gaps) | (gaps <= 0) | (gaps > max_gap_seconds)) + 1
+        for indices in np.split(np.arange(len(t)), breaks):
+            foot_x[indices] = _rolling_median(foot_x[indices], smooth_window)
+            foot_y[indices] = _rolling_median(foot_y[indices], smooth_window)
 
         waiting_total = 0.0
+        observed_duration = 0.0
         seg = 0.0
         for i in range(len(g) - 1):
             dt = t[i + 1] - t[i]
             h_avg = 0.5 * (h_px[i] + h_px[i + 1])
-            if dt <= 0 or h_avg <= 1:
+            if not np.isfinite(dt) or dt <= 0 or dt > max_gap_seconds or not np.isfinite(h_avg) or h_avg <= 1:
+                if seg >= min_wait_seconds:
+                    waiting_total += seg
+                seg = 0.0
                 continue
             scale = h_avg / assumed_height_m
             dxp = foot_x[i + 1] - foot_x[i]      # foot series already ego-compensated
             dyp = foot_y[i + 1] - foot_y[i]
             v = (math.hypot(dxp, dyp) / scale) / dt
+            if not np.isfinite(v):
+                if seg >= min_wait_seconds:
+                    waiting_total += seg
+                seg = 0.0
+                continue
+            observed_duration += dt
             if v < wait_speed_mps:
                 seg += dt
             else:
@@ -116,8 +142,10 @@ def run_waiting_time_analysis(video_path, csv_path=None, output_csv=None,
         if seg >= min_wait_seconds:
             waiting_total += seg
 
-        if waiting_total >= 1.0:
-            results.append({"track_id": track_id, "waiting_time": round(waiting_total, 2)})
+        if waiting_total >= min_wait_seconds:
+            results.append({"track_id": track_id, "waiting_time": round(waiting_total, 2),
+                            "observed_duration_s": round(observed_duration, 3),
+                            "unobserved_gap_count": int(len(breaks))})
 
-    pd.DataFrame(results, columns=["track_id", "waiting_time"]).to_csv(output_csv, index=False)
+    pd.DataFrame(results, columns=OUTPUT_COLUMNS).to_csv(output_csv, index=False)
     print(f"[waiting] {len(results)} waiting pedestrians. Saved to {output_csv}")

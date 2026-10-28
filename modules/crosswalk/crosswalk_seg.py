@@ -165,6 +165,7 @@ def run_crosswalk_detection(video_path, analyze_interval_sec=1.0, output_csv_pat
                 if used_device is None:
                     used_device = "cuda" if torch.cuda.is_available() else "cpu"
                 model, processor = ss._load_model(model_id, used_device)
+                ss._record_scene_assets(model, model_id, output_csv_path, used_device, short_side)
                 id2label = model.config.id2label
                 group_ids = ss._group_class_ids(id2label)
                 num_labels = max(int(i) for i in id2label) + 1

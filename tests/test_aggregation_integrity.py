@@ -351,6 +351,13 @@ def test_inferential_runs_on_synthetic_data():
     cwd = os.getcwd()
     try:
         os.makedirs(os.path.join(root, "summary_data"))
+        # These are known synthetic labels testing model mathematics, not outputs
+        # from the production classifiers. Explicit evidence is required by policy.
+        import json
+        for records in (rows, vids):
+            for record in records:
+                record['eligible_for_comparison'] = True
+                record['metric_validity'] = json.dumps({key: {'status': 'validated', 'reason': 'synthetic ground truth'} for key in record})
         pd.DataFrame(rows).to_csv(os.path.join(root, "summary_data", "all_pedestrian_info.csv"), index=False)
         pd.DataFrame(vids).to_csv(os.path.join(root, "summary_data", "all_video_info.csv"), index=False)
         os.chdir(root)

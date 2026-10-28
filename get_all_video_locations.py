@@ -2,9 +2,49 @@ import re
 
 import pandas as pd
 from pathlib import Path
+from modules.paths import RESULTS_ROOT, SUMMARY_ROOT
+from modules.mapping_utils import find_city_in_mapping
+from modules.pipeline import read_manifest
+from modules.localization.localize import localization_succeeded
+
+LOCATION_FIELDS = ['lat', 'lon', 'confidence_level', 'confidence_spread_m', 'street_names',
+                   'candidates', 'route_latlon', 'route_length_m', 'trajectory_source']
 
 
-def main():
+def _source_sha(value):
+    text = str(value).strip().lower() if value is not None else ''
+    return text if re.fullmatch(r'[0-9a-f]{64}', text) else ''
+
+
+def bind_localization_to_analysis(row, folder):
+    """Retain raw history while failing closed on an unverified/different clip."""
+    out = dict(row)
+    manifest = read_manifest(folder) or {}
+    if not isinstance(manifest, dict):
+        manifest = {}
+    configuration = manifest.get('configuration')
+    expected = _source_sha(configuration.get('source_sha256') if isinstance(configuration, dict) else None)
+    localized = _source_sha(row.get('source_video_sha256'))
+    out['source_video_sha256'] = localized or None
+    out['localization_origin_run_id'] = row.get('analysis_run_id')
+    out['analysis_run_id'] = manifest.get('run_id') if manifest.get('status') == 'complete' else None
+    out['analysis_source_video_sha256'] = expected or None
+    status = str(row.get('status') or '').strip().lower()
+    if status == 'ok':
+        if manifest.get('status') != 'complete' or not manifest.get('run_id') or not expected or not localized:
+            status = 'source_unverified'
+        elif localized != expected:
+            status = 'source_mismatch'
+        elif not localization_succeeded(row):
+            status = 'invalid_position'
+    out['status'] = status
+    if status != 'ok':
+        for column in LOCATION_FIELDS:
+            out[column] = None
+    return out
+
+
+def main(results_root=None, mapping_path=None, output_root=None):
     """Aggregate per-video [L1]localization.csv files into summary_data/all_video_locations.csv.
 
     Mirrors get_all_video_info.py: iterates analysis_results/<city>_<link>/ folders
@@ -17,13 +57,12 @@ def main():
     confidence_level, confidence_spread_m, street_names, status, source, city_lat, city_lon,
     route_latlon, route_length_m, trajectory_source).
     """
-    final_results_path = Path('./analysis_results')
-    mapping_csv_path = Path('./mapping.csv')
-    output_csv_path = Path('./summary_data/all_video_locations.csv')
+    final_results_path = Path(results_root or RESULTS_ROOT)
+    mapping_csv_path = Path(mapping_path or './mapping.csv')
+    output_csv_path = Path(output_root or SUMMARY_ROOT) / 'all_video_locations.csv'
 
     if not final_results_path.exists():
-        print("Error: ./analysis_results/ folder does not exist")
-        return
+        raise FileNotFoundError(final_results_path)
 
     mapping_df = None
     if mapping_csv_path.exists():
@@ -44,17 +83,8 @@ def main():
         """
         if mapping_df is None:
             return (None, None)
-        matches = mapping_df[mapping_df['city'] == city]
-        if matches.empty:
-            return (None, None)
-        for _, row in matches.iterrows():
-            raw = row.get('videos')
-            if isinstance(raw, str):
-                ids = [v.strip().strip("'\"") for v in raw.strip('[]').split(',')]
-                if link in ids:
-                    return (row.get('lat'), row.get('lon'))
-        first = matches.iloc[0]
-        return (first.get('lat'), first.get('lon'))
+        matched = find_city_in_mapping(city, link, mapping_df)
+        return (matched.get('lat'), matched.get('lon')) if matched is not None else (None, None)
 
     # Copied verbatim from each [L1] row. Deliberately excludes 'city' and 'video_name':
     # those are derived from the folder name (first-underscore split), matching
@@ -65,7 +95,8 @@ def main():
                         'result_json', 'candidates',
                         # Camera route through the city (visual odometry snapped to OSM).
                         # Older [L1] files predate these columns, hence .get(col, None).
-                        'route_latlon', 'route_length_m', 'trajectory_source']
+                        'route_latlon', 'route_length_m', 'trajectory_source',
+                        'source_video_sha256', 'analysis_run_id', 'localized_at']
 
     aggregated_rows = []
 
@@ -102,6 +133,7 @@ def main():
         row_data = {'city': city, 'link': link, 'video_name': folder_name}
         for col in location_columns:
             row_data[col] = loc.get(col, None)
+        row_data = bind_localization_to_analysis(row_data, folder_path)
 
         centroid = city_centroid(city, link)
         row_data['city_lat'] = centroid[0]
@@ -114,7 +146,9 @@ def main():
     columns_order = ['city', 'link', 'video_name', 'lat', 'lon', 'confidence_level',
                      'confidence_spread_m', 'street_names', 'status', 'source',
                      'city_lat', 'city_lon', 'result_json', 'candidates',
-                     'route_latlon', 'route_length_m', 'trajectory_source']
+                     'route_latlon', 'route_length_m', 'trajectory_source',
+                     'source_video_sha256', 'analysis_run_id', 'localized_at',
+                     'analysis_source_video_sha256', 'localization_origin_run_id']
 
     result_df = pd.DataFrame(aggregated_rows).reindex(columns=columns_order) if aggregated_rows \
         else pd.DataFrame(columns=columns_order)

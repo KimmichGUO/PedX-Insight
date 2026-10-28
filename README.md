@@ -25,6 +25,76 @@ environment variable `PEDX_RESULTS_ROOT` to send a run elsewhere (the JAAD bench
 versions); `get_all_video_info.py` publishes it as `code_version`.
 
 ## Toolkit:
+### Reliable runs and dataset releases
+
+Preview dependencies without loading models, or retry only verified unfinished stages:
+
+```bash
+python main.py --mode single_all --source_video_path VIDEO --plan
+python main.py --mode single_all --source_video_path VIDEO --resume-failed
+```
+
+`modules/pipeline.py` owns the dependency graph. Each video has a durable
+`[A0]run_manifest.json` with its run ID, configuration, stage outcomes, timing,
+output schemas and checksums. Failed prerequisites block consumers. A manual
+overwrite invalidates previous completion; previous stage outputs are retained in
+the video's `.previous/` directory. The sidewalk stage remains a subprocess.
+
+`run.py` honors the mapping's `start_time`/`end_time`; `--clip-seconds` bounds that
+window from its mapped start. Download, analysis and localization are independently
+retryable. Requested localization must produce a usable result bound to the analyzed
+source-video bytes before source-media deletion. A failed retry preserves the last
+successful location and records a separate localization attempt.
+`source_mismatch` and `source_unverified` retain the media: analysis and localization
+must refer to the same bytes, including after a download has been re-encoded. A low
+confidence estimate keeps its uncertainty metadata; confidence alone does not trigger
+a retry or establish that the filming city has been verified.
+
+All aggregators honor `PEDX_RESULTS_ROOT` and `PEDX_SUMMARY_ROOT`. Their raw audit
+tables retain legacy measurements with explicit `analysis_status`, `metric_validity`
+and `eligible_for_comparison` metadata. A search city is not a verified filming city.
+Recording dates remain unknown unless evidence supplies one; `analyzed_at` is a
+separate processing timestamp. Known-invalid weather, age/gender and legacy
+crosswalk measurements never enter public comparisons. Experimental opt-in does
+not make invalid measurements valid or establish geographic eligibility.
+
+Build a release in a **fresh** directory, then validate it without database access:
+
+```bash
+python -m scripts.build_release --output PATH/TO/NEW_RELEASE
+# In ../PedX-Visualizer:
+npm run db:publish -- --csv-dir PATH/TO/NEW_RELEASE --validate-only
+```
+
+The release manifest records exact artifact hashes, headers, row counts,
+measurement policy, statistics population and analysis run IDs. Preparation fails
+when there are no completed runs, when input snapshots disagree, or when a run
+changes during aggregation. `--allow-legacy-audit` builds an inspection artifact
+that the production publisher rejects. `--skip-stats` explicitly marks omitted
+statistics rather than reusing previous files.
+
+`analysis_runs.json` retains source-video hashes, clip configuration, runtime
+versions and resolved model references with each release. Local cache paths are
+omitted. Coordinates are accepted only when their source-video hash matches the
+current analysis; a preserved result from a different clip remains audit evidence.
+
+After review and database migrations, `python publish.py` prepares a fresh release
+and invokes the Visualizer's atomic publisher. `python publish.py --dry-run` prints
+commands only; `--release-dir` publishes an existing validated artifact. Publication
+updates records, coordinates, statistics, views, insights and the active release in
+one database transaction. Model intervals remain unavailable until a fit tagged
+with that active release succeeds.
+
+The nightly script archives immutable revisions from `PEDX_PUBLISH_REF` and
+`PEDX_VISUALIZER_PUBLISH_REF` (both default to `refs/heads/main`), rather than using
+the checked-out branch. Commit and review compatible changes in both repositories
+before selecting those revisions for publication. Credentials remain in the
+Visualizer's local environment file. Releases are retained under
+`PEDX_RELEASES_ROOT` (default `%LOCALAPPDATA%/PedX/releases`).
+
+See [the environment guide](docs/ENVIRONMENT.md) for clean installation, observed
+constraints, the environment diagnostic and offline CI checks.
+
 | Argument              | Description                                       | Required     | Default        |
 | --------------------- |---------------------------------------------------|--------------|----------------|
 | `--mode`              | Analysis mode                                     | Yes          | None           |

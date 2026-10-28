@@ -4,6 +4,8 @@ from shapely.geometry import Polygon, Point
 import os
 from modules.paths import RESULTS_ROOT
 
+OUTPUT_COLUMNS = ["track_id", "entered_lane", "start_frame", "end_frame"]
+
 def build_lane_polygon(lane_row):
     polygon_coords = [
         (lane_row['left_x1'], lane_row['left_y1']),
@@ -96,6 +98,6 @@ def pedestrian_on_lane(video_path, tracking_csv_path=None, lane_csv_path=None, o
                 "end_frame": None
             })
 
-    result_df = pd.DataFrame(results)
+    result_df = pd.DataFrame(results, columns=OUTPUT_COLUMNS)
     result_df.to_csv(output_csv_path, index=False)
     print(f"Pedestrian on lane detecion Done. Results saved to {output_csv_path}")

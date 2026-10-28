@@ -2,6 +2,7 @@ import argparse
 import subprocess
 import sys
 import os
+import math
 
 
 
@@ -25,23 +26,6 @@ ORCHESTRATOR_MODES = {"mul_all", "single_all", "pedestrian", "vehicle", "environ
 
 
 def main():
-    failed_modes = []
-
-    def run_mode(mode, video_path, analysis_interval=1.0, weights="yolo11n.pt"):
-        # sys.executable (not bare "python" via the shell): the venv interpreter must be
-        # used even when PATH points elsewhere. Exit codes are recorded — they used to be
-        # silently discarded, so single_all always exited 0 and run.py marked failed
-        # analyses as finished=TRUE.
-        cmd = [sys.executable, "main.py", "--mode", mode,
-               "--source_video_path", video_path,
-               "--analysis_interval", str(analysis_interval),
-               "--weights_yolo", weights]
-        print(f"Running: {mode} using video \"{video_path}\"", flush=True)
-        result = subprocess.run(cmd)
-        if result.returncode != 0:
-            failed_modes.append(mode)
-            print(f"[FAIL] mode {mode} exited with code {result.returncode}", flush=True)
-
     parser = argparse.ArgumentParser(description="Pedestrian Analysis Toolbox")
     parser.add_argument(
         "--mode",
@@ -90,7 +74,41 @@ def main():
         default=None,
         help="Interpreter of the Monocular-OSM-Localization env (for --mode localize)",
     )
+    parser.add_argument("--plan", action="store_true", help="Print the dependency plan without loading models")
+    parser.add_argument("--resume-failed", action="store_true", help="Reuse verified stages from the same video/configuration/code")
     args = parser.parse_args()
+    if not math.isfinite(args.analysis_interval) or args.analysis_interval <= 0:
+        parser.error("--analysis_interval must be finite and positive")
+    from modules.pipeline import build_plan, execute_pipeline
+    if args.plan:
+        for mode in ([args.mode] if args.mode in {"localize", "scene_seg"} else build_plan(args.mode)):
+            print(mode)
+        return
+    if args.mode in ORCHESTRATOR_MODES:
+        if args.mode == "mul_all":
+            from pathlib import Path
+            directory = Path(args.source_video_path)
+            if not directory.is_dir():
+                parser.error(f"not a video directory: {directory}")
+            videos = sorted(path for path in directory.iterdir() if path.suffix.lower() in {".mp4", ".avi", ".mov", ".mkv"})
+        else:
+            videos = [args.source_video_path]
+        failed = []
+        for video in videos:
+            manifest = execute_pipeline(video, args.mode, args.analysis_interval, args.weights_yolo,
+                                        resume=args.resume_failed)
+            if manifest["status"] not in {"complete", "partial"}:
+                failed.append(str(video))
+        if failed:
+            print(f"[FAIL] incomplete videos: {failed}", flush=True)
+            sys.exit(1)
+        return
+    from modules.pipeline import standalone_run
+    with standalone_run(args.source_video_path, args.mode):
+        _run_mode(args)
+
+
+def _run_mode(args):
 
     from modules.provenance import utc_now
     started_utc = utc_now()
@@ -334,154 +352,6 @@ def main():
             osm_python=args.osm_python,
         )
 
-    elif args.mode == "mul_all":
-        video_dir = args.source_video_path
-        if not os.path.isdir(video_dir):
-            print(f"Error: {video_dir} is not a valid directory.")
-            return
-
-        video_files = [f for f in os.listdir(video_dir) if f.lower().endswith((".mp4", ".avi", ".mov", ".mkv"))]
-
-        for video_file in video_files:
-            video_path = os.path.join(video_dir, video_file)
-            print(f"Processing {video_path} ...")
-            # basic function
-            # pedestrian
-            run_mode("id_img", video_path, args.analysis_interval, args.weights_yolo)
-            run_mode("ego", video_path)
-            run_mode("waiting", video_path, args.analysis_interval)
-            run_mode("phone", video_path, args.analysis_interval, args.weights_yolo)
-            run_mode("ag", video_path)
-            run_mode("clothing", video_path, args.analysis_interval)
-            run_mode("belongings", video_path, args.analysis_interval, args.weights_yolo)
-
-            # vehicle
-            run_mode("vehicle_type", video_path, args.analysis_interval)
-            run_mode("lane", video_path, args.analysis_interval)
-            run_mode("count_vehicle", video_path, args.analysis_interval)
-
-            # environment
-            run_mode("weather", video_path, args.analysis_interval)
-            run_mode("light", video_path, args.analysis_interval)
-            run_mode("traffic_sign", video_path, args.analysis_interval)
-            run_mode("road_condition", video_path, args.analysis_interval)
-            run_mode("width", video_path, args.analysis_interval)
-            run_mode("daytime", video_path, args.analysis_interval)
-            run_mode("crosswalk", video_path, args.analysis_interval)
-            run_mode("accident", video_path, args.analysis_interval)
-            run_mode("sidewalk", video_path, args.analysis_interval)
-
-            # advanced
-            run_mode("cross_pede", video_path)
-            run_mode("scale", video_path)  # [S2] stripe ground-plane scale -> feeds speed
-            run_mode("speed", video_path)  # after cross_pede so [C3] windows enable crossing speed
-            run_mode("pose", video_path)   # head-scanning + gait; needs the video + [C3]
-            run_mode("risky", video_path)
-            run_mode("crosswalk_usage", video_path)
-            run_mode("run_red", video_path)
-            run_mode("crossing_vehicle_count", video_path, args.analysis_interval)
-            run_mode("on_lane", video_path)
-            run_mode("nearby", video_path)
-
-            # novel insights (consume the CSVs produced above)
-            run_mode("pet", video_path)
-            run_mode("vehicle_speed", video_path)
-            run_mode("headway", video_path)
-            run_mode("signal_timing", video_path)
-            run_mode("micro_events", video_path)
-            run_mode("groups", video_path)
-
-            # summary
-            run_mode("personal_info", video_path)
-            run_mode("env_info", video_path)
-            run_mode("sum_video", video_path, args.analysis_interval)
-            run_mode("sum_pede", video_path)
-
-    elif args.mode == "single_all":
-        video_path = args.source_video_path
-        # basic function
-        # pedestrian
-        run_mode("id_img", video_path, args.analysis_interval, args.weights_yolo)
-        run_mode("ego", video_path)
-        run_mode("waiting", video_path, args.analysis_interval)
-        run_mode("phone", video_path, args.analysis_interval, args.weights_yolo)
-        run_mode("ag", video_path)
-        run_mode("clothing", video_path, args.analysis_interval)
-        run_mode("belongings", video_path, args.analysis_interval, args.weights_yolo)
-
-        # vehicle
-        run_mode("vehicle_type", video_path, args.analysis_interval)
-        run_mode("lane", video_path, args.analysis_interval)
-        run_mode("count_vehicle", video_path, args.analysis_interval)
-
-        # environment
-        run_mode("weather", video_path, args.analysis_interval)
-        run_mode("light", video_path, args.analysis_interval)
-        run_mode("traffic_sign", video_path, args.analysis_interval)
-        run_mode("road_condition", video_path, args.analysis_interval)
-        run_mode("width", video_path, args.analysis_interval)
-        run_mode("daytime", video_path, args.analysis_interval)
-        run_mode("crosswalk", video_path, args.analysis_interval)
-        run_mode("accident", video_path, args.analysis_interval)
-        run_mode("sidewalk", video_path, args.analysis_interval)
-
-        # advanced
-        run_mode("cross_pede", video_path)
-        run_mode("scale", video_path)  # [S2] stripe ground-plane scale -> feeds speed
-        run_mode("speed", video_path)  # after cross_pede so [C3] windows enable crossing speed
-        run_mode("pose", video_path)   # head-scanning + gait; needs the video + [C3]
-        run_mode("risky", video_path)
-        run_mode("crosswalk_usage", video_path)
-        run_mode("run_red", video_path)
-        run_mode("crossing_vehicle_count", video_path, args.analysis_interval)
-        run_mode("on_lane", video_path)
-        run_mode("nearby", video_path)
-
-        # novel insights (consume the CSVs produced above)
-        run_mode("pet", video_path)
-        run_mode("vehicle_speed", video_path)
-        run_mode("headway", video_path)
-        run_mode("signal_timing", video_path)
-        run_mode("micro_events", video_path)
-        run_mode("groups", video_path)
-
-        # summary
-        run_mode("personal_info", video_path)
-        run_mode("env_info", video_path)
-        run_mode("sum_video", video_path, args.analysis_interval)
-        run_mode("sum_pede", video_path)
-
-    elif args.mode == "pedestrian":
-        video_path = args.source_video_path
-        # basic function
-        # pedestrian
-        run_mode("id_img", video_path, args.analysis_interval, args.weights_yolo)
-        run_mode("ego", video_path)
-        run_mode("waiting", video_path, args.analysis_interval)
-        run_mode("speed", video_path)
-        run_mode("phone", video_path, args.analysis_interval, args.weights_yolo)
-        run_mode("ag", video_path)
-        run_mode("clothing", video_path, args.analysis_interval)
-        run_mode("belongings", video_path, args.analysis_interval, args.weights_yolo)
-
-    elif args.mode == "vehicle":
-        video_path = args.source_video_path
-        run_mode("vehicle_type", video_path, args.analysis_interval)
-        run_mode("lane", video_path, args.analysis_interval)
-        run_mode("count_vehicle", video_path, args.analysis_interval)
-
-    elif args.mode == "environment":
-        video_path = args.source_video_path
-        run_mode("weather", video_path, args.analysis_interval)
-        run_mode("light", video_path, args.analysis_interval)
-        run_mode("traffic_sign", video_path, args.analysis_interval)
-        run_mode("road_condition", video_path, args.analysis_interval)
-        run_mode("width", video_path, args.analysis_interval)
-        run_mode("daytime", video_path, args.analysis_interval)
-        run_mode("crosswalk", video_path, args.analysis_interval)
-        run_mode("accident", video_path, args.analysis_interval)
-        run_mode("sidewalk", video_path, args.analysis_interval)
-
     else:
         print(f"Unknown mode: {args.mode}")
 
@@ -490,17 +360,8 @@ def main():
     # only when the mode returned normally (a raised exception exits before this line).
     if args.mode not in ORCHESTRATOR_MODES:
         from modules.provenance import record_mode_run
-        record_mode_run(args.source_video_path, args.mode, started_utc)
+        record_mode_run(args.source_video_path, args.mode, started_utc, parameters=vars(args))
 
-    if failed_modes:
-        hard = [m for m in failed_modes if m not in OPTIONAL_MODES]
-        soft = [m for m in failed_modes if m in OPTIONAL_MODES]
-        if soft:
-            print(f"[WARN] optional modes unavailable/failed: {soft}", flush=True)
-        if hard:
-            # Propagate real failures so run.py does not mark the video finished=TRUE.
-            print(f"[FAIL] modes failed: {hard}", flush=True)
-            sys.exit(1)
 
 
 if __name__ == "__main__":

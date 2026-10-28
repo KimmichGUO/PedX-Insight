@@ -4,6 +4,8 @@ import pandas as pd
 from shapely.geometry import Point, Polygon
 from modules.paths import RESULTS_ROOT
 
+OUTPUT_COLUMNS = ['track_id', 'crossed', 'started_frame', 'ended_frame']
+
 def get_video_mid_x(video_path):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -119,6 +121,6 @@ def detect_crossing_strict(video_path, tracked_csv_path=None, sidewalk_csv_path=
     if output_csv_path is None:
         output_csv_path = os.path.join(os.path.dirname(tracked_csv_path), "crossing_results.csv")
 
-    pd.DataFrame(results).to_csv(output_csv_path, index=False)
+    pd.DataFrame(results, columns=OUTPUT_COLUMNS).to_csv(output_csv_path, index=False)
     print(f"Crossing detection results saved to: {output_csv_path}")
 

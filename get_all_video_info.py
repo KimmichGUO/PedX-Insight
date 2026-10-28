@@ -3,9 +3,11 @@ import re
 import pandas as pd
 import ast
 from pathlib import Path
-from modules.completeness import missing_outputs
+from modules.completeness import publication_issues
 from modules.mapping_utils import clean_mapping, find_city_in_mapping
 from modules.provenance import summarize as summarize_provenance
+from modules.paths import RESULTS_ROOT, SUMMARY_ROOT
+from modules.quality import METADATA_COLUMNS, video_metadata, analysis_time_record
 
 
 
@@ -50,21 +52,19 @@ def get_top_vehicles(file_path):
         return None, None, None
 
 
-def main():
+def main(results_root=None, mapping_path=None, output_root=None):
     # Define paths
-    final_results_path = Path('./analysis_results')
-    mapping_csv_path = Path('./mapping.csv')
+    final_results_path = Path(results_root or RESULTS_ROOT)
+    mapping_csv_path = Path(mapping_path or './mapping.csv')
     crossing_time_csv_path = Path('./crossing_time.csv')
     crossing_speed_csv_path = Path('./crossing_speed.csv')
-    output_csv_path = Path('./summary_data/all_video_info.csv')
+    output_csv_path = Path(output_root or SUMMARY_ROOT) / 'all_video_info.csv'
 
     if not final_results_path.exists():
-        print("Error: ./analysis_results/ folder does not exist")
-        return
+        raise FileNotFoundError(final_results_path)
 
     if not mapping_csv_path.exists():
-        print("Error: mapping.csv does not exist")
-        return
+        raise FileNotFoundError(mapping_csv_path)
 
     # Load mapping.csv
     try:
@@ -73,7 +73,7 @@ def main():
         print(f"Successfully loaded mapping.csv with {len(mapping_df)} records")
     except Exception as e:
         print(f"Error reading mapping.csv: {e}")
-        return
+        raise
 
     # Load crossing_time.csv
     crossing_time_df = None
@@ -166,7 +166,7 @@ def main():
         # with no behavioural data. Require the inputs every published column depends
         # on, so a partial video is skipped loudly instead of entering the dataset with
         # silent nulls.
-        missing = missing_outputs(folder_path)
+        missing = publication_issues(folder_path)
         if missing:
             print(f"  SKIPPED (incomplete analysis): {folder_name} is missing {len(missing)} "
                   f"required output(s): {', '.join(missing)}")
@@ -179,23 +179,18 @@ def main():
 
         # Analysis date (when [A1] was written) — the Visualizer's temporal features
         # parse a data_collected_date column when present.
-        data_collected_date = pd.Timestamp(video_info_path.stat().st_mtime, unit='s').strftime('%Y-%m-%d')
+        data_collected_date = None  # set from analysis provenance below; filesystem time is not evidence
 
         # Per-video analysis wall time, written by run.py as [A3]analysis_time.csv.
         # Aggregated below into summary_data/all_time_info.csv keyed by link.
         analysis_time_path = folder_path / '[A3]analysis_time.csv'
-        if analysis_time_path.exists():
-            try:
-                at_df = pd.read_csv(analysis_time_path)
-                if not at_df.empty:
-                    time_info_rows.append({
-                        'link': link,
-                        'video_name': folder_name,
-                        'duration_seconds': at_df.iloc[0].get('duration_seconds'),
-                        'analysis_seconds': at_df.iloc[0].get('analysis_seconds'),
-                    })
-            except Exception as e:
-                print(f"  Warning: could not read {analysis_time_path}: {e}")
+        analysis_timing = analysis_time_record(folder_path)
+        if analysis_timing:
+            time_info_rows.append({'link': link, 'video_name': folder_name,
+                'duration_seconds': analysis_timing.get('duration_seconds'),
+                'analysis_seconds': analysis_timing.get('analysis_seconds'),
+                'analysis_run_id': analysis_timing.get('analysis_run_id'),
+                'analyzed_at': analysis_timing.get('analyzed_at')})
 
         vehicle_count_path = folder_path / '[V6]vehicle_count.csv'
         top_vehicle1, top_vehicle2, top_vehicle3 = None, None, None
@@ -251,16 +246,11 @@ def main():
                 except Exception as e:
                     print(f"  Warning: could not read {_meta_path}: {e}")
         _dur = pd.to_numeric(row_data.get('duration_seconds'), errors='coerce')
-        if (pd.isna(_dur) or _dur <= 0) and analysis_time_path.exists():
-            try:
-                _at = pd.read_csv(analysis_time_path)
-                if not _at.empty:
-                    _d = pd.to_numeric(_at.iloc[0].get('duration_seconds'), errors='coerce')
-                    if pd.notna(_d) and _d > 0:
-                        row_data['duration_seconds'] = float(_d)
-                        row_data['duration_source'] = 'analysis_time'
-            except Exception as e:
-                print(f"  Warning: could not read {analysis_time_path}: {e}")
+        if (pd.isna(_dur) or _dur <= 0) and analysis_timing:
+            _d = pd.to_numeric(analysis_timing.get('duration_seconds'), errors='coerce')
+            if pd.notna(_d) and _d > 0:
+                row_data['duration_seconds'] = float(_d)
+                row_data['duration_source'] = 'analysis_time'
 
         row_data['crossing_time'] = crossing_time
         row_data['crossing_speed'] = crossing_speed
@@ -274,6 +264,8 @@ def main():
         # modified tracked files) and whether outputs mix revisions. Blank for folders
         # analysed before [A0] existed. Imported verbatim as videos.code_version.
         row_data['code_version'], row_data['code_version_mixed'] = summarize_provenance(folder_path)
+        row_data.update(video_metadata(folder_path, city, link, city_info))
+        row_data['data_collected_date'] = str(row_data['analyzed_at'])[:10] if row_data.get('analyzed_at') else None
 
         if city_info is not None:
             for col in mapping_columns:
@@ -300,7 +292,7 @@ def main():
             'top_vehicle1', 'top_vehicle2', 'top_vehicle3',
             'crossing_time', 'crossing_speed', 'data_collected_date',
             'code_version', 'code_version_mixed'
-        ] + mapping_columns
+        ] + mapping_columns + METADATA_COLUMNS
         result_df = result_df.reindex(columns=columns_order)
 
         # Ensure the output directory exists (./summary_data is not tracked in the repo).
@@ -312,14 +304,18 @@ def main():
         print(f"Results saved to {output_csv_path}")
         print(f"Output file contains {len(result_df)} rows and {len(result_df.columns)} columns")
     else:
-        print("No valid data found")
+        columns_order = ['city', 'link'] + video_info_columns + ['top_vehicle1', 'top_vehicle2', 'top_vehicle3',
+            'crossing_time', 'crossing_speed', 'data_collected_date', 'code_version', 'code_version_mixed'] + mapping_columns + METADATA_COLUMNS
+        output_csv_path.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(columns=columns_order).to_csv(output_csv_path, index=False, encoding='utf-8')
+        print("No valid data found; wrote an empty snapshot with column headers")
 
     # all_time_info.csv: consumed by statistics_with_pdf_save.py section 1 and by the
     # Visualizer's aggregate-csv-data.js (videos.analysis_seconds), keyed by link.
-    time_info_path = Path('./summary_data/all_time_info.csv')
+    time_info_path = output_csv_path.parent / 'all_time_info.csv'
     time_info_path.parent.mkdir(parents=True, exist_ok=True)
     time_df = pd.DataFrame(time_info_rows, columns=['link', 'video_name',
-                                                    'duration_seconds', 'analysis_seconds'])
+                                                    'duration_seconds', 'analysis_seconds', 'analysis_run_id', 'analyzed_at'])
     time_df.to_csv(time_info_path, index=False, encoding='utf-8')
     print(f"Analysis-time info for {len(time_df)} videos saved to {time_info_path}")
 

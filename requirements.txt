@@ -1,5 +1,7 @@
-# All dependencies pinned to their newest releases (July 2026), including the numpy 2.5.x
-# and OpenCV 5.x majors.
+# Minimum supported releases follow the July 2026 dependency policy, including
+# NumPy 2.5.x and OpenCV 5.x. These lower bounds are NOT a lock file.
+# Use constraints-py312-observed.txt for the documented snapshot-derived direct pins;
+# see docs/ENVIRONMENT.md for known production metadata drift and clean CI installs.
 #
 # paddlex was intentionally REMOVED: it hard-caps numpy<2.4 and pins
 # opencv-contrib-python==4.10.0.84, which made the newest numpy/OpenCV uninstallable
@@ -10,8 +12,9 @@ filterpy>=1.4.5
 lap>=0.5.13
 matplotlib>=3.11.0
 numpy>=2.5.1
-opencv_contrib_python>=5.0.0.93
-opencv_python>=5.0.0.93
+# Only one distribution may own cv2. PedX uses core OpenCV APIs; Ultralytics requires
+# this distribution by name. Installing contrib/headless alongside it overwrites cv2.
+opencv-python>=5.0.0.93
 pandas>=3.0.3
 Pillow>=12.3.0
 scikit-learn>=1.9.0
@@ -27,6 +30,9 @@ torchvision>=0.28.0
 # --mode scene_seg (Mask2Former / Mapillary Vistas, modules/scene_seg)
 transformers>=5.15.0
 ultralytics>=8.4.92
+# Explicit runtime tools used by the batch driver and the existing age-model fallback.
+yt-dlp>=2026.10.21
+onnxruntime>=1.28.0
 
 # Optional companion tool: Monocular-OSM-Localization (geolocates a video on OpenStreetMap
 # given the video + city name). It is now a real pip package -- distribution

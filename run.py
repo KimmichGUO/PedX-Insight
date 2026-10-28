@@ -1,214 +1,249 @@
+"""Resumable download, analysis, optional localization, and source retention."""
+import argparse
+import csv
+import datetime
+import math
+import os
+import subprocess
 import sys
 import time
+
 import pandas as pd
-import subprocess
-import os
-import argparse
+
+from modules.paths import RESULTS_ROOT
+from modules.localization.localize import localization_succeeded
+from modules.pipeline import file_hash
+from get_all_video_locations import bind_localization_to_analysis
 
 
-def _write_analysis_time(video_file_name, analysis_seconds):
-    """Record per-video analysis wall time as [A3]analysis_time.csv.
+def _true(value):
+    return pd.notna(value) and str(value).strip().lower() in {"true", "1", "1.0"}
 
-    This is the producer for summary_data/all_time_info.csv (aggregated by
-    get_all_video_info.py), keyed by the YouTube id so the Visualizer can join
-    on videos.link instead of the old fragile duration-equality join.
-    """
-    folder = os.path.splitext(video_file_name)[0]
-    out_dir = os.path.join("analysis_results", folder)
-    os.makedirs(out_dir, exist_ok=True)
-    # <name>_<video_id> with name underscore-free -> id = part after FIRST underscore
-    link = folder.split("_", 1)[1] if "_" in folder else folder
 
-    duration_seconds = None
-    video_info_csv = os.path.join(out_dir, "[A1]video_info.csv")
-    if os.path.exists(video_info_csv):
+def _window(row, clip_seconds=0):
+    """Mapping times are absolute source seconds; a budget starts at the mapped start."""
+    def number(value, default):
+        if pd.isna(value) or str(value).strip() == "":
+            return default
+        value = float(value)
+        if not math.isfinite(value) or value < 0:
+            raise ValueError("Clip times must be finite and nonnegative")
+        return value
+
+    start = number(row.get("start_time"), 0.0)
+    end = number(row.get("end_time"), None)
+    if end is not None and end <= start:
+        raise ValueError("end_time must be greater than start_time")
+    if clip_seconds:
+        end = min(end, start + clip_seconds) if end is not None else start + clip_seconds
+    return start, end
+
+
+def _localization_status(folder, video_path=None, previous_status=None):
+    """Require the analyzed bytes; confidence describes an estimate, not retry success."""
+    def read(name):
         try:
-            vi = pd.read_csv(video_info_csv)
-            match = vi.loc[vi["metric"] == "duration_seconds", "value"]
-            if not match.empty:
-                duration_seconds = match.iloc[0]
-        except Exception as e:
-            print(f"[warn] could not read duration from {video_info_csv}: {e}")
+            with open(os.path.join(RESULTS_ROOT, folder, name), encoding="utf-8") as f:
+                return next(csv.DictReader(f), {})
+        except (OSError, ValueError):
+            return {}
+    latest = read("[L1]localization_attempt.csv")
+    if latest:
+        latest = bind_localization_to_analysis(latest, os.path.join(RESULTS_ROOT, folder))
+        if not localization_succeeded(latest):
+            return latest.get("status") or "failed"
+    result = bind_localization_to_analysis(read("[L1]localization.csv"), os.path.join(RESULTS_ROOT, folder))
+    status = "ok" if localization_succeeded(result) else result.get("status") or "pending"
+    if status == "ok" and video_path is not None and os.path.isfile(video_path):
+        try:
+            if file_hash(video_path) != result["analysis_source_video_sha256"]:
+                return "source_mismatch"
+        except OSError:
+            return "source_unverified"
+    prior = str(previous_status or "").strip().lower()
+    if status == "ok" and prior not in {"", "nan", "none", "ok", "not_requested", "pending"}:
+        return prior
+    return status
 
+
+def _write_analysis_time(video_file_name, analysis_seconds, start=0.0, end=None):
+    folder = os.path.splitext(video_file_name)[0]
+    out_dir = os.path.join(RESULTS_ROOT, folder)
+    os.makedirs(out_dir, exist_ok=True)
+    link = folder.split("_", 1)[1] if "_" in folder else folder
+    from modules.pipeline import read_manifest
+    manifest = read_manifest(out_dir) or {}
+    duration = None
+    try:
+        vi = pd.read_csv(os.path.join(out_dir, "[A1]video_info.csv"))
+        values = vi.loc[vi["metric"] == "duration_seconds", "value"]
+        if not values.empty:
+            duration = values.iloc[0]
+    except (OSError, ValueError, KeyError):
+        pass
     pd.DataFrame([{
-        "link": link,
-        "video_name": folder,
-        "duration_seconds": duration_seconds,
+        "link": link, "video_name": folder, "duration_seconds": duration,
         "analysis_seconds": round(analysis_seconds, 1),
+        "clip_start_seconds": start, "clip_end_seconds": end,
+        "analysis_run_id": manifest.get("run_id") if manifest.get("status") == "complete" else None,
+        "analyzed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     }]).to_csv(os.path.join(out_dir, "[A3]analysis_time.csv"), index=False)
 
 
-def run(start_row: int = 1, start_step: int = 1, csv_file: str = "mapping_one_each.csv",
-        localize: bool = False, limit: int = 0, clip_seconds: int = 0):
-    """
-    Process videos: download, analyze, and delete.
+def run(start_row=1, start_step=1, csv_file="mapping_one_each.csv", localize=False,
+        limit=0, clip_seconds=0):
+    """Retry pending stages; delete media only after all requested stages succeed.
 
-    Args:
-        start_row (int): Start processing from which row in the CSV (1-based, not including header). Default = 1.
-        start_step (int): Which step to start with.
-                          1 = download, 2 = analysis, 3 = deletion. Default = 1.
-        csv_file (str): Path to the CSV file containing video info. Default = "mapping_each.csv".
-        localize (bool): Also geolocate each video (--mode localize) after analysis and
-                         BEFORE deletion (localization needs the video file). Requires the
-                         monocular_osm package (pip install -r requirements-localize.txt);
-                         failures never block the run.
-        limit (int): Stop after processing this many videos (0 = no limit). Counts videos
-                         actually processed, not rows skipped as already-finished.
-        clip_seconds (int): Download only the first N seconds of each video (0 = whole
-                         video, the default). Analysis cost is 3.5-90x realtime and scales
-                         with pedestrian density, so an unbounded batch over dense cities
-                         can run for weeks; this bounds it. Needs ffmpeg on PATH.
+    ``finished`` remains analysis success. Localization has independent requested/status
+    columns. ``start_step`` applies to the first pending row, including location retries.
     """
-    # Read CSV
+    if start_row < 1 or start_step not in (1, 2, 3) or limit < 0 or not math.isfinite(clip_seconds) or clip_seconds < 0:
+        raise ValueError("Invalid resume, limit, or clip options")
     df = pd.read_csv(csv_file)
-
-    # Ensure columns exist, and force object dtype: an all-empty CSV column is inferred
-    # as float64, and pandas 3 removed the silent upcast on setitem — assigning the
-    # 'TRUE' status strings below would raise LossySetitemError.
-    for col in ['finished', 'downloaded']:
-        if col not in df.columns:
-            print(f"Column '{col}' not found, creating it")
+    for col in ("finished", "downloaded", "analysis_status", "localization_requested",
+                "localization_status", "downloaded_start_time", "downloaded_end_time"):
+        if col not in df:
             df[col] = None
-        df[col] = df[col].astype('object')
+        df[col] = df[col].astype("object")
+    os.makedirs("videos", exist_ok=True)
 
-    video_folder = './videos'
-    os.makedirs(video_folder, exist_ok=True)
+    def save():
+        temp = str(csv_file) + ".tmp"
+        df.to_csv(temp, index=False, encoding="utf-8")
+        os.replace(temp, csv_file)
 
     processed = 0
-    for i, (idx, row) in enumerate(df.iloc[start_row - 1:].iterrows()):
+    for idx, row in df.iloc[start_row - 1:].iterrows():
         if limit and processed >= limit:
-            print(f"Reached --limit {limit}; stopping.")
             break
-        # start_step applies to the first processed row only (the resume point): 1=download,
-        # 2=analysis, 3=deletion. Subsequent rows always run the full pipeline.
-        effective_start_step = start_step if i == 0 else 1
-        video_id = row['video']
-        name = row['name']
-        is_finished = pd.notna(row['finished']) and str(row['finished']).upper() == 'TRUE'
-
-        # Skip if already analyzed
-        if is_finished:
-            print(f"Video {name} already analyzed, skipping...")
+        name, video_id = str(row["name"]), str(row["video"])
+        folder = f"{name}_{video_id}"
+        video_name = folder + ".mp4"
+        video_path = os.path.join("videos", video_name)
+        finished = _true(row["finished"])
+        wants_location = localize or _true(row["localization_requested"])
+        prior_status = str(row.get("localization_status", "")).strip().lower()
+        location_status = _localization_status(folder, video_path, prior_status) if wants_location else "not_requested"
+        location_needed = wants_location and location_status != "ok"
+        exists = os.path.isfile(video_path) and os.path.getsize(video_path) > 0
+        if finished and not location_needed and not exists:
+            if _true(row["downloaded"]):
+                df.loc[idx, "downloaded"] = "FALSE"
+                save()
+            continue
+        effective_step = start_step if processed == 0 else 1
+        processed += 1
+        df.loc[idx, "localization_requested"] = "TRUE" if wants_location else "FALSE"
+        df.loc[idx, "localization_status"] = location_status
+        df.loc[idx, "downloaded"] = "TRUE" if exists else "FALSE"
+        try:
+            # Localization retries use the analyzed clip even without the old budget flag.
+            if (finished or (effective_step == 2 and not clip_seconds)) and pd.notna(row.get("downloaded_start_time")):
+                start, end = _window({"start_time": row["downloaded_start_time"],
+                                      "end_time": row.get("downloaded_end_time")})
+            else:
+                start, end = _window(row, clip_seconds)
+        except (TypeError, ValueError) as e:
+            print(f"[FAIL] Invalid window for {video_name}: {e}")
+            save()
             continue
 
-        video_name = f"{name}_{video_id}.mp4"
-        video_path = os.path.join(video_folder, video_name)
-        url = f"https://www.youtube.com/watch?v={video_id}"
-
-        # Check download status
-        is_downloaded = pd.notna(row['downloaded']) and str(row['downloaded']).upper() == 'TRUE'
-
-        # Step 1: Download if not downloaded
-        if effective_start_step <= 1 and not is_downloaded:
-            download_cmd = [
-                "yt-dlp",
-                "--cookies", "www.youtube.com_cookies.txt",
-                # node runtime lets yt-dlp solve YouTube's JS challenges (node v24 installed);
-                # without it extraction is deprecated and bot-checks trigger sooner.
-                "--js-runtimes", "node",
-                "--user-agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "--referer", "https://www.youtube.com/",
-                "-f", "bestvideo[height<=720]/bestvideo",
-                "-o", video_path,
-            ]
-            if clip_seconds and clip_seconds > 0:
-                # Fetch only the opening window. yt-dlp needs ffmpeg for this, and
-                # --force-keyframes-at-cuts makes the cut frame-accurate so the analysis
-                # modules do not start on a partial GOP.
-                download_cmd += ["--download-sections", f"*0-{int(clip_seconds)}",
-                                 "--force-keyframes-at-cuts"]
-            download_cmd.append(url)
-            print(f"Downloading video {video_name} ...")
+        needs_media = not finished or location_needed
+        prior_start, prior_end = row.get("downloaded_start_time"), row.get("downloaded_end_time")
+        known_window = pd.notna(prior_start)
+        try:
+            window_matches = ((not known_window and (finished or (start == 0 and end is None))) or
+                              (known_window and float(prior_start) == start and
+                               ((pd.isna(prior_end) and end is None) or
+                                (pd.notna(prior_end) and end is not None and float(prior_end) == end))))
+        except (TypeError, ValueError):
+            window_matches = False
+        if needs_media and (not exists or not window_matches):
+            if effective_step > 1:
+                print(f"[KEEP] {video_name}: source missing or window differs; resume from step 1")
+                save()
+                continue
+            staging = video_path + ".download.mp4"
+            command = ["yt-dlp", "--cookies", "www.youtube.com_cookies.txt", "--js-runtimes", "node",
+                       "--user-agent", "Mozilla/5.0", "--referer", "https://www.youtube.com/",
+                       "-f", "bestvideo[height<=720]/bestvideo", "--force-overwrites", "-o", staging]
+            if start > 0 or end is not None:
+                finish = f"{end:g}" if end is not None else "inf"
+                command += ["--download-sections", f"*{start:g}-{finish}", "--force-keyframes-at-cuts"]
+            command.append(f"https://www.youtube.com/watch?v={video_id}")
             try:
-                subprocess.run(download_cmd, check=True)
-                print(f"Downloaded {video_name}")
-                df.loc[idx, 'downloaded'] = 'TRUE'
-                df.to_csv(csv_file, index=False)
-            except subprocess.CalledProcessError:
-                print(f"Failed to download video {video_name}, skipping.")
+                subprocess.run(command, check=True)
+                if not os.path.isfile(staging) or os.path.getsize(staging) == 0:
+                    raise OSError("Downloader returned without a nonempty media file")
+                os.replace(staging, video_path)
+                exists = True
+                df.loc[idx, "downloaded"] = "TRUE"
+                df.loc[idx, "downloaded_start_time"] = start
+                df.loc[idx, "downloaded_end_time"] = end
+            except (subprocess.CalledProcessError, OSError) as e:
+                print(f"[FAIL] Download {video_name}: {e}")
+                save()
                 continue
 
-        # Step 2: Run analysis
-        if effective_start_step <= 2:
-            analysis_cmd = [
-                sys.executable,
-                "main.py",
-                "--mode", "single_all",
-                "--source_video_path", f"./videos/{video_name}"
-            ]
-            print(f"Analyzing video {video_name} ...")
+        if not finished and effective_step <= 2:
+            df.loc[idx, "analysis_status"] = "running"
+            save()
             try:
-                analysis_started = time.time()
-                subprocess.run(analysis_cmd, check=True)
-                _write_analysis_time(video_name, time.time() - analysis_started)
-                print(f"[OK] Analysis completed for {video_name}")
-                df.loc[idx, 'finished'] = 'TRUE'
-                df.to_csv(csv_file, index=False)
-            except subprocess.CalledProcessError:
-                print(f"[FAIL] Analysis failed for {video_name}")
+                began = time.monotonic()
+                subprocess.run([sys.executable, "main.py", "--mode", "single_all",
+                                "--source_video_path", video_path], check=True,
+                               env=dict(os.environ, PEDX_CLIP_START_SECONDS=f"{start:g}",
+                                        PEDX_CLIP_END_SECONDS=f"{end:g}" if end is not None else ""))
+                _write_analysis_time(video_name, time.monotonic() - began, start, end)
+                finished = True
+                df.loc[idx, "finished"] = "TRUE"
+                df.loc[idx, "analysis_status"] = "ok"
+                if wants_location:
+                    # Reanalysis can change clip bytes without changing the folder/link.
+                    location_status = _localization_status(folder, video_path, prior_status)
+                    location_needed = location_status != "ok"
+                    df.loc[idx, "localization_status"] = location_status
+            except (subprocess.CalledProcessError, OSError) as e:
+                df.loc[idx, "analysis_status"] = "failed"
+                print(f"[FAIL] Analysis {video_name}: {e}")
+                save()
                 continue
 
-        localize_failed = False
-        # Step 2.5: Geolocate (optional) — must run BEFORE deletion, needs the video file.
-        if localize and effective_start_step <= 2:
-            # Call the wrapper directly (it forwards unknown flags to the OSM tool);
-            # main.py's strict argparse can't carry tool flags. The flags below are the
-            # proven fast/safe configuration: no splat/aerial refinement, ~0.7s frame
-            # spacing for real VO baselines, capped frame budget.
-            localize_cmd = [
-                sys.executable, os.path.join("modules", "localization", "localize.py"),
-                "--source_video_path", video_path,
-                "--no-splat", "--no-aerial",
-                "--frame-stride", "20", "--max-frames", "600",
-                "--vo-segment", "60:900",
-            ]
-            print(f"Localizing video {video_name} ...")
-            # check=False: a failed/unconfigured localization must never block the pipeline;
-            # localize writes its own status row into [L1]localization.csv either way.
-            result = subprocess.run(localize_cmd, check=False)
-            localize_failed = result.returncode != 0
-            print(f"[{'OK' if not localize_failed else 'WARN'}] Localization "
-                  f"{'completed' if not localize_failed else 'failed (continuing)'} for {video_name}")
+        if location_needed and finished and effective_step <= 2:
+            df.loc[idx, "localization_status"] = "running"
+            save()
+            try:
+                result = subprocess.run([
+                    sys.executable, "-m", "modules.localization.localize",
+                    "--source_video_path", video_path, "--no-splat", "--no-aerial",
+                    "--frame-stride", "20", "--max-frames", "600", "--vo-segment", "60:900",
+                ], check=False)
+                location_status = _localization_status(folder, video_path)
+                if result.returncode and location_status == "ok":
+                    location_status = "subprocess_failed"
+            except OSError as e:
+                print(f"[FAIL] Localization {video_name}: {e}")
+                location_status = "subprocess_failed"
+            df.loc[idx, "localization_status"] = location_status
 
-        # Step 3: Delete video -- but NOT if localization was asked for and failed.
-        # Localization is the only step that needs the video file, and its usual failure
-        # mode is a transient one: the OSM road graph is fetched from Overpass, which
-        # rate-limits and times out (observed: 21 s just to connect, and a dense city's
-        # graph query then exceeding the 180 s timeout). Deleting on failure turns a
-        # retryable network blip into a mandatory multi-hundred-MB re-download, so the
-        # video is kept and the operator is told how to retry it.
-        if effective_start_step <= 3 and os.path.exists(video_path):
-            if localize_failed:
-                print(f"[KEEP] {video_name} retained because localization failed — retry with:")
-                print(f"       python modules/localization/localize.py --source_video_path \"{video_path}\" "
-                      f"--no-splat --no-aerial --frame-stride 20 --max-frames 600 --vo-segment 60:900")
-            else:
+        if finished and (not wants_location or location_status == "ok"):
+            if os.path.exists(video_path):
                 os.remove(video_path)
-                print(f"[OK] Deleted video {video_name}")
-
-        processed += 1
-
-    print("All videos processed!")
+            df.loc[idx, "downloaded"] = "FALSE"
+        elif exists:
+            print(f"[KEEP] {video_name}: requested stages remain incomplete")
+        save()
+    return processed
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process videos: download, analyze, and delete.")
-    parser.add_argument("--start_row", type=int, default=1, help="Row number to start from (1 = first data row)")
-    parser.add_argument("--start_step", type=int, default=1, choices=[1, 2, 3],
-                        help="Step to start with: 1 = download, 2 = analysis, 3 = deletion")
-    parser.add_argument("--csv", type=str, default="mapping_one_each.csv", help="Path to CSV file with video info")
-    parser.add_argument("--localize", action="store_true",
-                        help="Also geolocate each video (--mode localize) after analysis, before deletion. "
-                             "Requires the monocular_osm package (see README / requirements-localize.txt).")
-    parser.add_argument("--limit", type=int, default=0,
-                        help="Stop after processing this many videos (0 = no limit).")
-    parser.add_argument("--clip-seconds", dest="clip_seconds", type=int, default=0,
-                        help="Download only the first N seconds of each video (0 = whole video). "
-                             "Analysis runs 3.5-90x realtime and scales with pedestrian density, "
-                             "so this is how you bound a batch's cost. Requires ffmpeg on PATH.")
-
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--start_row", type=int, default=1)
+    parser.add_argument("--start_step", type=int, default=1, choices=[1, 2, 3])
+    parser.add_argument("--csv", default="mapping_one_each.csv")
+    parser.add_argument("--localize", action="store_true")
+    parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument("--clip-seconds", type=int, default=0,
+                        help="Bound the mapped interval to N seconds from start_time (0 = full mapped interval)")
     args = parser.parse_args()
-
-    run(start_row=args.start_row, start_step=args.start_step, csv_file=args.csv, localize=args.localize,
-        limit=args.limit, clip_seconds=args.clip_seconds)
+    run(args.start_row, args.start_step, args.csv, args.localize, args.limit, args.clip_seconds)

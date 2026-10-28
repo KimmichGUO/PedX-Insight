@@ -65,6 +65,11 @@ def find_city_in_mapping(city, link, mapping_df):
     Exact name match first, then a normalised match. Among several rows with the same name
     (two Londons), the one whose `videos` list contains `link` wins.
     """
+    # Prefer the source identity to a filename-derived spelling of a city.
+    if "videos" in mapping_df.columns:
+        linked = mapping_df[mapping_df["videos"].map(lambda raw: link in (_videos_list(raw) or []) if isinstance(raw, (str, list, tuple)) else False)]
+        if len(linked) == 1:
+            return linked.iloc[0]
     city_matches = mapping_df[mapping_df["city"] == city]
     if len(city_matches) == 0:
         norm = normalise_city(city)
@@ -86,4 +91,4 @@ def find_city_in_mapping(city, link, mapping_df):
         except Exception as e:
             print(f"Error parsing 'videos' column: {e}, value: {row.get('videos')}")
     print(f"Warning: City {city} has multiple matches but no record contains link {link}")
-    return city_matches.iloc[0]
+    return None  # ambiguous countries must never be resolved by row order

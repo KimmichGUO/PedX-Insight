@@ -1,59 +1,65 @@
-# Nightly PedX publish: aggregate PedX-Insight results -> copy to PedX-Visualizer -> push
-# to the hosted DB. Registered in Windows Task Scheduler as "PedX Nightly Publish" (03:00
-# daily) so the Globe stays current while the long batch run grinds through videos.
-#
-# Safe alongside a running batch: folders mid-analysis lack [A1]/[A2] and are skipped by
-# the aggregation scripts; they are picked up the following night.
+# Publish immutable configured revisions, with manifest validation and atomic activation.
+$ErrorActionPreference = 'Stop'
+$Insight = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$Viz = if ($env:PEDX_VISUALIZER_ROOT) { $env:PEDX_VISUALIZER_ROOT } else { Join-Path (Split-Path $Insight -Parent) 'PedX-Visualizer' }
+$Python = if ($env:PEDX_PYTHON) { $env:PEDX_PYTHON } else { 'C:\Users\markc\AppData\Local\Programs\Python\Python312\python.exe' }
+$Node = if ($env:PEDX_NODE) { $env:PEDX_NODE } else { (Get-Command node -ErrorAction Stop).Source }
+$Log = Join-Path $PSScriptRoot 'nightly_publish.log'
+$ReleaseRef = if ($env:PEDX_PUBLISH_REF) { $env:PEDX_PUBLISH_REF } else { 'refs/heads/main' }
+$VizRef = if ($env:PEDX_VISUALIZER_PUBLISH_REF) { $env:PEDX_VISUALIZER_PUBLISH_REF } else { 'refs/heads/main' }
+$TempRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath())
+$Work = Join-Path $TempRoot ('pedx_publish_' + [guid]::NewGuid().ToString('N'))
+$ReleaseRoot = if ($env:PEDX_RELEASES_ROOT) { $env:PEDX_RELEASES_ROOT } else { Join-Path $env:LOCALAPPDATA 'PedX\releases' }
+$Release = Join-Path $ReleaseRoot ([guid]::NewGuid().ToString('N'))
 
-$ErrorActionPreference = "Continue"
-$Python  = "C:\Users\markc\AppData\Local\Programs\Python\Python312\python.exe"
-$Npm     = "C:\Users\markc\AppData\Local\nodejs\npm.cmd"
-$Insight = "C:\Users\markc\Desktop\PedX-Insight"
-$Viz     = "C:\Users\markc\Desktop\PedX-Visualizer"
-$Log     = Join-Path $Insight "scripts\nightly_publish.log"
-
-function Log($msg) {
-    $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  $msg"
-    Add-Content -Path $Log -Value $line
+function Log($Message) { Add-Content -LiteralPath $Log -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $Message" }
+function Snapshot($Repository, $Reference, $Destination, $Archive) {
+    $Commit = (& git -C $Repository rev-parse --verify "$($Reference)^{commit}").Trim()
+    if ($LASTEXITCODE -ne 0 -or $Commit -notmatch '^[a-f0-9]{40}$') { throw "Invalid publication reference: $Reference" }
+    New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+    & git -C $Repository archive --format=tar "--output=$Archive" $Commit
+    if ($LASTEXITCODE -ne 0) { throw "Cannot archive $Repository" }
+    & tar -xf $Archive -C $Destination
+    if ($LASTEXITCODE -ne 0) { throw "Cannot extract $Repository" }
+    return $Commit
 }
 
-Log "===== nightly publish start ====="
-Set-Location $Insight
-
-foreach ($script in @("get_all_pede_info.py", "get_all_video_info.py", "statistics_with_pdf_save.py")) {
-    & $Python $script *>> $null
-    if ($LASTEXITCODE -ne 0) { Log "FAIL $script (exit $LASTEXITCODE)"; Log "aborting"; exit 1 }
-    Log "ok   $script"
+$SavedEnvironment = @{}
+foreach ($Name in @('PEDX_RESULTS_ROOT', 'PEDX_SUMMARY_ROOT', 'PEDX_IMMUTABLE_SOURCE_REVISION', 'PEDX_ENV_FILE', 'NODE_PATH')) {
+    $SavedEnvironment[$Name] = [Environment]::GetEnvironmentVariable($Name, 'Process')
 }
-
-# Inferential statistics (variance partition, adjusted associations, forest plot) ->
-# summary_data/inferential_*.csv. NON-FATAL: model fits can fail on a thin dataset, and the
-# descriptive aggregates above must still publish when they do.
-& $Python "statistics_inferential.py" *>> $null
-if ($LASTEXITCODE -ne 0) {
-    Log "WARN statistics_inferential.py (exit $LASTEXITCODE) - inferential tables may be stale; continuing"
-} else {
-    Log "ok   statistics_inferential.py"
+try {
+    Log 'nightly publish start'
+    New-Item -ItemType Directory -Path $Work -Force | Out-Null
+    $InsightSnapshot = Join-Path $Work 'Insight'
+    $VizSnapshot = Join-Path $Work 'Visualizer'
+    $Commit = Snapshot $Insight $ReleaseRef $InsightSnapshot (Join-Path $Work 'insight.tar')
+    $VizCommit = Snapshot $Viz $VizRef $VizSnapshot (Join-Path $Work 'visualizer.tar')
+    if (-not (Test-Path -LiteralPath (Join-Path $InsightSnapshot 'scripts\build_release.py'))) { throw 'Configured Insight revision has no validated release builder' }
+    if (-not (Test-Path -LiteralPath (Join-Path $VizSnapshot 'scripts\publish-release.js'))) { throw 'Configured Visualizer revision has no atomic publisher' }
+    $env:PEDX_RESULTS_ROOT = Join-Path $Insight 'analysis_results'
+    $env:PEDX_SUMMARY_ROOT = $Release
+    $env:PEDX_IMMUTABLE_SOURCE_REVISION = $Commit
+    $env:PEDX_ENV_FILE = if ($SavedEnvironment['PEDX_ENV_FILE']) { $SavedEnvironment['PEDX_ENV_FILE'] } elseif (Test-Path -LiteralPath (Join-Path $Viz '.env.local')) { Join-Path $Viz '.env.local' } else { Join-Path $Viz '.env' }
+    $env:NODE_PATH = Join-Path $Viz 'node_modules'
+    Push-Location $InsightSnapshot
+    try {
+        & $Python -B -m scripts.build_release --output $Release --results-root $env:PEDX_RESULTS_ROOT --mapping (Join-Path $Insight 'mapping.csv') *>> $Log
+        if ($LASTEXITCODE -ne 0) { throw 'Release preparation failed; previous active release retained' }
+    } finally { Pop-Location }
+    Push-Location $VizSnapshot
+    try {
+        & $Node scripts/publish-release.js --csv-dir $Release *>> $Log
+        if ($LASTEXITCODE -ne 0) { throw 'Atomic publication failed; previous active release retained' }
+    } finally { Pop-Location }
+    Log "published Insight=$Commit Visualizer=$VizCommit release=$Release"
+    # Verify the absolute target before recursively removing this named scratch directory.
+    $ResolvedWork = [System.IO.Path]::GetFullPath($Work)
+    if (-not $ResolvedWork.StartsWith($TempRoot, [System.StringComparison]::OrdinalIgnoreCase) -or (Split-Path $ResolvedWork -Leaf) -notlike 'pedx_publish_*') { throw 'Refusing cleanup outside publication scratch directory' }
+    Remove-Item -LiteralPath $ResolvedWork -Recurse -Force
+} catch {
+    Log "FAIL: $($_.Exception.Message); staging retained at $Work"
+    exit 1
+} finally {
+    foreach ($Name in $SavedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($Name, $SavedEnvironment[$Name], 'Process') }
 }
-
-# Localization aggregate -> summary_data/all_video_locations.csv, the input contract of the
-# Visualizer's import-video-coordinates.js (run below via db:publish). Without this the nightly
-# job would copy and import whatever stale CSV was last generated by hand. Kept NON-FATAL and
-# separate from the loop above: localization is opt-in (run.py --localize), so a failure here
-# must not block publishing the core pedestrian/video aggregates. It already no-ops safely when
-# no [L1]localization.csv files exist yet.
-& $Python "get_all_video_locations.py" *>> $null
-if ($LASTEXITCODE -ne 0) {
-    Log "WARN get_all_video_locations.py (exit $LASTEXITCODE) - coordinates may be stale; continuing"
-} else {
-    Log "ok   get_all_video_locations.py"
-}
-
-Copy-Item -Path (Join-Path $Insight "summary_data\*.csv") -Destination (Join-Path $Viz "summary_data") -Force
-Log "ok   copied summary_data CSVs"
-
-Set-Location $Viz
-& $Npm run db:publish *>> $null
-if ($LASTEXITCODE -ne 0) { Log "FAIL npm run db:publish (exit $LASTEXITCODE)"; exit 1 }
-Log "ok   db:publish (aggregate + coordinates + views + insights)"
-Log "===== nightly publish done ====="

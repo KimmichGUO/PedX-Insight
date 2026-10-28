@@ -1,0 +1,20 @@
+{
+  "python": "3.12.9",
+  "platform": "Windows x86_64",
+  "tested_at_utc": "2026-10-28T09:05:39.619610Z",
+  "runtime": "CPU",
+  "pip_check": "passed",
+  "strict_environment_imports": "passed",
+  "tests_passed": 242,
+  "tests_deselected": 3,
+  "test_exclusions": [
+    "real_archived_crops",
+    "empty_and_non_png_folders",
+    "unreadable_png_is_skipped"
+  ],
+  "installed_distribution_count": 88,
+  "lock_sha256": "a9ba57e2a48b0edc4a64cc1aa7d111007ab77676c614ba85ad9164b488121372",
+  "scope": "Fresh venv install with artifact hash verification and offline tests; no detector weights downloaded or inference run",
+  "test_duration_seconds": 34.42,
+  "test_command": "python -B -m pytest -o addopts='' -q -p no:cacheprovider tests --basetemp <fresh-temporary-directory> --junitxml <temporary-report.xml> -k 'not real_archived_crops and not empty_and_non_png_folders and not unreadable_png_is_skipped'"
+}

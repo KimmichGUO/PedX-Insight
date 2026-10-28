@@ -66,6 +66,9 @@ free VRAM and utilization at or below 25%; `--device cpu` explicitly selects CPU
 The worker never stops another process. Media, logs and atomic state stay under
 the work directory; pilot and full-window results are separate. Downloads resume
 only when source identity, section bounds and checksums agree. Sources are retained.
+Use `--download-python` for a separate yt-dlp environment with its supported
+JavaScript components; [the archive guide](docs/ARCHIVE_REANALYSIS.md) documents
+isolated installation and acquisition timeouts without changing the CV environment.
 
 The worker leaves location review pending and never publishes automatically.
 Structured city reviews in `location_verification_source` bind the reviewer,

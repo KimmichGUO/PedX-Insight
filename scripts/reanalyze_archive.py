@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -126,14 +127,45 @@ def select_jobs(args):
     return jobs[:limit] if limit else jobs, skipped
 
 
-def run_command(command, *, cwd, env, log_path=None):
-    options = dict(cwd=cwd, env=env, check=True, text=True, encoding="utf-8", errors="replace")
+def run_command(command, *, cwd, env, log_path=None, timeout=None):
+    options = dict(cwd=cwd, env=env, text=True, encoding="utf-8", errors="replace")
+
+    def execute(stdout, stderr):
+        if timeout is None:
+            # Long-running CV/localization retain their existing unbounded runtime.
+            return subprocess.run(command, stdout=stdout, stderr=stderr, check=True, **options)
+        group = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW}
+                 if os.name == "nt" else {"start_new_session": True})
+        with subprocess.Popen(command, stdout=stdout, stderr=stderr, **options, **group) as process:
+            try:
+                output, errors = process.communicate(timeout=timeout)
+            except (subprocess.TimeoutExpired, KeyboardInterrupt):
+                # Only this invocation's child tree is terminated, including its ffmpeg.
+                if os.name == "nt":
+                    taskkill = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "taskkill.exe"
+                    try:
+                        subprocess.run([str(taskkill), "/PID", str(process.pid), "/T", "/F"],
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+                    except (OSError, subprocess.TimeoutExpired):
+                        process.kill()
+                else:
+                    try:
+                        os.killpg(process.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                if process.poll() is None:
+                    process.kill()
+                process.wait(timeout=10)
+                raise
+            if process.returncode:
+                raise subprocess.CalledProcessError(process.returncode, command, output=output, stderr=errors)
+            return subprocess.CompletedProcess(command, process.returncode, output, errors)
     if log_path is None:
-        return subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **options)
+        return execute(subprocess.PIPE, subprocess.PIPE)
     with Path(log_path).open("a", encoding="utf-8") as stream:
         stream.write("\n[archive worker stage started " + now() + "]\n")
         stream.flush()
-        return subprocess.run(command, stdout=stream, stderr=subprocess.STDOUT, **options)
+        return execute(stream, subprocess.STDOUT)
 
 
 def disk_guard(root):
@@ -148,7 +180,7 @@ def wait_for_gpu(args, env, runner, sleeper):
     while True:
         result = runner(["nvidia-smi", "--id=" + str(args.gpu_index),
                          "--query-gpu=memory.free,utilization.gpu", "--format=csv,noheader,nounits"],
-                        cwd=args.work_root, env=env)
+                        cwd=args.work_root, env=env, timeout=15)
         fields = result.stdout.strip().splitlines()[0].split(",")
         free, utilization = map(float, fields)
         if math.isfinite(free) and math.isfinite(utilization) and free >= 8192 and 0 <= utilization <= 25:
@@ -171,7 +203,7 @@ def inspect_download(media, info_path, job, args, env, runner):
             raise ValueError("Downloader section metadata differs from the requested bounds")
     result = runner([args.ffprobe, "-v", "error", "-show_entries",
                      "format=duration,start_time:stream=codec_type,codec_name,width,height,avg_frame_rate",
-                     "-of", "json", str(media)], cwd=args.work_root, env=env)
+                     "-of", "json", str(media)], cwd=args.work_root, env=env, timeout=45)
     probe = json.loads(result.stdout)
     duration = number(probe.get("format", {}).get("duration"))
     if duration <= 0 or not any(s.get("codec_type") == "video" for s in probe.get("streams", [])):
@@ -298,16 +330,23 @@ def run_worker(args, runner=run_command, sleeper=time.sleep):
                         shutil.copyfile(args.cookies, cookies)
                         target = staging / media.name
                         window = job["requested_window"]
-                        command = [args.python, "-m", "yt_dlp", "--no-playlist", "--no-progress", "--write-info-json",
+                        download_python = getattr(args, "download_python", None) or args.python
+                        download_timeout = getattr(args, "download_timeout_seconds", 3600)
+                        command = [download_python, "-m", "yt_dlp", "--ignore-config", "--no-playlist", "--no-progress", "--write-info-json",
                             "--cookies", str(cookies), "--js-runtimes", "node", "--force-overwrites",
+                            "--socket-timeout", "30", "--retries", "3", "--fragment-retries", "3",
+                            "--extractor-retries", "3", "--file-access-retries", "3", "--abort-on-unavailable-fragments",
+                            "--retry-sleep", "http:exp=1:8", "--retry-sleep", "fragment:exp=1:8",
+                            "--downloader-args", "ffmpeg_i:-rw_timeout 30000000",
                             "-f", "bestvideo[height<=720][vcodec^=avc1]/bestvideo[height<=720]/bestvideo",
                             "--remux-video", "mp4", "--download-sections", f"*{window['start']:g}-{window['end']:g}",
                             "--force-keyframes-at-cuts", "-o", str(target),
                             "https://www.youtube.com/watch?v=" + job["video_id"]]
-                        runner(command, cwd=REPO, env=env, log_path=log_path)
+                        runner(command, cwd=REPO, env=env, log_path=log_path, timeout=download_timeout)
                         info_candidates = [target.with_name(target.name + ".info.json"), target.with_suffix(".info.json")]
                         staged_info = next((path for path in info_candidates if path.is_file()), info_candidates[0])
                         acquisition = inspect_download(target, staged_info, job, args, env, runner)
+                        acquisition.update(download_python=download_python, download_timeout_seconds=download_timeout)
                         os.replace(target, media)
                         os.replace(staged_info, info)
                         state["acquisition"] = acquisition
@@ -373,6 +412,9 @@ def main(argv=None):
     parser.add_argument("--queue", type=Path, required=True)
     parser.add_argument("--work-root", type=Path, required=True)
     parser.add_argument("--python", required=True, help="CV Python interpreter")
+    parser.add_argument("--download-python", help="Isolated yt-dlp[default] interpreter (default: --python)")
+    parser.add_argument("--download-timeout-seconds", type=float, default=3600,
+                        help="Total acquisition deadline, including ffmpeg; does not limit inference")
     parser.add_argument("--osm-python", help="Explicit companion-tool Python interpreter")
     parser.add_argument("--cookies", type=Path, default=REPO / "www.youtube.com_cookies.txt")
     parser.add_argument("--ffprobe", default="ffprobe")
@@ -388,9 +430,11 @@ def main(argv=None):
         parser.error("Limits and GPU index/wait must be nonnegative")
     if args.clip_seconds is not None and (not args.video_id or not math.isfinite(args.clip_seconds) or args.clip_seconds <= 0):
         parser.error("--clip-seconds requires --video-id and a finite positive duration")
+    if not math.isfinite(args.download_timeout_seconds) or args.download_timeout_seconds <= 0:
+        parser.error("--download-timeout-seconds must be finite and positive")
     if not args.prepare_only and not args.osm_python:
         parser.error("--osm-python is required for analysis/localization")
-    for attr in ("python", "osm_python"):
+    for attr in ("python", "osm_python", "download_python"):
         if getattr(args, attr):
             value = Path(getattr(args, attr)).resolve()
             if not value.is_file():

@@ -1,0 +1,3 @@
+# Install in a separate download-only venv; never repair a CV environment in place.
+# The upstream default group selects its matching yt-dlp-ejs==0.8.0 solver package.
+yt-dlp[default]==2026.10.21

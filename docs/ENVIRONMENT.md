@@ -83,7 +83,7 @@ The tested environment used Python **3.12.9**, Torch **2.13.0+cpu**, Torchvision
 **0.28.0+cpu**, NumPy **2.5.3**, the sole OpenCV provider **5.0.0.93**, and Pillow
 **13.0.0**. `pip check` and all eleven strict scientific/runtime imports passed.
 Torch reported `torch.version.cuda is None`. The final offline rerun on October 28,
-2026 passed **318 tests in 35.60 seconds**, with the three documented real-model
+2026 passed **333 tests in 26.22 seconds**, with the three documented real-model
 tests deselected. The older observed profile
 above remains a record of the shared environment; this clean CPU lock establishes
 a separately tested package environment.

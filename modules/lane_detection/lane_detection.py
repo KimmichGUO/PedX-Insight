@@ -3,8 +3,6 @@ import cv2
 import numpy as np
 import math
 import csv
-from ultralytics import YOLO
-import torch
 from modules.paths import RESULTS_ROOT
 
 def region_of_interest(img, vertices):
@@ -32,17 +30,18 @@ def pipeline(image):
     if lines is None:
         return image, None, None
 
-    for line in lines:
-        for x1, y1, x2, y2 in line:
-            slope = (y2 - y1) / (x2 - x1 + 1e-5)
-            if abs(slope) < 0.5:
-                continue
-            if slope <= 0:
-                left_x.extend([x1, x2])
-                left_y.extend([y1, y2])
-            else:
-                right_x.extend([x1, x2])
-                right_y.extend([y1, y2])
+    # OpenCV 4 commonly returns (N, 1, 4); OpenCV 5 also returns (N, 4).
+    # Normalize both to endpoint rows before applying the same lane geometry.
+    for x1, y1, x2, y2 in np.asarray(lines).reshape(-1, 4):
+        slope = (y2 - y1) / (x2 - x1 + 1e-5)
+        if abs(slope) < 0.5:
+            continue
+        if slope <= 0:
+            left_x.extend([x1, x2])
+            left_y.extend([y1, y2])
+        else:
+            right_x.extend([x1, x2])
+            right_y.extend([y1, y2])
 
     min_y = int(image.shape[0] * (3 / 5))
     max_y = image.shape[0]
@@ -65,6 +64,9 @@ def estimate_distance(bbox_width, bbox_height):
     return (known_width * focal_length) / bbox_width if bbox_width > 0 else 0
 
 def run_lane_detection(video_path, weights="yolo11n.pt", analyze_interval_sec=1.0, output_csv_path=None):
+    from ultralytics import YOLO
+    import torch
+
     model = YOLO(weights)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)

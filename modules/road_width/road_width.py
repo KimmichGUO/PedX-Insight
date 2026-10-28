@@ -109,8 +109,8 @@ def run_road_width_analysis(video_path, analyze_interval_sec=1.0, output_csv_pat
 
         left_boundary = right_boundary = None
         if lines is not None:
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
+            # Normalize OpenCV 4's (N, 1, 4) and OpenCV 5's (N, 4) endpoints.
+            for x1, y1, x2, y2 in np.asarray(lines).reshape(-1, 4):
                 slope = (y2 - y1) / (x2 - x1 + 1e-6)
                 if slope < 0:
                     if left_boundary is None or x1 < left_boundary[0]:

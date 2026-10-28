@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -49,8 +50,8 @@ class Tools:
         self.missing_sections, self.shifted_section = missing_sections, shifted_section
         self.gpu = ["9000, 0"]
 
-    def __call__(self, command, *, cwd, env, log_path=None):
-        self.calls.append({"command": list(command), "env": dict(env), "cwd": Path(cwd)})
+    def __call__(self, command, *, cwd, env, log_path=None, timeout=None):
+        self.calls.append({"command": list(command), "env": dict(env), "cwd": Path(cwd), "timeout": timeout})
         if "yt_dlp" in command:
             if self.interrupt:
                 self.interrupt = False
@@ -307,3 +308,57 @@ def test_cli_rejects_unbounded_pilot_without_launching(tmp_path):
     with pytest.raises(SystemExit):
         worker.main(["--queue", str(tmp_path / "missing.csv"), "--work-root", str(tmp_path),
                      "--python", sys.executable, "--prepare-only", "--clip-seconds", "300"])
+
+
+def test_isolated_download_interpreter_and_deadline_leave_cv_unbounded(tmp_path, fake_contract):
+    args, tools = arguments(tmp_path), Tools()
+    args.download_python = str(tmp_path / "download-env" / "python.exe")
+    args.download_timeout_seconds = 123
+    assert worker.run_worker(args, tools) == 0
+    download = next(call for call in tools.calls if "yt_dlp" in call["command"])
+    command = download["command"]
+    assert command[0] == args.download_python and download["timeout"] == 123
+    for flag in ("--retries", "--fragment-retries", "--extractor-retries", "--file-access-retries"):
+        assert command[command.index(flag) + 1] == "3"
+    assert command[command.index("--socket-timeout") + 1] == "30"
+    assert command[command.index("--downloader-args") + 1] == "ffmpeg_i:-rw_timeout 30000000"
+    for call in tools.calls:
+        if any(Path(part).name in {"main.py", "localize.py"} for part in call["command"]):
+            assert call["command"][0] == args.python and call["timeout"] is None
+
+
+def test_acquisition_deadline_is_durable_and_resume_can_retry(tmp_path):
+    args, tools = arguments(tmp_path), Tools()
+    args.prepare_only = True
+
+    def timeout(command, **options):
+        if "yt_dlp" in command:
+            raise subprocess.TimeoutExpired(command, options["timeout"])
+        return tools(command, **options)
+    assert worker.run_worker(args, timeout) == 1
+    state, = states(args)
+    assert state["status"] == "failed" and state["error"]["type"] == "TimeoutExpired"
+    assert state["error"]["stage"] == "acquiring"
+    assert not list(args.work_root.rglob("cookies.txt"))
+    assert worker.run_worker(args, tools) == 0 and states(args)[0]["status"] == "media_ready"
+
+
+def test_deadline_terminates_only_the_owned_process_tree(tmp_path):
+    started, leaked = tmp_path / "child-started.txt", tmp_path / "child-leaked.txt"
+    child = ("from pathlib import Path; import time; "
+             f"Path({str(started)!r}).write_text('started'); time.sleep(2); "
+             f"Path({str(leaked)!r}).write_text('leaked')")
+    parent = f"import subprocess,sys,time; subprocess.Popen([sys.executable,'-c',{child!r}]); time.sleep(60)"
+    began = time.monotonic()
+    with pytest.raises(subprocess.TimeoutExpired):
+        worker.run_command([sys.executable, "-c", parent], cwd=tmp_path, env=dict(worker.os.environ), timeout=0.8)
+    assert time.monotonic() - began < 10 and started.exists()
+    time.sleep(1.5)
+    assert not leaked.exists()
+
+
+@pytest.mark.parametrize("duration", ["0", "nan", "inf"])
+def test_cli_rejects_nonfinite_or_disabled_download_deadline(tmp_path, duration):
+    with pytest.raises(SystemExit):
+        worker.main(["--queue", str(tmp_path / "missing.csv"), "--work-root", str(tmp_path),
+                     "--python", sys.executable, "--prepare-only", "--download-timeout-seconds", duration])

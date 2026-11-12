@@ -113,44 +113,75 @@ def _nuisance(sub, outcome):
     return terms
 
 
+def _support_issue(sub, outcome):
+    """Reject thin/one-sided outcomes before fitting, including variance models."""
+    if len(sub) < MIN_OBS or sub["cluster"].nunique() < MIN_CLUSTERS:
+        return "insufficient data"
+    if outcome in BINARY_OUTCOMES:
+        if not sub[outcome].isin([0, 1]).all():
+            return "outcome is not binary"
+        if min(int(sub[outcome].sum()), int((sub[outcome] == 0).sum())) < MIN_EVENTS:
+            return "too few events or non-events"
+    return None
+
+
+def _require_converged(result):
+    if not result.converged:
+        raise RuntimeError("model did not converge")
+    return result
+
+
+def _speed_variance(sub, split):
+    """Keep video effects in both sides of the city-component likelihood test.
+
+    Without enough cities with repeated videos, only the combined between-video/city
+    component is identified and no city-specific test is reported.
+    """
+    import statsmodels.formula.api as smf
+    video_vc = {"video": "0 + C(link)"}
+    if not split:
+        fit = _require_converged(smf.mixedlm("speed_ok ~ 1", sub, groups=sub["link"]).fit(reml=True))
+        return 0.0, float(fit.cov_re.iloc[0, 0]), float(fit.scale), None
+    full = smf.mixedlm("speed_ok ~ 1", sub, groups=sub["cluster"], re_formula="1", vc_formula=video_vc)
+    fit = _require_converged(full.fit(reml=True))
+    # The null removes only the city intercept, retaining one variance component per
+    # video. A single constant group makes the video indicators global in statsmodels.
+    null = smf.mixedlm("speed_ok ~ 1", sub, groups=np.ones(len(sub)),
+                      re_formula="0", vc_formula=video_vc)
+    m1 = _require_converged(full.fit(reml=False))
+    m0 = _require_converged(null.fit(reml=False))
+    if not np.isfinite([m1.llf, m0.llf]).all():
+        raise RuntimeError("non-finite model likelihood")
+    lr = max(0.0, 2 * (m1.llf - m0.llf))
+    p = float(0.5 * stats.chi2.sf(lr, 1)) if lr > 0 else 1.0
+    return float(fit.cov_re.iloc[0, 0]), float(fit.vcomp[0]), float(fit.scale), p
+
+
 # ----------------------------------------------------------------- variance partition
 
 def variance_partition(d):
-    import statsmodels.formula.api as smf
     rows = []
     rng = np.random.default_rng(SEED)
 
     # crossing speed: LMM with city RE + video variance component
-    sub = d.dropna(subset=["speed_ok"])
+    sub = d.dropna(subset=["speed_ok", "cluster", "link"])
     base = {"outcome": "crossing_speed_mps (0.3-3.0 m/s)", "adjusted_for": "none", "n_obs": len(sub),
             "n_videos": sub["link"].nunique(), "n_cities": sub["cluster"].nunique(),
             "n_multi_video_cities": _multi_video_cities(sub)}
     # City and video variance are separable only when some city has several videos.
     # (re_formula="1" is required: with vc_formula, statsmodels otherwise drops the
     # per-group random intercept.)
-    separable = base["n_videos"] > base["n_cities"]
+    split = base["n_multi_video_cities"] >= MIN_MULTI_VIDEO_CITIES
     try:
+        issue = _support_issue(sub, SPEED_OUTCOME)
+        if issue:
+            raise ValueError(issue)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            if separable:
-                m = smf.mixedlm("speed_ok ~ 1", sub, groups=sub["cluster"], re_formula="1",
-                                vc_formula={"video": "0 + C(link)"}).fit(reml=True)
-                v_video = float(m.vcomp[0])
-            else:
-                m = smf.mixedlm("speed_ok ~ 1", sub, groups=sub["cluster"]).fit(reml=True)
-                v_video = 0.0
-            v_city = float(m.cov_re.iloc[0, 0])
-            v_res = float(m.scale)
-            # LRT for the city component: ML fits with and without it (boundary test,
-            # 50:50 chi-bar-square mixture).
-            m1 = smf.mixedlm("speed_ok ~ 1", sub, groups=sub["cluster"]).fit(reml=False)
-            m0 = smf.ols("speed_ok ~ 1", sub).fit()
-            lr = max(0.0, 2 * (m1.llf - m0.llf))
-            p = 0.5 * stats.chi2.sf(lr, 1)
+            v_city, v_video, v_res, p = _speed_variance(sub, split)
         tot = v_city + v_video + v_res
-        split = separable and base["n_multi_video_cities"] >= MIN_MULTI_VIDEO_CITIES
         rows.append({**base,
-                     "model": "LMM (REML), city RE" + (" + video VC" if separable else ""),
+                     "model": "LMM (REML), city RE + video VC" if split else "LMM (REML), video RE (includes city)",
                      "var_city": v_city if split else None, "var_video": v_video if split else None,
                      "var_city_or_video": v_city + v_video, "var_residual": v_res,
                      "icc_city": v_city / tot if split else None,
@@ -167,15 +198,16 @@ def variance_partition(d):
     # just detector recall (the 2026-09 risky-crossing finding), it would shrink when
     # traffic_light_prob enters as a fixed effect.
     for y in BINARY_OUTCOMES:
-        sub0 = d.dropna(subset=[y])
+        sub0 = d.dropna(subset=[y, "cluster", "link"])
         for adjusted in (False, True):
             nuis = _nuisance(sub0, y) if adjusted else []
             sub = sub0.dropna(subset=nuis)
             base = {"outcome": y, "adjusted_for": "+".join(nuis) or "none", "n_obs": len(sub),
                     "n_videos": sub["link"].nunique(), "n_cities": sub["cluster"].nunique(),
                     "n_multi_video_cities": _multi_video_cities(sub)}
-            if sub[y].sum() < MIN_EVENTS:
-                rows.append({**base, "model": "GLMM", "note": "too few events"})
+            issue = _support_issue(sub, y)
+            if issue:
+                rows.append({**base, "model": "GLMM", "note": issue})
                 continue
             if adjusted:
                 # standardise continuous covariates so the VB prior scale is sensible
@@ -235,7 +267,9 @@ def _vb_icc(formula, vc, sub, rng, latent, n_draw=4000):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         model = BinomialBayesMixedGLM.from_formula(formula, vc, sub)
-        fit = model.fit_vb()
+        fit = model.fit_vb(rng=SEED)
+    if not fit.optim_retvals["success"]:
+        raise RuntimeError("variational model did not converge")
     names = list(model.vcp_names)
     mean = dict(zip(names, fit.vcp_mean))
     sd = dict(zip(names, fit.vcp_sd))
@@ -265,7 +299,7 @@ def associations(d):
     for y in outcomes:
         ycol = "speed_ok" if y == SPEED_OUTCOME else y
         for fam, (terms, needed, caveat) in FAMILIES.items():
-            sub = d.dropna(subset=[ycol] + needed).copy()
+            sub = d.dropna(subset=[ycol, "cluster", "link"] + needed).copy()
             dropped = []
             if terms.startswith("C("):
                 # A level with a handful of rows gives a separated, uninformative estimate
@@ -289,25 +323,23 @@ def associations(d):
                     "adjusted_for": "+".join(nuis),
                     "caveat": "; ".join(x for x in [caveat, ("dropped sparse levels: "
                                                              + ", ".join(dropped)) if dropped else ""] if x)}
-            if len(sub) < MIN_OBS or k < MIN_CLUSTERS:
-                rows.append({**base, "term": fam, "note": "insufficient data"})
-                continue
-            if y != SPEED_OUTCOME and sub[ycol].sum() < MIN_EVENTS:
-                rows.append({**base, "term": fam, "note": "too few events"})
+            issue = _support_issue(sub, y)
+            if issue:
+                rows.append({**base, "term": fam, "note": issue})
                 continue
             formula = f"{ycol} ~ {terms}" + "".join(f" + {t}" for t in nuis)
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     if y == SPEED_OUTCOME:
-                        res = smf.mixedlm(formula, sub, groups=sub["cluster"]).fit(reml=True)
+                        res = _require_converged(smf.mixedlm(formula, sub, groups=sub["cluster"]).fit(reml=True))
                         method, scale = "LMM, random intercept per city", "difference_m_per_s"
                         params, ses = res.fe_params, res.bse_fe
                     else:
-                        res = smf.gee(formula, groups="cluster", data=sub,
+                        res = _require_converged(smf.gee(formula, groups="cluster", data=sub,
                                       family=sm.families.Binomial(),
                                       cov_struct=sm.cov_struct.Exchangeable()
-                                      ).fit(cov_type="bias_reduced")
+                                      ).fit(cov_type="bias_reduced"))
                         method = "GEE logistic, exchangeable/city, bias-reduced SE, t(k-1)"
                         scale = "odds_ratio"
                         params, ses = res.params, res.bse

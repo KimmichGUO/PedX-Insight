@@ -20,7 +20,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
 from modules import pipeline, quality  # noqa: E402
-from scripts.build_release import build_release  # noqa: E402
+from scripts.build_release import build_release, release_metric_validity  # noqa: E402
 
 
 def write_csv(path, columns, rows=()):
@@ -279,6 +279,8 @@ def test_complete_release_passes_visualizer_validator_without_database(tmp_path,
     assert pd.isna(videos.loc[0, 'recorded_at']) and videos.loc[0, 'recording_date_source'] == 'unknown'
     assert videos.loc[0, 'clip_start_seconds'] == 10 and videos.loc[0, 'clip_end_seconds'] == 14
     assert json.loads(videos.loc[0, 'metric_validity'])['weather']['status'] == 'invalid'
+    registry = json.loads((output / 'metrics_registry.json').read_text(encoding='utf-8'))
+    assert registry['default_statuses']['crosswalk_usage_rate']['status'] == 'experimental'
     locations = pd.read_csv(output / 'all_video_locations.csv')
     assert locations.loc[0, 'status'] == 'ok'
     assert locations.loc[0, 'source_video_sha256'] == 'a' * 64
@@ -494,6 +496,43 @@ def test_release_uses_one_private_mapping_snapshot(tmp_path, monkeypatch):
     assert release['producer']['mapping_sha256'] == original_hash
     assert pd.read_csv(output / 'all_pedestrian_info.csv').iloc[0]['city'] == 'London'
     assert not (output / 'mapping.csv').exists()
+
+
+@pytest.mark.parametrize('column,value', [
+    ('city_id', 'geonames:6167865'),
+    ('eligible_for_comparison', False),
+    ('source_video_sha256', 'b' * 64),
+    ('clip_start_seconds', 99),
+    ('metric_validity', '{"weather":{"status":"validated"}}'),
+])
+def test_release_rejects_conflicting_pedestrian_population_metadata(tmp_path, monkeypatch, column, value):
+    import get_all_pede_info
+    fixture = complete_results_tree(tmp_path)
+    original = get_all_pede_info.main
+
+    def aggregate(*args, **kwargs):
+        original(*args, **kwargs)
+        path = Path(kwargs['output_root']) / 'all_pedestrian_info.csv'
+        people = pd.read_csv(path)
+        people[column] = value
+        people.to_csv(path, index=False)
+
+    monkeypatch.setattr(get_all_pede_info, 'main', aggregate)
+    monkeypatch.chdir(tmp_path)
+    output = tmp_path / 'release'
+    with pytest.raises(ValueError, match='metadata does not match parent video'):
+        build_release(output, results_root=fixture.results, mapping_path=fixture.mapping, skip_stats=True)
+    assert not (output / 'release_manifest.json').exists()
+
+
+@pytest.mark.parametrize('other,expected', [('validated', 'experimental'), ('invalid_legacy', 'invalid_legacy'),
+                                           ('invalid', 'invalid'), (None, 'unknown')])
+def test_release_registry_uses_source_policies_and_preserves_mixed_restrictions(other, expected):
+    first = {'crosswalk': {'status': 'experimental', 'reason': 'Geometry remains experimental'}}
+    second = {'crosswalk': {'status': other, 'reason': 'Another source policy'}} if other else {}
+    registry = release_metric_validity(pd.DataFrame({'metric_validity': [json.dumps(first), json.dumps(second)]}))
+    assert registry['crosswalk']['status'] == expected
+    assert registry['crosswalk']['source_status_counts'] == {'experimental': 1, other or 'unknown': 1}
 
 
 def model_asset_fixture(tmp_path, *, windows_paths=False):

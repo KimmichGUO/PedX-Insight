@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 
+import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -147,3 +148,16 @@ def test_legacy_plain_text_manual_evidence_remains_compatible(tmp_path):
                       configuration={"source_sha256": None, "clip_end_seconds": None})
     assert result["eligible_for_comparison"] is True
     assert result["eligibility_status"] == "verified"
+
+
+@pytest.mark.parametrize("bounds", [(0, 300), (None, 300), (0, None)])
+def test_manifest_bounds_are_authoritative_over_timing_metadata(tmp_path, bounds):
+    config = dict(zip(("clip_start_seconds", "clip_end_seconds"), bounds))
+    metadata(tmp_path, configuration=config)
+    folder = tmp_path / "Ulm1_video"
+    pd.DataFrame([{"analysis_run_id": "analysis-one", "clip_start_seconds": 20,
+                   "clip_end_seconds": 1800}]).to_csv(folder / "[A3]analysis_time.csv", index=False)
+    result = video_metadata(folder, "Ulm", "video", {"city_id": CITY, "verified_city_id": CITY,
+        "eligibility_status": "verified", "location_verification_source": json.dumps(review_record())})
+    for key, value in config.items():
+        assert result[key] == value, "Published bounds must describe the source checked by the location review"

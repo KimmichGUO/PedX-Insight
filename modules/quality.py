@@ -16,6 +16,22 @@ METADATA_COLUMNS = ["city_id", "searched_city_id", "verified_city_id", "eligibil
     "analysis_run_id", "analysis_status", "source_video_sha256", "clip_start_seconds", "clip_end_seconds",
     "eligible_for_comparison", "metric_validity"]
 
+# Component flags share the validity of the detector that produced them. Without
+# this link an invalid family becomes "unknown" at the component column, which
+# experimental opt-in would otherwise admit to subgroup statistics.
+DETECTOR_FAMILIES = {
+    "clothing": ("short_sleeved_shirt", "long_sleeved_shirt", "short_sleeved_outwear",
+        "long_sleeved_outwear", "vest", "sling", "shorts", "trousers", "skirt",
+        "short_sleeved_dress", "long_sleeved_dress", "vest_dress", "sling_dress"),
+    "belongings": ("backpack", "umbrella", "handbag", "suitcase"),
+    "accident": ("police_car", "arrow_board", "cones"),
+    "road_condition": ("crack", "potholes"),
+    "vehicle_type": ("ambulance", "army vehicle", "auto rickshaw", "bicycle", "bus", "car",
+        "garbagevan", "human hauler", "human", "hauler", "minibus", "minivan", "motorbike",
+        "pickup", "policecar", "rickshaw", "scooter", "suv", "taxi", "three wheelers -CNG-",
+        "truck", "van", "wheelbarrow", "avg_vehicle_total"),
+}
+
 
 def _token(value):
     text = unicodedata.normalize("NFKD", str(_clean(value)))
@@ -213,7 +229,11 @@ def video_metadata(folder, city, link, city_info=None):
     out["source_video_sha256"] = configuration.get("source_sha256")
     timing = analysis_time_record(folder) or {}
     for key in ("clip_start_seconds", "clip_end_seconds"):
-        value = timing.get(key, configuration.get(key))
+        # The manifest's source/configuration is what the location review checked.
+        # Even an explicitly unknown bound must not be replaced by a timing CSV's
+        # historical requested window. Older manifests may omit these fields.
+        value = configuration[key] if key in configuration else timing.get(key)
+        out[key] = None
         if value is not None and pd.notna(value):
             out[key] = value
     return out
@@ -231,6 +251,7 @@ def apply_metric_policy(frame, *, include_experimental=False):
     measured = [column for column in out.columns if column not in preserve]
     for column in measured:
         out[column] = out[column].astype(object)
+    families = {column: family for family, columns in DETECTOR_FAMILIES.items() for column in columns}
     for index, row in out.iterrows():
         eligible = str(row.get("eligible_for_comparison", "")).strip().lower() in {"true", "1", "1.0"}
         encoded = row.get("metric_validity")
@@ -241,8 +262,11 @@ def apply_metric_policy(frame, *, include_experimental=False):
         if not isinstance(policies, dict):
             policies = {}
         for column in measured:
-            rule = policies.get(column, {})
+            family = families.get(column)
+            family_rule = policies.get(family, {})
+            family_status = family_rule.get("status", "unknown") if isinstance(family_rule, dict) else "unknown"
+            rule = policies.get(column, family_rule)
             status = rule.get("status", "unknown") if isinstance(rule, dict) else "unknown"
-            if not eligible or status not in allowed:
+            if not eligible or status not in allowed or (family in policies and family_status not in allowed):
                 out.at[index, column] = pd.NA
     return out

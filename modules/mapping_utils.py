@@ -55,25 +55,30 @@ def _videos_list(videos_str):
     if isinstance(videos_str, str):
         if videos_str.startswith("[") and videos_str.endswith("]"):
             videos_str = videos_str[1:-1]
-        return [v.strip().strip("'\"") for v in videos_str.split(",")]
+        return [token for v in videos_str.split(",") if (token := v.strip().strip("'\""))]
     return videos_str
 
 
 def find_city_in_mapping(city, link, mapping_df):
     """Return the mapping.csv row for (city, link), or None.
 
-    Exact name match first, then a normalised match. Among several rows with the same name
-    (two Londons), the one whose `videos` list contains `link` wins.
+    A unique source match wins. Duplicate source matches may be narrowed by the
+    filename city, but must still identify exactly one row (including two Londons).
     """
     # Prefer the source identity to a filename-derived spelling of a city.
-    if "videos" in mapping_df.columns:
+    candidates = mapping_df
+    if link and "videos" in mapping_df.columns:
         linked = mapping_df[mapping_df["videos"].map(lambda raw: link in (_videos_list(raw) or []) if isinstance(raw, (str, list, tuple)) else False)]
         if len(linked) == 1:
             return linked.iloc[0]
-    city_matches = mapping_df[mapping_df["city"] == city]
+        if len(linked) > 1:
+            # Do not resolve to an unrelated name-only row after discovering that
+            # the actual source has conflicting attribution in the mapping.
+            candidates = linked
+    city_matches = candidates[candidates["city"] == city]
     if len(city_matches) == 0:
         norm = normalise_city(city)
-        city_matches = mapping_df[mapping_df["city"].map(normalise_city) == norm]
+        city_matches = candidates[candidates["city"].map(normalise_city) == norm]
         if len(city_matches):
             print(f"  Note: city '{city}' matched mapping.csv '{city_matches.iloc[0]['city']}' "
                   f"by normalised name")
@@ -82,13 +87,5 @@ def find_city_in_mapping(city, link, mapping_df):
         return None
     if len(city_matches) == 1:
         return city_matches.iloc[0]
-    for _, row in city_matches.iterrows():
-        try:
-            if pd.isna(row["videos"]) if not isinstance(row["videos"], (list, tuple)) else False:
-                continue
-            if link in _videos_list(row["videos"]):
-                return row
-        except Exception as e:
-            print(f"Error parsing 'videos' column: {e}, value: {row.get('videos')}")
-    print(f"Warning: City {city} has multiple matches but no record contains link {link}")
+    print(f"Warning: City {city} has multiple possible mapping rows for link {link}")
     return None  # ambiguous countries must never be resolved by row order

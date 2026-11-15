@@ -144,14 +144,25 @@ def city_level(video_df, value_cols, *, city_col="city", constant_cols=()):
 
 
 def city_cluster_id(df, city_col="city", country_col="country"):
-    """Add a `cluster` column identifying the city (city names collide across countries).
+    """Add a city cluster, preferring the pipeline's stable filming-location identity.
 
     fillna BEFORE concatenating: under pandas 3, str + NA is NA, and a NA cluster id
-    silently drops the row from every clustered computation.
+    silently drops the row from every clustered computation. Labels are only a legacy
+    fallback: same-name cities within one country must not share a random effect.
     """
     df = df.copy()
     country = df[country_col].fillna("").astype(str) if country_col in df.columns else ""
     df["cluster"] = df[city_col].fillna("").astype(str) + "|" + country
+    if "admin1_code" in df:
+        admin = df["admin1_code"].fillna("").astype(str).str.strip()
+        df.loc[admin.ne(""), "cluster"] += "|" + admin[admin.ne("")]
+    # Verified filming city takes precedence over a searched-city identity. Apply in
+    # reverse priority so an absent verified id retains the canonical/legacy fallback.
+    for column in ("city_id", "verified_city_id"):
+        if column in df:
+            identity = df[column].fillna("").astype(str).str.strip()
+            present = identity.ne("")
+            df.loc[present, "cluster"] = "id:" + identity[present]
     return df
 
 

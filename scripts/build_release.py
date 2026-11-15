@@ -15,7 +15,7 @@ from modules.completeness import publication_issues
 from modules.paths import RESULTS_ROOT
 from modules.pipeline import atomic_json, file_hash, output_record, read_manifest
 from modules.provenance import git_state, utc_now
-from modules.quality import metric_validity
+from modules.quality import METADATA_COLUMNS
 
 CORE_FILES = ("all_video_info.csv", "all_pedestrian_info.csv", "all_time_info.csv", "all_video_locations.csv")
 ANALYTICS_FILES = ("accident_road_condition_stats.csv", "age_stats.csv", "carried_items_stats.csv",
@@ -35,6 +35,35 @@ def public_model_id(value):
             Path(text).suffix.lower() in {".pt", ".pth", ".onnx", ".bin", ".safetensors", ".pb"}):
         return portable_basename(text)
     return text
+
+
+def release_metric_validity(videos):
+    """Describe the actual source runs, conservatively combining mixed policies.
+
+    The release directory contains aggregate CSVs, not a video's detector outputs.
+    Probing it for [E10] would mislabel every new crosswalk result as legacy-invalid.
+    """
+    priority = {status: index for index, status in enumerate(
+        ("validated", "experimental", "unknown", "reference_only", "invalid_legacy", "invalid"))}
+    sources = []
+    for encoded in videos["metric_validity"]:
+        policy = json.loads(encoded)
+        if not isinstance(policy, dict):
+            raise ValueError("Metric validity must be an object for every source run")
+        sources.append(policy)
+    result = {}
+    for key in sorted({key for source in sources for key in source}):
+        rules = [source.get(key, {"status": "unknown", "reason": "Source run has no policy for this metric."})
+                 for source in sources]
+        if any(not isinstance(rule, dict) or rule.get("status") not in priority for rule in rules):
+            raise ValueError(f"Invalid source metric policy: {key}")
+        counts = {status: sum(rule["status"] == status for rule in rules)
+                  for status in priority if any(rule["status"] == status for rule in rules)}
+        selected = max(rules, key=lambda rule: priority[rule["status"]])
+        result[key] = {**selected, "source_status_counts": counts}
+        if len(counts) > 1:
+            result[key]["reason"] = "Mixed source-run policies; using the most restrictive status. " + str(selected.get("reason", ""))
+    return result
 
 
 def validate_snapshot(directory, *, require_completed=True):
@@ -57,6 +86,23 @@ def validate_snapshot(directory, *, require_completed=True):
         reference = videos.set_index("link")["analysis_run_id"]
         if not pedestrians["analysis_run_id"].fillna("").eq(pedestrians["link"].map(reference).fillna("")).all():
             raise ValueError("Video and pedestrian snapshots belong to different runs")
+        # Descriptive statistics use the pedestrian metadata, while the dashboard
+        # gates on its parent video. Both must describe the same population and
+        # source; matching only run_id can silently give them different cohorts.
+        parents = videos.set_index("link")
+        for column in METADATA_COLUMNS:
+            if column not in parents or column not in pedestrians:
+                raise ValueError(f"Pedestrian metadata does not match parent video: missing {column}")
+            expected = pedestrians["link"].map(parents[column]).astype(object).fillna("")
+            actual = pedestrians[column].astype(object).fillna("")
+            if column == "metric_validity":
+                try:
+                    canonical = lambda value: json.dumps(json.loads(value), sort_keys=True)
+                    expected, actual = expected.map(canonical), actual.map(canonical)
+                except (ValueError, TypeError) as error:
+                    raise ValueError("Pedestrian metadata does not match parent video: invalid metric_validity") from error
+            if not actual.eq(expected).all():
+                raise ValueError(f"Pedestrian metadata does not match parent video: {column}")
     return frames
 
 
@@ -136,7 +182,7 @@ def _build_release_snapshot(output, *, results_root=None, mapping_path="mapping.
                     "configuration": configuration, "model_assets": models})
         atomic_json(output / "analysis_runs.json", {"schema_version": 1, "runs": source_runs})
         atomic_json(output / "metrics_registry.json", {"schema_version": 1, "scope": "global_comparison",
-            "benchmark": "validation/results/JAAD_REPORT.md", "default_statuses": metric_validity(output),
+            "benchmark": "validation/results/JAAD_REPORT.md", "default_statuses": release_metric_validity(videos),
             "default_allowed": ["validated"], "experimental_opt_in": ["experimental", "unknown"],
             "invalid_never_compared": ["invalid", "invalid_legacy"]})
         population = {"eligible_only": True, "allowed_metric_statuses": ["validated"] +
